@@ -1,0 +1,175 @@
+/* =============================
+   GLOBAL RESET & BASE
+============================= */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* 🎨 Theme Variables */
+:root {
+  --bg-gradient-start: #0f172a; /* dark navy */
+  --bg-gradient-end: #334155;   /* slate grey */
+  --text-color: #e2e8f0;
+  --text-light: #94a3b8;
+
+  --primary-color: #2563eb; /* blue */
+  --primary-hover: #1e40af;
+
+  --error-color: #ef4444;
+  --success-color: #22c55e;
+
+  font-family: 'Poppins', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--text-color);
+  background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+}
+
+/* =============================
+   BODY
+============================= */
+body {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+  color: var(--text-color);
+  overflow-x: hidden;
+}
+
+/* =============================
+   TEXT & LINKS
+============================= */
+a {
+  font-weight: 500;
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+a:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+
+h1, h2, h3 {
+  font-weight: 700;
+  margin: 0;
+  color: #f1f5f9;
+}
+
+/* =============================
+   BUTTONS (Modern)
+============================= */
+button {
+  font-family: inherit;
+  border: none;
+  border-radius: 10px;
+  padding: 0.8rem 1.6rem;
+  background: linear-gradient(135deg, var(--primary-color), #3b82f6);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+button:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
+  box-shadow: 0 6px 16px rgba(30, 64, 175, 0.35);
+}
+button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(30, 64, 175, 0.3);
+}
+button:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.6);
+  outline-offset: 2px;
+}
+
+/* =============================
+   INPUTS
+============================= */
+input, textarea, select {
+  width: 100%;
+  font-family: inherit;
+  padding: 0.75rem 1rem;
+  border: 1px solid #475569;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  outline: none;
+}
+
+/* =============================
+   CONTAINERS
+============================= */
+.main-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+/* =============================
+   UTILITIES
+============================= */
+.center-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  padding: 2rem;
+  color: #0f172a;
+}
+
+/* =============================
+   ANIMATIONS
+============================= */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fadeInUp {
+  animation: fadeInUp 0.6s ease;
+}
+
+/* =============================
+   MEDIA QUERIES
+============================= */
+@media (max-width: 768px) {
+  .main-container {
+    padding: 1.25rem;
+  }
+}
