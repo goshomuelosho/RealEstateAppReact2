@@ -4,24 +4,28 @@ import { useNavigate, Link } from "react-router-dom";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchProfile = async () => {
       const { data } = await supabase.auth.getUser();
       if (!data.user) {
         navigate("/login");
         return;
       }
-      setUser(data.user);
-    };
-    fetchUser();
-  }, [navigate]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/login");
-  };
+      // 🧠 Fetch profile data (name + avatar)
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("name, avatar_url")
+        .eq("id", data.user.id)
+        .single();
+
+      setProfile(profileData || {});
+    };
+
+    fetchProfile();
+  }, [navigate]);
 
   return (
     <div
@@ -37,34 +41,9 @@ export default function Dashboard() {
       }}
     >
       {/* 🌌 Floating Gradient Lights */}
-      <div
-        style={{
-          position: "absolute",
-          top: "15%",
-          left: "5%",
-          width: "300px",
-          height: "300px",
-          background: "radial-gradient(circle, rgba(59,130,246,0.15), transparent)",
-          borderRadius: "50%",
-          filter: "blur(70px)",
-          animation: "float 8s ease-in-out infinite",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          bottom: "10%",
-          right: "10%",
-          width: "400px",
-          height: "400px",
-          background: "radial-gradient(circle, rgba(168,85,247,0.15), transparent)",
-          borderRadius: "50%",
-          filter: "blur(80px)",
-          animation: "float 10s ease-in-out infinite reverse",
-        }}
-      />
+      <div style={bgLight("#3b82f6", "10%", "5%", 300)} />
+      <div style={bgLight("#8b5cf6", "80%", "85%", 400)} />
 
-      {/* ✨ Animations */}
       <style>{`
         @keyframes float {
           0%, 100% { transform: translate(0, 0) scale(1); }
@@ -77,32 +56,9 @@ export default function Dashboard() {
       `}</style>
 
       {/* 🧭 Header */}
-      <header
-        style={{
-          padding: "1.25rem 2rem",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          background: "rgba(15, 23, 42, 0.6)",
-          backdropFilter: "blur(20px) saturate(180%)",
-          borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
-          zIndex: 10,
-          position: "sticky",
-          top: 0,
-        }}
-      >
+      <header style={headerStyle}>
         {/* Logo */}
-        <Link
-          to="/dashboard"
-          style={{
-            fontSize: "1.5rem",
-            fontWeight: "700",
-            background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            textDecoration: "none",
-          }}
-        >
+        <Link to="/dashboard" style={logoStyle}>
           🏠 Real Estate
         </Link>
 
@@ -113,36 +69,42 @@ export default function Dashboard() {
           </Link>
         </nav>
 
-        {/* User Info */}
-        {user && (
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+        {/* Profile Shortcut */}
+        {profile && (
+          <div
+            onClick={() => navigate("/profile")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+              cursor: "pointer",
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: "50px",
+              padding: "0.4rem 0.9rem",
+              transition: "all 0.3s ease",
+            }}
+          >
+            <img
+              src={profile.avatar_url || "https://via.placeholder.com/40"}
+              alt="Avatar"
+              style={{
+                width: "36px",
+                height: "36px",
+                borderRadius: "50%",
+                objectFit: "cover",
+                border: "2px solid rgba(255,255,255,0.2)",
+              }}
+            />
             <span
               style={{
-                fontSize: "0.9rem",
-                color: "#94a3b8",
-                padding: "0.5rem 1rem",
-                background: "rgba(255,255,255,0.05)",
-                borderRadius: "20px",
-                border: "1px solid rgba(255,255,255,0.1)",
-              }}
-            >
-              {user.email}
-            </span>
-            <button
-              onClick={handleLogout}
-              style={{
-                padding: "0.6rem 1.5rem",
-                background: "linear-gradient(135deg, #ef4444, #dc2626)",
-                border: "none",
-                borderRadius: "10px",
-                color: "#fff",
+                fontSize: "0.95rem",
                 fontWeight: "600",
-                cursor: "pointer",
-                transition: "all 0.3s ease",
+                color: "#E2E8F0",
               }}
             >
-              Logout
-            </button>
+              {profile.name || "My Profile"}
+            </span>
           </div>
         )}
       </header>
@@ -197,60 +159,92 @@ export default function Dashboard() {
             }}
           >
             <Link to="/add-estate">
-              <button
-                style={{
-                  padding: "1rem 2rem",
-                  fontSize: "1.1rem",
-                  fontWeight: "700",
-                  background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
-                  border: "none",
-                  borderRadius: "12px",
-                  color: "#fff",
-                  cursor: "pointer",
-                  transition: "all 0.3s ease",
-                  boxShadow: "0 4px 20px rgba(59,130,246,0.4)",
-                }}
-              >
-                ➕ Add New Estate
-              </button>
+              <button style={btnPrimary}>➕ Add New Estate</button>
             </Link>
 
             <Link to="/my-estates">
-              <button
-                style={{
-                  padding: "1rem 2rem",
-                  fontSize: "1.1rem",
-                  fontWeight: "700",
-                  background: "linear-gradient(135deg, #10b981, #059669)",
-                  border: "none",
-                  borderRadius: "12px",
-                  color: "#fff",
-                  cursor: "pointer",
-                  transition: "all 0.3s ease",
-                  boxShadow: "0 4px 20px rgba(16,185,129,0.4)",
-                }}
-              >
-                🏡 View My Estates
-              </button>
+              <button style={btnSecondary}>🏡 View My Estates</button>
             </Link>
           </div>
         </div>
       </main>
 
       {/* 📜 Footer */}
-      <footer
-        style={{
-          textAlign: "center",
-          padding: "1rem",
-          color: "#94a3b8",
-          fontSize: "0.9rem",
-          borderTop: "1px solid rgba(255,255,255,0.1)",
-          backdropFilter: "blur(10px)",
-          background: "rgba(15,23,42,0.5)",
-        }}
-      >
+      <footer style={footerStyle}>
         © {new Date().getFullYear()} Real Estate Management | Built with ❤️
       </footer>
     </div>
   );
 }
+
+/* 🎨 Styles */
+const bgLight = (color, top, left, size) => ({
+  position: "absolute",
+  top,
+  left,
+  width: `${size}px`,
+  height: `${size}px`,
+  background: `radial-gradient(circle, ${color}33, transparent)`,
+  borderRadius: "50%",
+  filter: "blur(60px)",
+  opacity: 0.8,
+});
+
+const headerStyle = {
+  flexShrink: 0,
+  padding: "1.25rem 2rem",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  background: "rgba(15, 23, 42, 0.6)",
+  backdropFilter: "blur(20px)",
+  borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+  zIndex: 10,
+  position: "sticky",
+  top: 0,
+};
+
+const logoStyle = {
+  fontSize: "1.5rem",
+  fontWeight: "700",
+  background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+  textDecoration: "none",
+};
+
+const btnPrimary = {
+  padding: "1rem 2rem",
+  fontSize: "1.1rem",
+  fontWeight: "700",
+  background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
+  border: "none",
+  borderRadius: "12px",
+  color: "#fff",
+  cursor: "pointer",
+  transition: "all 0.3s ease",
+  boxShadow: "0 4px 20px rgba(59,130,246,0.4)",
+};
+
+const btnSecondary = {
+  padding: "1rem 2rem",
+  fontSize: "1.1rem",
+  fontWeight: "700",
+  background: "linear-gradient(135deg, #10b981, #059669)",
+  border: "none",
+  borderRadius: "12px",
+  color: "#fff",
+  cursor: "pointer",
+  transition: "all 0.3s ease",
+  boxShadow: "0 4px 20px rgba(16,185,129,0.4)",
+};
+
+const footerStyle = {
+  textAlign: "center",
+  padding: "1rem",
+  color: "#94a3b8",
+  fontSize: "0.9rem",
+  borderTop: "1px solid rgba(255,255,255,0.1)",
+  backdropFilter: "blur(10px)",
+  background: "rgba(15,23,42,0.5)",
+};

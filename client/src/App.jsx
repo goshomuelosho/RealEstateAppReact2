@@ -7,6 +7,7 @@ import MyEstates from "./pages/MyEstates";
 import AddEstate from "./pages/AddEstate";
 import EditEstate from "./pages/EditEstate";
 import EstateDetail from "./pages/EstateDetail";
+import Profile from "./pages/Profile";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
       <Route path="/add-estate" element={<AddEstate />} />
       <Route path="/edit-estate/:id" element={<EditEstate />} />
       <Route path="/estate/:id" element={<EstateDetail />} />
+      <Route path="/profile" element={<Profile />} />
     </Routes>
   );
 }
