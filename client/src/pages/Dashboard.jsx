@@ -5,6 +5,7 @@ import { useNavigate, Link } from "react-router-dom";
 export default function Dashboard() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -22,6 +23,7 @@ export default function Dashboard() {
         .single();
 
       setProfile(profileData || {});
+      setTimeout(() => setIsLoaded(true), 150); // smooth fade-in
     };
 
     fetchProfile();
@@ -38,6 +40,8 @@ export default function Dashboard() {
         position: "relative",
         overflow: "hidden",
         color: "#E2E8F0",
+        transition: "opacity 0.4s ease",
+        opacity: isLoaded ? 1 : 0,
       }}
     >
       {/* 🌌 Floating Gradient Lights */}
@@ -50,19 +54,21 @@ export default function Dashboard() {
           50% { transform: translate(30px, -30px) scale(1.1); }
         }
         @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(30px); }
+          from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes shimmer {
+          0% { background-position: -200px 0; }
+          100% { background-position: 200px 0; }
         }
       `}</style>
 
       {/* 🧭 Header */}
       <header style={headerStyle}>
-        {/* Logo */}
         <Link to="/dashboard" style={logoStyle}>
           🏠 Real Estate
         </Link>
 
-        {/* Navigation */}
         <nav style={{ display: "flex", gap: "2rem", alignItems: "center" }}>
           <Link to="/my-estates" style={{ color: "#e2e8f0" }}>
             My Estates
@@ -70,43 +76,54 @@ export default function Dashboard() {
         </nav>
 
         {/* Profile Shortcut */}
-        {profile && (
-          <div
-            onClick={() => navigate("/profile")}
+        <div
+          onClick={() => navigate("/profile")}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.75rem",
+            cursor: "pointer",
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: "50px",
+            padding: "0.4rem 0.9rem",
+            transition: "all 0.3s ease",
+          }}
+        >
+          {/* Avatar (Fade-In or Shimmer Placeholder) */}
+          <div style={{ position: "relative" }}>
+            {profile?.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt="Avatar"
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: "2px solid rgba(255,255,255,0.2)",
+                  opacity: isLoaded ? 1 : 0,
+                  transition: "opacity 0.4s ease",
+                }}
+              />
+            ) : (
+              <div style={avatarSkeleton} />
+            )}
+          </div>
+
+          {/* Name (Fade-In or Placeholder) */}
+          <span
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.75rem",
-              cursor: "pointer",
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: "50px",
-              padding: "0.4rem 0.9rem",
-              transition: "all 0.3s ease",
+              fontSize: "0.95rem",
+              fontWeight: "600",
+              color: "#E2E8F0",
+              opacity: isLoaded ? 1 : 0.5,
+              transition: "opacity 0.4s ease",
             }}
           >
-            <img
-              src={profile.avatar_url || "https://via.placeholder.com/40"}
-              alt="Avatar"
-              style={{
-                width: "36px",
-                height: "36px",
-                borderRadius: "50%",
-                objectFit: "cover",
-                border: "2px solid rgba(255,255,255,0.2)",
-              }}
-            />
-            <span
-              style={{
-                fontSize: "0.95rem",
-                fontWeight: "600",
-                color: "#E2E8F0",
-              }}
-            >
-              {profile.name || "My Profile"}
-            </span>
-          </div>
-        )}
+            {profile?.name || "Loading..."}
+          </span>
+        </div>
       </header>
 
       {/* 🏡 Hero Section */}
@@ -133,6 +150,8 @@ export default function Dashboard() {
               background: "linear-gradient(135deg, #ffffff, #94a3b8)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
+              transition: "opacity 0.4s ease",
+              opacity: isLoaded ? 1 : 0.3,
             }}
           >
             Welcome to Your Real Estate Dashboard 👋
@@ -143,6 +162,8 @@ export default function Dashboard() {
               fontSize: "1.15rem",
               lineHeight: 1.7,
               marginBottom: "2.5rem",
+              transition: "opacity 0.4s ease",
+              opacity: isLoaded ? 1 : 0.3,
             }}
           >
             Manage your property listings with ease. Add, edit, and keep track
@@ -156,6 +177,8 @@ export default function Dashboard() {
               gap: "1.5rem",
               flexWrap: "wrap",
               justifyContent: "center",
+              opacity: isLoaded ? 1 : 0.3,
+              transition: "opacity 0.4s ease",
             }}
           >
             <Link to="/add-estate">
@@ -211,6 +234,16 @@ const logoStyle = {
   WebkitBackgroundClip: "text",
   WebkitTextFillColor: "transparent",
   textDecoration: "none",
+};
+
+const avatarSkeleton = {
+  width: "36px",
+  height: "36px",
+  borderRadius: "50%",
+  background:
+    "linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%)",
+  backgroundSize: "200px 100%",
+  animation: "shimmer 1.5s infinite",
 };
 
 const btnPrimary = {

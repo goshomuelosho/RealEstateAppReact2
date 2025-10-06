@@ -2,15 +2,18 @@ import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate, Link } from "react-router-dom";
 
-/* 🎨 Styles (moved up to avoid no-undef) */
-const pageContainer = {
+/* 🎨 Styles (defined first) */
+const pageContainer = (isLoaded) => ({
   minHeight: "100vh",
   display: "flex",
   flexDirection: "column",
   background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)",
   position: "relative",
   overflow: "hidden",
-};
+  transition: "opacity 0.4s ease",
+  opacity: isLoaded ? 1 : 0,
+});
+
 const bgLight = (color, top, left, size) => ({
   position: "absolute",
   top,
@@ -21,6 +24,7 @@ const bgLight = (color, top, left, size) => ({
   borderRadius: "50%",
   filter: "blur(60px)",
 });
+
 const headerStyle = {
   flexShrink: 0,
   padding: "1.25rem 2rem",
@@ -32,6 +36,7 @@ const headerStyle = {
   borderBottom: "1px solid rgba(255,255,255,0.1)",
   zIndex: 10,
 };
+
 const logoStyle = {
   fontSize: "1.5rem",
   fontWeight: "700",
@@ -40,6 +45,7 @@ const logoStyle = {
   WebkitTextFillColor: "transparent",
   textDecoration: "none",
 };
+
 const profileBox = {
   display: "flex",
   alignItems: "center",
@@ -49,19 +55,37 @@ const profileBox = {
   border: "1px solid rgba(255,255,255,0.1)",
   borderRadius: "50px",
   padding: "0.4rem 0.9rem",
+  transition: "all 0.3s ease",
 };
-const avatarStyle = {
+
+const avatarStyle = (isLoaded) => ({
   width: "36px",
   height: "36px",
   borderRadius: "50%",
   objectFit: "cover",
   border: "2px solid rgba(255,255,255,0.2)",
+  opacity: isLoaded ? 1 : 0,
+  transition: "opacity 0.4s ease",
+});
+
+const avatarSkeleton = {
+  width: "36px",
+  height: "36px",
+  borderRadius: "50%",
+  background:
+    "linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%)",
+  backgroundSize: "200px 100%",
+  animation: "shimmer 1.5s infinite",
 };
-const profileName = {
+
+const profileName = (isLoaded) => ({
   fontSize: "0.95rem",
   fontWeight: "600",
   color: "#E2E8F0",
-};
+  opacity: isLoaded ? 1 : 0.5,
+  transition: "opacity 0.4s ease",
+});
+
 const mainStyle = {
   flex: 1,
   display: "flex",
@@ -69,7 +93,10 @@ const mainStyle = {
   alignItems: "center",
   padding: "3rem 1.5rem",
   zIndex: 1,
+  animation: "fadeIn 0.8s ease",
 };
+
+/* Card + Form Styles */
 const formCard = {
   background: "rgba(255,255,255,0.08)",
   backdropFilter: "blur(20px)",
@@ -79,13 +106,14 @@ const formCard = {
   width: "100%",
   maxWidth: "600px",
   boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
-  animation: "fadeIn 0.8s ease",
   color: "#f8fafc",
 };
+
 const formHeader = { textAlign: "center", marginBottom: "2.5rem" };
 const formIcon = { fontSize: "3.5rem", marginBottom: "1rem" };
 const formTitle = { fontSize: "2rem", fontWeight: "800" };
 const formSubtitle = { color: "#cbd5e1", fontSize: "0.95rem" };
+
 const labelStyle = {
   display: "block",
   fontSize: "0.85rem",
@@ -93,6 +121,7 @@ const labelStyle = {
   color: "#e2e8f0",
   marginBottom: "0.5rem",
 };
+
 const inputStyle = {
   width: "100%",
   padding: "1rem 1.25rem",
@@ -103,6 +132,7 @@ const inputStyle = {
   fontSize: "1rem",
   outline: "none",
 };
+
 const uploadBoxStyle = (hasImage) => ({
   border: "2px dashed rgba(255,255,255,0.3)",
   borderRadius: "12px",
@@ -112,12 +142,14 @@ const uploadBoxStyle = (hasImage) => ({
   overflow: "hidden",
   marginTop: "1rem",
 });
+
 const previewImageStyle = {
   width: "100%",
   height: "200px",
   objectFit: "cover",
   borderRadius: "10px",
 };
+
 const removeBtnStyle = {
   position: "absolute",
   top: "0.75rem",
@@ -129,6 +161,7 @@ const removeBtnStyle = {
   color: "white",
   cursor: "pointer",
 };
+
 const fileInputStyle = {
   position: "absolute",
   top: 0,
@@ -138,6 +171,7 @@ const fileInputStyle = {
   opacity: 0,
   cursor: "pointer",
 };
+
 const submitButton = (loading) => ({
   marginTop: "1.5rem",
   padding: "1.1rem",
@@ -151,6 +185,7 @@ const submitButton = (loading) => ({
   fontSize: "1.05rem",
   cursor: loading ? "not-allowed" : "pointer",
 });
+
 const spinner = {
   width: "20px",
   height: "20px",
@@ -159,6 +194,8 @@ const spinner = {
   borderRadius: "50%",
   animation: "spin 0.8s linear infinite",
 };
+
+/* Modal Styles */
 const modalOverlay = {
   position: "fixed",
   top: 0,
@@ -214,15 +251,19 @@ const progressBar = {
   borderRadius: "2px",
   margin: "0 auto",
 };
+
 const keyframes = `
   @keyframes fadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: 200px 0; } }
 `;
 
 /* 🚀 Component */
 export default function AddEstate() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -246,6 +287,7 @@ export default function AddEstate() {
         .single();
 
       setProfile(profileData || { id: userData.user.id });
+      setTimeout(() => setIsLoaded(true), 150);
     };
     getProfile();
   }, [navigate]);
@@ -291,32 +333,40 @@ export default function AddEstate() {
   };
 
   return (
-    <div style={pageContainer}>
+    <div style={pageContainer(isLoaded)}>
       <div style={bgLight("#3b82f6", "10%", "5%", 300)} />
       <div style={bgLight("#8b5cf6", "80%", "85%", 400)} />
       <style>{keyframes}</style>
 
+      {/* 🧭 Header */}
       <header style={headerStyle}>
         <Link to="/dashboard" style={logoStyle}>
           🏠 Real Estate
         </Link>
         <nav>
-          <Link to="/my-estates" style={{ color: "#3b82f6" }}>
+          <Link to="/my-estates" style={{ color: "#e2e8f0" }}>
             My Estates
           </Link>
         </nav>
-        {profile && (
-          <div style={profileBox} onClick={() => navigate("/profile")}>
+
+        {/* 👤 Profile */}
+        <div style={profileBox} onClick={() => navigate("/profile")}>
+          {profile?.avatar_url ? (
             <img
-              src={profile.avatar_url || "https://via.placeholder.com/40"}
+              src={profile.avatar_url}
               alt="Avatar"
-              style={avatarStyle}
+              style={avatarStyle(isLoaded)}
             />
-            <span style={profileName}>{profile.name || "My Profile"}</span>
-          </div>
-        )}
+          ) : (
+            <div style={avatarSkeleton} />
+          )}
+          <span style={profileName(isLoaded)}>
+            {profile?.name || "Loading..."}
+          </span>
+        </div>
       </header>
 
+      {/* 📋 Form */}
       <main style={mainStyle}>
         <form onSubmit={handleSubmit} style={formCard}>
           <div style={formHeader}>
@@ -325,6 +375,7 @@ export default function AddEstate() {
             <p style={formSubtitle}>Fill in details to list your property</p>
           </div>
 
+          {/* Title */}
           <div>
             <label style={labelStyle}>Property Title</label>
             <input
@@ -337,6 +388,7 @@ export default function AddEstate() {
             />
           </div>
 
+          {/* Description */}
           <div>
             <label style={labelStyle}>Description</label>
             <textarea
@@ -349,7 +401,14 @@ export default function AddEstate() {
             />
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+          {/* Price + Location */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "1rem",
+            }}
+          >
             <div>
               <label style={labelStyle}>Price ($)</label>
               <input
@@ -375,13 +434,26 @@ export default function AddEstate() {
             </div>
           </div>
 
+          {/* Upload */}
           <div>
             <label style={labelStyle}>Property Image</label>
             <div style={uploadBoxStyle(imagePreview)}>
               {imagePreview ? (
                 <div style={{ position: "relative" }}>
-                  <img src={imagePreview} alt="Preview" style={previewImageStyle} />
-                  <button onClick={() => { setImage(null); setImagePreview(null); }} style={removeBtnStyle}>✕</button>
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    style={previewImageStyle}
+                  />
+                  <button
+                    onClick={() => {
+                      setImage(null);
+                      setImagePreview(null);
+                    }}
+                    style={removeBtnStyle}
+                  >
+                    ✕
+                  </button>
                 </div>
               ) : (
                 <div style={{ textAlign: "center" }}>
@@ -389,13 +461,26 @@ export default function AddEstate() {
                   <p style={{ color: "#94a3b8" }}>Click to upload image</p>
                 </div>
               )}
-              <input type="file" accept="image/*" onChange={handleImageChange} style={fileInputStyle} />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                style={fileInputStyle}
+              />
             </div>
           </div>
 
+          {/* Submit */}
           <button type="submit" disabled={loading} style={submitButton(loading)}>
             {loading ? (
-              <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
+              <span
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.5rem",
+                }}
+              >
                 <div style={spinner} /> Adding Estate...
               </span>
             ) : (
@@ -405,10 +490,13 @@ export default function AddEstate() {
         </form>
       </main>
 
+      {/* ✅ Success Modal */}
       {showModal && (
         <div style={modalOverlay}>
           <div style={modalCard}>
-            <div style={checkContainer}><div style={checkMark} /></div>
+            <div style={checkContainer}>
+              <div style={checkMark} />
+            </div>
             <h3 style={modalTitle}>Estate Added Successfully!</h3>
             <p style={modalText}>Redirecting...</p>
             <div style={progressBar} />
