@@ -1,27 +1,34 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
+import NavBar from "../components/NavBar";
 
 export default function EstateDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [estate, setEstate] = useState(null);
-  const [profile, setProfile] = useState(null);
+  const [profile, setProfile] = useState(null); // current user profile for NavBar
   const [loading, setLoading] = useState(true);
+  const [isOwner, setIsOwner] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return navigate("/login");
+      if (!userData.user) {
+        navigate("/login");
+        return;
+      }
 
-      // 👤 Fetch profile
+      const currentUserId = userData.user.id;
+
+      // 👤 Fetch profile (for NavBar)
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("name, avatar_url")
-        .eq("id", userData.user.id)
+        .select("id, name, avatar_url")
+        .eq("id", currentUserId)
         .single();
-      setProfile(profileData || {});
+      setProfile(profileData || { id: currentUserId });
 
       // 🏡 Fetch estate
       const { data, error } = await supabase
@@ -32,10 +39,12 @@ export default function EstateDetail() {
 
       if (error || !data) {
         alert("Estate not found!");
-        return navigate("/my-estates");
+        navigate("/my-estates");
+        return;
       }
 
       setEstate(data);
+      setIsOwner(data.user_id === currentUserId); // 👈 owner check
       setLoading(false);
     };
 
@@ -43,7 +52,7 @@ export default function EstateDetail() {
   }, [id, navigate]);
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this estate?")) return;
+    if (!window.confirm("Are you sure you want to delete this estate?")) return;
     const { error } = await supabase.from("estates").delete().eq("id", id);
     if (error) alert(error.message);
     else navigate("/my-estates");
@@ -52,42 +61,22 @@ export default function EstateDetail() {
   if (loading) {
     return (
       <div style={loaderContainer}>
+        <style>{keyframes}</style>
         <div style={loaderSpinner} />
       </div>
     );
   }
 
+  if (!estate) return null;
+
   return (
     <div style={pageContainer}>
-      {/* 🌌 Floating Gradient Lights */}
       <div style={bgLight("#3b82f6", "10%", "5%", 300)} />
       <div style={bgLight("#8b5cf6", "80%", "85%", 400)} />
       <style>{keyframes}</style>
 
-      {/* 🧭 Header */}
-      <header style={headerStyle}>
-        <Link to="/dashboard" style={logoStyle}>
-          🏠 Real Estate
-        </Link>
-
-        <nav style={{ display: "flex", gap: "2rem" }}>
-          <Link to="/my-estates" style={{ color: "#e2e8f0" }}>
-            My Estates
-          </Link>
-        </nav>
-
-        {/* 👤 Profile Shortcut */}
-        {profile && (
-          <div style={profileBox} onClick={() => navigate("/profile")}>
-            <img
-              src={profile.avatar_url || "https://via.placeholder.com/40"}
-              alt="Avatar"
-              style={avatarStyle}
-            />
-            <span style={profileName}>{profile.name || "My Profile"}</span>
-          </div>
-        )}
-      </header>
+      {/* 🧭 Global NavBar with Marketplace link */}
+      <NavBar profile={profile} />
 
       {/* 🏡 Estate Details Card */}
       <main style={mainStyle}>
@@ -101,20 +90,23 @@ export default function EstateDetail() {
           )}
           <h1 style={estateTitle}>{estate.title}</h1>
           <p style={estateLocation}>📍 {estate.location}</p>
-          <p style={estatePrice}>${estate.price.toLocaleString()}</p>
+          <p style={estatePrice}>${Number(estate.price || 0).toLocaleString()}</p>
           <p style={estateDescription}>{estate.description}</p>
 
-          <div style={buttonGroup}>
-            <button
-              onClick={() => navigate(`/edit-estate/${estate.id}`)}
-              style={editButton}
-            >
-              ✏️ Edit
-            </button>
-            <button onClick={handleDelete} style={deleteButton}>
-              🗑️ Delete
-            </button>
-          </div>
+          {/* Only show Edit/Delete if this is the owner's estate */}
+          {isOwner && (
+            <div style={buttonGroup}>
+              <button
+                onClick={() => navigate(`/edit-estate/${estate.id}`)}
+                style={editButton}
+              >
+                ✏️ Edit
+              </button>
+              <button onClick={handleDelete} style={deleteButton}>
+                🗑️ Delete
+              </button>
+            </div>
+          )}
         </div>
       </main>
 
@@ -136,6 +128,7 @@ const keyframes = `
     to { transform: rotate(360deg); }
   }
 `;
+
 const loaderContainer = {
   height: "100vh",
   display: "flex",
@@ -143,6 +136,7 @@ const loaderContainer = {
   alignItems: "center",
   background: "linear-gradient(135deg, #0f172a, #1e293b, #334155)",
 };
+
 const loaderSpinner = {
   width: "40px",
   height: "40px",
@@ -151,6 +145,7 @@ const loaderSpinner = {
   borderRadius: "50%",
   animation: "spin 1s linear infinite",
 };
+
 const pageContainer = {
   minHeight: "100vh",
   display: "flex",
@@ -160,6 +155,7 @@ const pageContainer = {
   overflow: "hidden",
   color: "#E2E8F0",
 };
+
 const bgLight = (color, top, left, size) => ({
   position: "absolute",
   top,
@@ -171,49 +167,7 @@ const bgLight = (color, top, left, size) => ({
   filter: "blur(60px)",
   opacity: 0.8,
 });
-const headerStyle = {
-  flexShrink: 0,
-  padding: "1.25rem 2rem",
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  background: "rgba(15, 23, 42, 0.6)",
-  backdropFilter: "blur(20px)",
-  borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
-  zIndex: 10,
-  position: "sticky",
-  top: 0,
-};
-const logoStyle = {
-  fontSize: "1.5rem",
-  fontWeight: "700",
-  background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
-  WebkitBackgroundClip: "text",
-  WebkitTextFillColor: "transparent",
-  textDecoration: "none",
-};
-const profileBox = {
-  display: "flex",
-  alignItems: "center",
-  gap: "0.75rem",
-  cursor: "pointer",
-  background: "rgba(255,255,255,0.05)",
-  border: "1px solid rgba(255,255,255,0.1)",
-  borderRadius: "50px",
-  padding: "0.4rem 0.9rem",
-};
-const avatarStyle = {
-  width: "36px",
-  height: "36px",
-  borderRadius: "50%",
-  objectFit: "cover",
-  border: "2px solid rgba(255,255,255,0.2)",
-};
-const profileName = {
-  fontSize: "0.95rem",
-  fontWeight: "600",
-  color: "#E2E8F0",
-};
+
 const mainStyle = {
   flex: 1,
   display: "flex",
@@ -223,6 +177,7 @@ const mainStyle = {
   zIndex: 1,
   animation: "fadeInUp 0.8s ease",
 };
+
 const estateCard = {
   background: "rgba(255,255,255,0.95)",
   color: "#0f172a",
@@ -232,6 +187,7 @@ const estateCard = {
   maxWidth: "800px",
   boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
 };
+
 const estateImage = {
   width: "100%",
   height: "350px",
@@ -239,11 +195,40 @@ const estateImage = {
   borderRadius: "16px",
   marginBottom: "2rem",
 };
-const estateTitle = { fontSize: "2rem", fontWeight: 800, marginBottom: "0.5rem" };
-const estateLocation = { fontSize: "1.1rem", color: "#475569", marginBottom: "0.5rem" };
-const estatePrice = { fontSize: "1.6rem", fontWeight: 700, color: "#3b82f6", margin: "1rem 0" };
-const estateDescription = { fontSize: "1rem", lineHeight: 1.7, color: "#334155", marginBottom: "2rem" };
-const buttonGroup = { display: "flex", justifyContent: "flex-end", gap: "1rem" };
+
+const estateTitle = {
+  fontSize: "2rem",
+  fontWeight: 800,
+  marginBottom: "0.5rem",
+  color: "#0f172a", // 👈 match MyEstates card title color
+};
+
+const estateLocation = {
+  fontSize: "1.1rem",
+  color: "#475569",
+  marginBottom: "0.5rem",
+};
+
+const estatePrice = {
+  fontSize: "1.6rem",
+  fontWeight: 700,
+  color: "#3b82f6",
+  margin: "1rem 0",
+};
+
+const estateDescription = {
+  fontSize: "1rem",
+  lineHeight: 1.7,
+  color: "#334155",
+  marginBottom: "2rem",
+};
+
+const buttonGroup = {
+  display: "flex",
+  justifyContent: "flex-end",
+  gap: "1rem",
+};
+
 const editButton = {
   padding: "0.9rem 1.5rem",
   background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
@@ -254,11 +239,13 @@ const editButton = {
   cursor: "pointer",
   boxShadow: "0 4px 15px rgba(59,130,246,0.3)",
 };
+
 const deleteButton = {
   ...editButton,
   background: "linear-gradient(135deg, #ef4444, #dc2626)",
   boxShadow: "0 4px 15px rgba(239,68,68,0.3)",
 };
+
 const footerStyle = {
   textAlign: "center",
   padding: "1rem",

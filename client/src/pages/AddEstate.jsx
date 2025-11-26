@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 
 /* 🎨 Styles (defined first) */
 const pageContainer = (isLoaded) => ({
@@ -261,6 +261,7 @@ const keyframes = `
 /* 🚀 Component */
 export default function AddEstate() {
   const navigate = useNavigate();
+  const location = useLocation(); // 👈 read pre-check from Marketplace
   const [profile, setProfile] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -269,6 +270,7 @@ export default function AddEstate() {
     description: "",
     price: "",
     location: "",
+    is_public: false, // 👈 NEW: marketplace flag
   });
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -287,10 +289,14 @@ export default function AddEstate() {
         .single();
 
       setProfile(profileData || { id: userData.user.id });
+      // pre-check when coming from Marketplace
+      if (location.state?.listOnMarketplace) {
+        setForm((f) => ({ ...f, is_public: true }));
+      }
       setTimeout(() => setIsLoaded(true), 150);
     };
     getProfile();
-  }, [navigate]);
+  }, [navigate, location.state]);
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -316,12 +322,16 @@ export default function AddEstate() {
       const { error: uploadError } = await supabase.storage
         .from("estate-images")
         .upload(fileName, image);
-      if (uploadError) return alert(uploadError.message);
+      if (uploadError) {
+        alert(uploadError.message);
+        setLoading(false);
+        return;
+      }
       imageUrl = supabase.storage.from("estate-images").getPublicUrl(fileName).data.publicUrl;
     }
 
     const { error } = await supabase.from("estates").insert([
-      { user_id: profile.id, ...form, image_url: imageUrl },
+      { user_id: profile.id, ...form, image_url: imageUrl }, // 👈 includes is_public
     ]);
 
     setLoading(false);
@@ -343,7 +353,10 @@ export default function AddEstate() {
         <Link to="/dashboard" style={logoStyle}>
           🏠 Real Estate
         </Link>
-        <nav>
+        <nav style={{ display: "flex", gap: "1rem" }}>
+          <Link to="/marketplace" style={{ color: "#e2e8f0" }}>
+            Marketplace
+          </Link>
           <Link to="/my-estates" style={{ color: "#e2e8f0" }}>
             My Estates
           </Link>
@@ -446,7 +459,8 @@ export default function AddEstate() {
                     style={previewImageStyle}
                   />
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
                       setImage(null);
                       setImagePreview(null);
                     }}
@@ -469,6 +483,26 @@ export default function AddEstate() {
               />
             </div>
           </div>
+
+          {/* ✅ List on Marketplace */}
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              marginTop: "1rem",
+              userSelect: "none",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={!!form.is_public}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, is_public: e.target.checked }))
+              }
+            />
+            <span>List on Marketplace</span>
+          </label>
 
           {/* Submit */}
           <button type="submit" disabled={loading} style={submitButton(loading)}>

@@ -8,6 +8,7 @@ import AddEstate from "./pages/AddEstate";
 import EditEstate from "./pages/EditEstate";
 import EstateDetail from "./pages/EstateDetail";
 import Profile from "./pages/Profile";
+import Marketplace from "./pages/Marketplace";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
       {/* 🔓 Public routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+
 
       {/* 🔐 Protected routes */}
       <Route path="/" element={<Navigate to="/dashboard" />} />
@@ -24,6 +26,7 @@ function App() {
       <Route path="/edit-estate/:id" element={<EditEstate />} />
       <Route path="/estate/:id" element={<EstateDetail />} />
       <Route path="/profile" element={<Profile />} />
+       <Route path="/marketplace" element={<Marketplace />} />
     </Routes>
   );
 }

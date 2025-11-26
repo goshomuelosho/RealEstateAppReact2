@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate, Link } from "react-router-dom";
+import NavBar from "../components/NavBar";
 
 /* 🎨 Styles (moved to top for ESLint + clarity) */
 const keyframes = `
@@ -33,50 +34,6 @@ const bgLight = (color, top, left, size) => ({
   filter: "blur(60px)",
   opacity: 0.8,
 });
-
-const headerStyle = {
-  padding: "1.25rem 2rem",
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  background: "rgba(15,23,42,0.6)",
-  backdropFilter: "blur(20px)",
-  borderBottom: "1px solid rgba(255,255,255,0.1)",
-  position: "sticky",
-  top: 0,
-  zIndex: 10,
-};
-
-const logoStyle = {
-  fontSize: "1.5rem",
-  fontWeight: "700",
-  background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
-  WebkitBackgroundClip: "text",
-  WebkitTextFillColor: "transparent",
-  textDecoration: "none",
-};
-
-const profileBox = {
-  display: "flex",
-  alignItems: "center",
-  gap: "0.75rem",
-  cursor: "pointer",
-  background: "rgba(255,255,255,0.05)",
-  border: "1px solid rgba(255,255,255,0.1)",
-  borderRadius: "50px",
-  padding: "0.4rem 0.9rem",
-  transition: "all 0.3s ease",
-};
-
-const avatarStyle = {
-  width: "36px",
-  height: "36px",
-  borderRadius: "50%",
-  objectFit: "cover",
-  border: "2px solid rgba(255,255,255,0.2)",
-};
-
-const profileName = { fontSize: "0.95rem", fontWeight: "600", color: "#E2E8F0" };
 
 const mainStyle = { flex: 1, padding: "3rem 2rem", animation: "fadeInUp 0.8s ease" };
 
@@ -169,18 +126,37 @@ const priceBadge = {
   fontSize: "1.25rem",
 };
 
+const visibilityPill = (isPublic) => ({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 8,
+  padding: "0.35rem 0.6rem",
+  borderRadius: 999,
+  marginTop: 8,
+  fontSize: "0.8rem",
+  fontWeight: 700,
+  color: isPublic ? "#065f46" : "#991b1b",
+  background: isPublic ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)",
+  border: `1px solid ${
+    isPublic ? "rgba(16,185,129,0.35)" : "rgba(239,68,68,0.35)"
+  }`,
+});
+
 const cardActions = {
   padding: "1rem 1.5rem",
-  display: "flex",
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr 1fr",
   gap: "0.75rem",
   background: "rgba(241,245,249,0.5)",
 };
 
 const actionBtn = (type) => ({
-  flex: 1,
+  width: "100%",
   background:
     type === "green"
       ? "linear-gradient(135deg, #10b981, #059669)"
+      : type === "blue"
+      ? "linear-gradient(135deg, #3b82f6, #1d4ed8)"
       : "linear-gradient(135deg, #ef4444, #dc2626)",
   border: "none",
   borderRadius: "8px",
@@ -238,10 +214,13 @@ export default function MyEstates() {
       let query = supabase.from("estates").select("*").eq("user_id", userId);
 
       if (titleSearch.trim()) query = query.ilike("title", `%${titleSearch}%`);
-      if (locationSearch.trim()) query = query.ilike("location", `%${locationSearch}%`);
+      if (locationSearch.trim())
+        query = query.ilike("location", `%${locationSearch}%`);
 
-      if (sortOrder === "low-high") query = query.order("price", { ascending: true });
-      else if (sortOrder === "high-low") query = query.order("price", { ascending: false });
+      if (sortOrder === "low-high")
+        query = query.order("price", { ascending: true });
+      else if (sortOrder === "high-low")
+        query = query.order("price", { ascending: false });
       else query = query.order("created_at", { ascending: false });
 
       const { data, error } = await query;
@@ -278,6 +257,21 @@ export default function MyEstates() {
     if (!error) setEstates((prev) => prev.filter((e) => e.id !== id));
   };
 
+  const handleTogglePublic = async (estate) => {
+    const next = !estate.is_public;
+    const { error } = await supabase
+      .from("estates")
+      .update({ is_public: next })
+      .eq("id", estate.id);
+    if (!error) {
+      setEstates((prev) =>
+        prev.map((e) => (e.id === estate.id ? { ...e, is_public: next } : e))
+      );
+    } else {
+      alert("Could not update marketplace visibility.");
+    }
+  };
+
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && profile?.id) {
       fetchEstates(profile.id);
@@ -295,16 +289,35 @@ export default function MyEstates() {
       <div style={bgLight("#8b5cf6", "80%", "85%", 400)} />
       <style>{keyframes}</style>
 
-      <Header profile={profile} navigate={navigate} />
+      {/* 🔝 Global NavBar with Marketplace link */}
+      <NavBar profile={profile} />
 
       <main style={mainStyle}>
         <div style={contentWrapper}>
           {/* Title */}
           <div style={titleBar}>
             <h1 style={pageTitle}>My Estates</h1>
-            <Link to="/add-estate">
-              <button style={addButton}>➕ Add Estate</button>
-            </Link>
+            <div
+              style={{
+                display: "flex",
+                gap: "0.75rem",
+                alignItems: "center",
+              }}
+            >
+              <Link to="/marketplace">
+                <button
+                  style={{
+                    ...addButton,
+                    background: "linear-gradient(135deg,#3b82f6,#1d4ed8)",
+                  }}
+                >
+                  🛒 Marketplace
+                </button>
+              </Link>
+              <Link to="/add-estate">
+                <button style={addButton}>➕ Add Estate</button>
+              </Link>
+            </div>
           </div>
 
           {/* Filters */}
@@ -350,6 +363,7 @@ export default function MyEstates() {
                   hoveredCard={hoveredCard}
                   setHoveredCard={setHoveredCard}
                   handleDelete={handleDelete}
+                  handleTogglePublic={handleTogglePublic}
                   navigate={navigate}
                 />
               ))}
@@ -367,36 +381,17 @@ export default function MyEstates() {
   );
 }
 
-/* 🔹 Header */
-function Header({ profile, navigate }) {
-  return (
-    <header style={headerStyle}>
-      <Link to="/dashboard" style={logoStyle}>
-        🏠 Real Estate
-      </Link>
-
-      <nav style={{ display: "flex", gap: "2rem", alignItems: "center" }}>
-        <Link to="/my-estates" style={{ color: "#3b82f6", fontWeight: "600" }}>
-          My Estates
-        </Link>
-      </nav>
-
-      {profile && (
-        <div onClick={() => navigate("/profile")} style={profileBox}>
-          <img
-            src={profile.avatar_url || "https://via.placeholder.com/40"}
-            alt="Avatar"
-            style={avatarStyle}
-          />
-          <span style={profileName}>{profile.name || "My Profile"}</span>
-        </div>
-      )}
-    </header>
-  );
-}
-
 /* 🔹 Estate Card */
-function EstateCard({ estate, hoveredCard, setHoveredCard, handleDelete, navigate }) {
+function EstateCard({
+  estate,
+  hoveredCard,
+  setHoveredCard,
+  handleDelete,
+  handleTogglePublic,
+  navigate,
+}) {
+  const isPublic = !!estate.is_public;
+
   return (
     <div
       style={{
@@ -406,7 +401,9 @@ function EstateCard({ estate, hoveredCard, setHoveredCard, handleDelete, navigat
             ? "0 20px 60px rgba(59,130,246,0.4)"
             : "0 10px 40px rgba(0,0,0,0.3)",
         transform:
-          hoveredCard === estate.id ? "translateY(-8px) scale(1.02)" : "translateY(0)",
+          hoveredCard === estate.id
+            ? "translateY(-8px) scale(1.02)"
+            : "translateY(0)",
       }}
       onMouseEnter={() => setHoveredCard(estate.id)}
       onMouseLeave={() => setHoveredCard(null)}
@@ -425,17 +422,52 @@ function EstateCard({ estate, hoveredCard, setHoveredCard, handleDelete, navigat
         />
       )}
       <div style={{ padding: "1.5rem", flex: 1 }}>
-        <h3 style={{ fontSize: "1.4rem", fontWeight: "700", color: "#0f172a" }}>
+        <h3
+          style={{
+            fontSize: "1.4rem",
+            fontWeight: "700",
+            color: "#0f172a",
+            margin: 0,
+          }}
+        >
           {estate.title}
         </h3>
-        <p style={{ color: "#64748b", margin: "0.75rem 0" }}>📍 {estate.location}</p>
-        <div style={priceBadge}>${estate.price.toLocaleString()}</div>
+        <p
+          style={{
+            color: "#64748b",
+            margin: "0.5rem 0 0.75rem",
+          }}
+        >
+          📍 {estate.location}
+        </p>
+
+        {/* Marketplace visibility pill */}
+        <div style={visibilityPill(isPublic)}>
+          {isPublic ? "Public on Marketplace" : "Private"}
+        </div>
+
+        <div style={{ marginTop: "0.9rem" }}>
+          <span style={priceBadge}>
+            ${Number(estate.price || 0).toLocaleString()}
+          </span>
+        </div>
       </div>
+
       <div style={cardActions}>
-        <button style={actionBtn("green")} onClick={() => navigate(`/edit-estate/${estate.id}`)}>
+        <button
+          style={actionBtn("blue")}
+          onClick={() => handleTogglePublic(estate)}
+          title={isPublic ? "Unlist from Marketplace" : "Publish to Marketplace"}
+        >
+          {isPublic ? "🙈 Unlist" : "🌐 Publish"}
+        </button>
+        <button
+          style={actionBtn("green")}
+          onClick={() => navigate(`/edit-estate/${estate.id}`)}
+        >
           ✏️ Edit
         </button>
-        <button style={actionBtn("red")} onClick={() => handleDelete(estate.id)}>
+        <button style={actionBtn()} onClick={() => handleDelete(estate.id)}>
           🗑️ Delete
         </button>
       </div>

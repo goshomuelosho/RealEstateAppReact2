@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import NavBar from "../components/NavBar";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -71,7 +72,9 @@ export default function Profile() {
         return;
       }
 
-      avatar_url = supabase.storage.from("estate-images").getPublicUrl(fileName).data.publicUrl;
+      avatar_url = supabase.storage
+        .from("estate-images")
+        .getPublicUrl(fileName).data.publicUrl;
     }
 
     const { error } = await supabase.from("profiles").upsert({
@@ -124,13 +127,19 @@ export default function Profile() {
   };
 
   return (
-    <div style={{ ...pageWrapper, opacity: isLoaded ? 1 : 0, transition: "opacity 0.4s ease" }}>
+    <div
+      style={{
+        ...pageWrapper,
+        opacity: isLoaded ? 1 : 0,
+        transition: "opacity 0.4s ease",
+      }}
+    >
       {/* 🌌 Lights */}
       <div style={bgLight("#3b82f6", "10%", "5%", 300)} />
       <div style={bgLight("#8b5cf6", "80%", "85%", 400)} />
 
-      {/* 🧭 Header */}
-      <Header profile={profile} />
+      {/* 🧭 Global NavBar with Marketplace button */}
+      <NavBar profile={profile} />
 
       {/* Main */}
       <main style={mainStyle}>
@@ -140,12 +149,24 @@ export default function Profile() {
             <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
               <div style={avatarWrapper}>
                 <img
-                  src={preview || profile.avatar_url || "https://via.placeholder.com/120"}
+                  src={
+                    preview ||
+                    profile.avatar_url ||
+                    "https://via.placeholder.com/120"
+                  }
                   alt="Avatar"
                   style={avatarStyle}
                 />
-                <label htmlFor="avatar" style={avatarEditBtn}>✏️</label>
-                <input id="avatar" type="file" accept="image/*" onChange={handleAvatarChange} style={{ display: "none" }} />
+                <label htmlFor="avatar" style={avatarEditBtn}>
+                  ✏️
+                </label>
+                <input
+                  id="avatar"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  style={{ display: "none" }}
+                />
               </div>
             </div>
 
@@ -155,7 +176,9 @@ export default function Profile() {
               <input
                 type="text"
                 value={profile.name || ""}
-                onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                onChange={(e) =>
+                  setProfile({ ...profile, name: e.target.value })
+                }
                 style={inputStyle}
               />
             </div>
@@ -176,7 +199,9 @@ export default function Profile() {
               <label style={labelStyle}>Bio</label>
               <textarea
                 value={profile.bio || ""}
-                onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                onChange={(e) =>
+                  setProfile({ ...profile, bio: e.target.value })
+                }
                 style={{ ...inputStyle, height: "100px", resize: "vertical" }}
                 placeholder="Tell us about yourself..."
               />
@@ -208,25 +233,40 @@ export default function Profile() {
                   style={inputStyle}
                 />
               </div>
-              <button type="submit" disabled={passwordLoading} style={saveButton(passwordLoading)}>
+              <button
+                type="submit"
+                disabled={passwordLoading}
+                style={saveButton(passwordLoading)}
+              >
                 {passwordLoading ? "Updating..." : "🔄 Update Password"}
               </button>
               {passwordMessage && (
-                <p style={{
-                  marginTop: "1rem",
-                  textAlign: "center",
-                  fontWeight: "600",
-                  color: passwordMessage.startsWith("✅") ? "#10b981" : "#f87171",
-                }}>
+                <p
+                  style={{
+                    marginTop: "1rem",
+                    textAlign: "center",
+                    fontWeight: "600",
+                    color: passwordMessage.startsWith("✅")
+                      ? "#10b981"
+                      : "#f87171",
+                  }}
+                >
                   {passwordMessage}
                 </p>
               )}
-              <button type="button" onClick={() => setShowPasswordForm(false)} style={cancelButton}>
+              <button
+                type="button"
+                onClick={() => setShowPasswordForm(false)}
+                style={cancelButton}
+              >
                 Cancel
               </button>
             </form>
           ) : (
-            <button onClick={() => setShowPasswordForm(true)} style={{ ...saveButton(false), marginTop: "1.5rem" }}>
+            <button
+              onClick={() => setShowPasswordForm(true)}
+              style={{ ...saveButton(false), marginTop: "1.5rem" }}
+            >
               🔑 Change Password
             </button>
           )}
@@ -245,33 +285,6 @@ export default function Profile() {
         </div>
       )}
     </div>
-  );
-}
-
-/* 🔹 Header */
-function Header({ profile }) {
-  const navigate = useNavigate();
-  return (
-    <header style={headerStyle}>
-      <Link to="/dashboard" style={logoStyle}>
-        🏠 Real Estate
-      </Link>
-
-      <nav>
-        <Link to="/my-estates" style={{ color: "#e2e8f0" }}>
-          My Estates
-        </Link>
-      </nav>
-
-      <div style={profileBox} onClick={() => navigate("/profile")}>
-        <img
-          src={profile.avatar_url || "https://via.placeholder.com/40"}
-          alt="Avatar"
-          style={avatarSmall}
-        />
-        <span style={profileName}>{profile.name || "My Profile"}</span>
-      </div>
-    </header>
   );
 }
 
@@ -295,49 +308,6 @@ const bgLight = (color, top, left, size) => ({
   borderRadius: "50%",
   filter: "blur(60px)",
 });
-
-const headerStyle = {
-  padding: "1.25rem 2rem",
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  background: "rgba(15,23,42,0.6)",
-  backdropFilter: "blur(20px)",
-  borderBottom: "1px solid rgba(255,255,255,0.1)",
-  zIndex: 10,
-  position: "sticky",
-  top: 0,
-};
-
-const logoStyle = {
-  fontSize: "1.5rem",
-  fontWeight: "700",
-  background: "linear-gradient(135deg,#3b82f6,#8b5cf6)",
-  WebkitBackgroundClip: "text",
-  WebkitTextFillColor: "transparent",
-  textDecoration: "none",
-};
-
-const profileBox = {
-  display: "flex",
-  alignItems: "center",
-  gap: "0.75rem",
-  cursor: "pointer",
-  background: "rgba(255,255,255,0.05)",
-  border: "1px solid rgba(255,255,255,0.1)",
-  borderRadius: "50px",
-  padding: "0.4rem 0.9rem",
-};
-
-const avatarSmall = {
-  width: "36px",
-  height: "36px",
-  borderRadius: "50%",
-  objectFit: "cover",
-  border: "2px solid rgba(255,255,255,0.2)",
-};
-
-const profileName = { fontSize: "0.95rem", fontWeight: "600", color: "#E2E8F0" };
 
 const mainStyle = {
   flex: 1,

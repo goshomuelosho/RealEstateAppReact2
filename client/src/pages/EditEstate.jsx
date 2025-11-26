@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import NavBar from "../components/NavBar";
 
 /* 🎨 Reusable styles */
 const pageContainer = (isLoaded) => ({
@@ -23,69 +24,6 @@ const bgLight = (color, top, left, size) => ({
   background: `radial-gradient(circle, ${color}33, transparent)`,
   borderRadius: "50%",
   filter: "blur(60px)",
-});
-
-const headerStyle = {
-  flexShrink: 0,
-  padding: "1.25rem 2rem",
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  background: "rgba(15, 23, 42, 0.6)",
-  backdropFilter: "blur(20px)",
-  borderBottom: "1px solid rgba(255,255,255,0.1)",
-  zIndex: 10,
-  position: "sticky",
-  top: 0,
-};
-
-const logoStyle = {
-  fontSize: "1.5rem",
-  fontWeight: "700",
-  background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
-  WebkitBackgroundClip: "text",
-  WebkitTextFillColor: "transparent",
-  textDecoration: "none",
-};
-
-const profileBox = {
-  display: "flex",
-  alignItems: "center",
-  gap: "0.75rem",
-  cursor: "pointer",
-  background: "rgba(255,255,255,0.05)",
-  border: "1px solid rgba(255,255,255,0.1)",
-  borderRadius: "50px",
-  padding: "0.4rem 0.9rem",
-  transition: "all 0.3s ease",
-};
-
-const avatarStyle = (isLoaded) => ({
-  width: "36px",
-  height: "36px",
-  borderRadius: "50%",
-  objectFit: "cover",
-  border: "2px solid rgba(255,255,255,0.2)",
-  opacity: isLoaded ? 1 : 0,
-  transition: "opacity 0.4s ease",
-});
-
-const avatarSkeleton = {
-  width: "36px",
-  height: "36px",
-  borderRadius: "50%",
-  background:
-    "linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%)",
-  backgroundSize: "200px 100%",
-  animation: "shimmer 1.5s infinite",
-};
-
-const profileName = (isLoaded) => ({
-  fontSize: "0.95rem",
-  fontWeight: "600",
-  color: "#E2E8F0",
-  opacity: isLoaded ? 1 : 0.5,
-  transition: "opacity 0.4s ease",
 });
 
 const mainStyle = {
@@ -121,6 +59,19 @@ const inputStyle = {
   fontSize: "1rem",
   outline: "none",
 };
+
+const switchRow = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "1rem",
+  padding: "0.9rem 1rem",
+  borderRadius: "12px",
+  border: "1px solid rgba(255,255,255,0.12)",
+  background: "rgba(255,255,255,0.06)",
+};
+
+const hint = { color: "#cbd5e1", fontSize: "0.9rem" };
 
 const submitButton = (saving) => ({
   marginTop: "1.5rem",
@@ -207,6 +158,7 @@ export default function EditEstate() {
     price: "",
     location: "",
     image_url: "",
+    is_public: false, // 👈 marketplace visibility
   });
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -230,7 +182,17 @@ export default function EditEstate() {
         .select("*")
         .eq("id", id)
         .single();
-      if (!error && data) setForm(data);
+
+      if (!error && data) {
+        setForm({
+          title: data.title || "",
+          description: data.description || "",
+          price: data.price ?? "",
+          location: data.location || "",
+          image_url: data.image_url || "",
+          is_public: !!data.is_public,
+        });
+      }
 
       setTimeout(() => setIsLoaded(true), 150);
     };
@@ -239,6 +201,9 @@ export default function EditEstate() {
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleTogglePublic = (e) =>
+    setForm((prev) => ({ ...prev, is_public: e.target.checked }));
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -269,10 +234,16 @@ export default function EditEstate() {
         .data.publicUrl;
     }
 
-    const { error } = await supabase
-      .from("estates")
-      .update({ ...form, image_url: imageUrl })
-      .eq("id", id);
+    const payload = {
+      title: form.title,
+      description: form.description,
+      price: Number(form.price) || 0,
+      location: form.location,
+      image_url: imageUrl,
+      is_public: !!form.is_public, // 👈 save flag
+    };
+
+    const { error } = await supabase.from("estates").update(payload).eq("id", id);
 
     setSaving(false);
     if (error) alert(error.message);
@@ -290,33 +261,8 @@ export default function EditEstate() {
       <div style={bgLight("#8b5cf6", "80%", "85%", 400)} />
       <style>{keyframes}</style>
 
-      {/* 🧭 Header */}
-      <header style={headerStyle}>
-        <Link to="/dashboard" style={logoStyle}>
-          🏠 Real Estate
-        </Link>
-
-        <nav>
-          <Link to="/my-estates" style={{ color: "#e2e8f0" }}>
-            My Estates
-          </Link>
-        </nav>
-
-        <div style={profileBox} onClick={() => navigate("/profile")}>
-          {profile?.avatar_url ? (
-            <img
-              src={profile.avatar_url}
-              alt="Avatar"
-              style={avatarStyle(isLoaded)}
-            />
-          ) : (
-            <div style={avatarSkeleton} />
-          )}
-          <span style={profileName(isLoaded)}>
-            {profile?.name || "Loading..."}
-          </span>
-        </div>
-      </header>
+      {/* 🧭 Global NavBar with Marketplace link */}
+      <NavBar profile={profile} />
 
       {/* ✏️ Edit Form */}
       <main style={mainStyle}>
@@ -334,6 +280,26 @@ export default function EditEstate() {
           >
             ✏️ Edit Estate
           </h2>
+
+          {/* Marketplace visibility badge */}
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "0.4rem 0.7rem",
+              borderRadius: 10,
+              border: "1px solid rgba(255,255,255,0.15)",
+              background: form.is_public
+                ? "linear-gradient(135deg, rgba(16,185,129,0.18), rgba(5,150,105,0.18))"
+                : "linear-gradient(135deg, rgba(239,68,68,0.18), rgba(220,38,38,0.18))",
+              marginBottom: "1rem",
+              fontWeight: 700,
+              color: form.is_public ? "#bbf7d0" : "#fecaca",
+            }}
+          >
+            {form.is_public ? "Visible on Marketplace" : "Hidden from Marketplace"}
+          </div>
 
           {currentImageUrl && (
             <div
@@ -390,12 +356,39 @@ export default function EditEstate() {
               style={inputStyle}
             />
 
+            {/* Image input */}
             <input
               type="file"
               accept="image/*"
               onChange={handleImageChange}
               style={inputStyle}
             />
+
+            {/* is_public toggle */}
+            <div style={switchRow}>
+              <div>
+                <div style={{ fontWeight: 700 }}>Show on Marketplace</div>
+                <div style={hint}>
+                  If enabled, this listing will appear publicly in Marketplace.
+                </div>
+              </div>
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 10,
+                  cursor: "pointer",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={!!form.is_public}
+                  onChange={handleTogglePublic}
+                  style={{ width: 18, height: 18, accentColor: "#10b981" }}
+                />
+                <span>{form.is_public ? "Enabled" : "Disabled"}</span>
+              </label>
+            </div>
 
             <button type="submit" disabled={saving} style={submitButton(saving)}>
               {saving ? (
@@ -424,7 +417,13 @@ export default function EditEstate() {
             <div style={checkContainer}>
               <div style={checkMark} />
             </div>
-            <h3 style={{ fontSize: "1.75rem", fontWeight: 800, marginBottom: "0.75rem" }}>
+            <h3
+              style={{
+                fontSize: "1.75rem",
+                fontWeight: 800,
+                marginBottom: "0.75rem",
+              }}
+            >
               Estate Updated Successfully!
             </h3>
             <p style={{ color: "#64748b" }}>Redirecting...</p>

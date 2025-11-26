@@ -1,206 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate, Link } from "react-router-dom";
+import NavBar from "../components/NavBar";
 
-export default function Dashboard() {
-  const navigate = useNavigate();
-  const [profile, setProfile] = useState(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (!data.user) {
-        navigate("/login");
-        return;
-      }
-
-      // 🧠 Fetch profile data (name + avatar)
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("name, avatar_url")
-        .eq("id", data.user.id)
-        .single();
-
-      setProfile(profileData || {});
-      setTimeout(() => setIsLoaded(true), 150); // smooth fade-in
-    };
-
-    fetchProfile();
-  }, [navigate]);
-
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)",
-        position: "relative",
-        overflow: "hidden",
-        color: "#E2E8F0",
-        transition: "opacity 0.4s ease",
-        opacity: isLoaded ? 1 : 0,
-      }}
-    >
-      {/* 🌌 Floating Gradient Lights */}
-      <div style={bgLight("#3b82f6", "10%", "5%", 300)} />
-      <div style={bgLight("#8b5cf6", "80%", "85%", 400)} />
-
-      <style>{`
-        @keyframes float {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(30px, -30px) scale(1.1); }
-        }
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes shimmer {
-          0% { background-position: -200px 0; }
-          100% { background-position: 200px 0; }
-        }
-      `}</style>
-
-      {/* 🧭 Header */}
-      <header style={headerStyle}>
-        <Link to="/dashboard" style={logoStyle}>
-          🏠 Real Estate
-        </Link>
-
-        <nav style={{ display: "flex", gap: "2rem", alignItems: "center" }}>
-          <Link to="/my-estates" style={{ color: "#e2e8f0" }}>
-            My Estates
-          </Link>
-        </nav>
-
-        {/* Profile Shortcut */}
-        <div
-          onClick={() => navigate("/profile")}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.75rem",
-            cursor: "pointer",
-            background: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: "50px",
-            padding: "0.4rem 0.9rem",
-            transition: "all 0.3s ease",
-          }}
-        >
-          {/* Avatar (Fade-In or Shimmer Placeholder) */}
-          <div style={{ position: "relative" }}>
-            {profile?.avatar_url ? (
-              <img
-                src={profile.avatar_url}
-                alt="Avatar"
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "50%",
-                  objectFit: "cover",
-                  border: "2px solid rgba(255,255,255,0.2)",
-                  opacity: isLoaded ? 1 : 0,
-                  transition: "opacity 0.4s ease",
-                }}
-              />
-            ) : (
-              <div style={avatarSkeleton} />
-            )}
-          </div>
-
-          {/* Name (Fade-In or Placeholder) */}
-          <span
-            style={{
-              fontSize: "0.95rem",
-              fontWeight: "600",
-              color: "#E2E8F0",
-              opacity: isLoaded ? 1 : 0.5,
-              transition: "opacity 0.4s ease",
-            }}
-          >
-            {profile?.name || "Loading..."}
-          </span>
-        </div>
-      </header>
-
-      {/* 🏡 Hero Section */}
-      <main
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          textAlign: "center",
-          padding: "3rem 1.5rem",
-          position: "relative",
-          zIndex: 1,
-          animation: "fadeInUp 0.8s ease",
-        }}
-      >
-        <div style={{ maxWidth: "750px" }}>
-          <h1
-            style={{
-              fontSize: "3rem",
-              fontWeight: "800",
-              marginBottom: "1rem",
-              background: "linear-gradient(135deg, #ffffff, #94a3b8)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              transition: "opacity 0.4s ease",
-              opacity: isLoaded ? 1 : 0.3,
-            }}
-          >
-            Welcome to Your Real Estate Dashboard 👋
-          </h1>
-          <p
-            style={{
-              color: "#cbd5e1",
-              fontSize: "1.15rem",
-              lineHeight: 1.7,
-              marginBottom: "2.5rem",
-              transition: "opacity 0.4s ease",
-              opacity: isLoaded ? 1 : 0.3,
-            }}
-          >
-            Manage your property listings with ease. Add, edit, and keep track
-            of your real estate portfolio — all in one place.
-          </p>
-
-          {/* Action Buttons */}
-          <div
-            style={{
-              display: "flex",
-              gap: "1.5rem",
-              flexWrap: "wrap",
-              justifyContent: "center",
-              opacity: isLoaded ? 1 : 0.3,
-              transition: "opacity 0.4s ease",
-            }}
-          >
-            <Link to="/add-estate">
-              <button style={btnPrimary}>➕ Add New Estate</button>
-            </Link>
-
-            <Link to="/my-estates">
-              <button style={btnSecondary}>🏡 View My Estates</button>
-            </Link>
-          </div>
-        </div>
-      </main>
-
-      {/* 📜 Footer */}
-      <footer style={footerStyle}>
-        © {new Date().getFullYear()} Real Estate Management | Built with ❤️
-      </footer>
-    </div>
-  );
-}
-
-/* 🎨 Styles */
+/* =========================
+   🎨 Styles
+   ========================= */
 const bgLight = (color, top, left, size) => ({
   position: "absolute",
   top,
@@ -212,39 +17,6 @@ const bgLight = (color, top, left, size) => ({
   filter: "blur(60px)",
   opacity: 0.8,
 });
-
-const headerStyle = {
-  flexShrink: 0,
-  padding: "1.25rem 2rem",
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  background: "rgba(15, 23, 42, 0.6)",
-  backdropFilter: "blur(20px)",
-  borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
-  zIndex: 10,
-  position: "sticky",
-  top: 0,
-};
-
-const logoStyle = {
-  fontSize: "1.5rem",
-  fontWeight: "700",
-  background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
-  WebkitBackgroundClip: "text",
-  WebkitTextFillColor: "transparent",
-  textDecoration: "none",
-};
-
-const avatarSkeleton = {
-  width: "36px",
-  height: "36px",
-  borderRadius: "50%",
-  background:
-    "linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%)",
-  backgroundSize: "200px 100%",
-  animation: "shimmer 1.5s infinite",
-};
 
 const btnPrimary = {
   padding: "1rem 2rem",
@@ -281,3 +53,302 @@ const footerStyle = {
   backdropFilter: "blur(10px)",
   background: "rgba(15,23,42,0.5)",
 };
+
+/* === Insights styles === */
+const insightsWrap = {
+  width: "100%",
+  maxWidth: "1100px",
+  margin: "0 auto 0",
+  padding: "0 1.25rem 2rem",
+};
+
+const insightsGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+  gap: "1rem",
+  transition: "opacity 0.4s ease",
+};
+
+const card = {
+  background: "rgba(255,255,255,0.08)",
+  border: "1px solid rgba(255,255,255,0.12)",
+  backdropFilter: "blur(14px)",
+  borderRadius: "16px",
+  padding: "1rem 1.1rem",
+  display: "flex",
+  alignItems: "center",
+  gap: "0.9rem",
+  minHeight: "86px",
+};
+
+const iconBubble = {
+  width: "44px",
+  height: "44px",
+  borderRadius: "12px",
+  display: "grid",
+  placeItems: "center",
+  fontSize: "1.25rem",
+  background: "linear-gradient(135deg, #334155, #1f2937)",
+  border: "1px solid rgba(255,255,255,0.08)",
+};
+
+const statTextWrap = { display: "flex", flexDirection: "column" };
+const statLabel = { color: "#cbd5e1", fontSize: "0.85rem", marginBottom: "0.15rem" };
+const statValue = { color: "#f8fafc", fontWeight: 800, fontSize: "1.25rem", lineHeight: 1 };
+
+const skeletonBar = {
+  height: "16px",
+  width: "70%",
+  borderRadius: "6px",
+  background:
+    "linear-gradient(90deg, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.08) 75%)",
+  backgroundSize: "300px 100%",
+  animation: "shimmer 1.6s infinite",
+};
+
+const skeletonBig = { ...skeletonBar, height: "22px", width: "50%" };
+
+/* =========================
+   🚀 Dashboard
+   ========================= */
+export default function Dashboard() {
+  const navigate = useNavigate();
+  const [profile, setProfile] = useState(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // 🔢 insights state
+  const [stats, setStats] = useState({
+    totalValue: 0,
+    totalEstates: 0,
+    avgPrice: 0,
+    added30d: 0,
+  });
+  const [insightsLoading, setInsightsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfileAndStats = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) {
+        navigate("/login");
+        return;
+      }
+
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("id, name, avatar_url")
+        .eq("id", data.user.id)
+        .single();
+
+      setProfile(profileData || {});
+      setTimeout(() => setIsLoaded(true), 150); // smooth fade-in
+
+      // Fetch estates for insights
+      setInsightsLoading(true);
+      const { data: estates } = await supabase
+        .from("estates")
+        .select("price, created_at")
+        .eq("user_id", data.user.id);
+
+      const totalEstates = estates?.length || 0;
+      const totalValue = (estates || []).reduce((s, e) => s + (Number(e.price) || 0), 0);
+      const avgPrice = totalEstates ? Math.round(totalValue / totalEstates) : 0;
+
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const added30d = (estates || []).filter(
+        (e) => new Date(e.created_at) >= thirtyDaysAgo
+      ).length;
+
+      setStats({ totalValue, totalEstates, avgPrice, added30d });
+      setInsightsLoading(false);
+    };
+
+    fetchProfileAndStats();
+  }, [navigate]);
+
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)",
+        position: "relative",
+        overflow: "hidden",
+        color: "#E2E8F0",
+        transition: "opacity 0.4s ease",
+        opacity: isLoaded ? 1 : 0,
+      }}
+    >
+      {/* 🌌 Floating Gradient Lights */}
+      <div style={bgLight("#3b82f6", "10%", "5%", 300)} />
+      <div style={bgLight("#8b5cf6", "80%", "85%", 400)} />
+
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(30px, -30px) scale(1.1); }
+        }
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes shimmer {
+          0% { background-position: -200px 0; }
+          100% { background-position: 200px 0; }
+        }
+      `}</style>
+
+      {/* 🧭 Global NavBar with Marketplace link */}
+      <NavBar profile={profile} />
+
+      {/* 🏡 Hero Section */}
+      <main
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          textAlign: "center",
+          padding: "2.25rem 1.5rem 2rem",
+          position: "relative",
+          zIndex: 1,
+          animation: "fadeInUp 0.8s ease",
+        }}
+      >
+        <div style={{ maxWidth: "750px" }}>
+          <h1
+            style={{
+              fontSize: "3rem",
+              fontWeight: "800",
+              marginBottom: "1rem",
+              background: "linear-gradient(135deg, #ffffff, #94a3b8)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              transition: "opacity 0.4s ease",
+              opacity: isLoaded ? 1 : 0.3,
+            }}
+          >
+            Welcome to Your Real Estate Dashboard 👋
+          </h1>
+          <p
+            style={{
+              color: "#cbd5e1",
+              fontSize: "1.15rem",
+              lineHeight: 1.7,
+              marginBottom: "2.5rem",
+              transition: "opacity 0.4s ease",
+              opacity: isLoaded ? 1 : 0.3,
+            }}
+          >
+            Manage your property listings with ease. Add, edit, and keep track of your real
+            estate portfolio — all in one place.
+          </p>
+
+          {/* Action Buttons */}
+          <div
+            style={{
+              display: "flex",
+              gap: "1.5rem",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              opacity: isLoaded ? 1 : 0.3,
+              transition: "opacity 0.4s ease",
+            }}
+          >
+            <Link to="/add-estate">
+              <button style={btnPrimary}>➕ Add New Estate</button>
+            </Link>
+
+            <Link to="/my-estates">
+              <button style={btnSecondary}>🏡 View My Estates</button>
+            </Link>
+          </div>
+        </div>
+      </main>
+
+      {/* 🧮 Insights Strip (below hero) */}
+      <section style={{ paddingTop: "0.5rem", paddingBottom: "1.5rem" }}>
+        <div style={insightsWrap}>
+          <div style={{ ...insightsGrid, opacity: isLoaded ? 1 : 0.3 }}>
+            {/* Total Value */}
+            <InsightCard
+              icon="💰"
+              iconBg="linear-gradient(135deg,#1f2937,#334155)"
+              label="Total Portfolio Value"
+              valueRenderer={(v) => `$${v.toLocaleString()}`}
+              loading={insightsLoading}
+              valueKey="totalValue"
+            />
+
+            {/* Total Estates */}
+            <InsightCard
+              icon="🏠"
+              iconBg="linear-gradient(135deg,#0b3b62,#1e40af)"
+              label="Total Estates"
+              valueRenderer={(v) => v}
+              loading={insightsLoading}
+              valueKey="totalEstates"
+            />
+
+            {/* Average Price */}
+            <InsightCard
+              icon="📊"
+              iconBg="linear-gradient(135deg,#14532d,#065f46)"
+              label="Average Price"
+              valueRenderer={(v) => (v ? `$${v.toLocaleString()}` : "—")}
+              loading={insightsLoading}
+              valueKey="avgPrice"
+            />
+
+            {/* Added Last 30 Days */}
+            <InsightCard
+              icon="🗓️"
+              iconBg="linear-gradient(135deg,#5b21b6,#7c3aed)"
+              label="Added in Last 30 Days"
+              valueRenderer={(v) => v}
+              loading={insightsLoading}
+              valueKey="added30d"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* 📜 Footer */}
+      <footer style={footerStyle}>
+        © {new Date().getFullYear()} Real Estate Management | Built with ❤️
+      </footer>
+    </div>
+  );
+
+  // Nested so it can read styles above without re-declaring
+  function InsightCard({ icon, iconBg, label, valueRenderer, loading, valueKey }) {
+    const value =
+      valueKey === "totalValue"
+        ? stats.totalValue
+        : valueKey === "totalEstates"
+        ? stats.totalEstates
+        : valueKey === "avgPrice"
+        ? stats.avgPrice
+        : stats.added30d;
+
+    return (
+      <div style={card}>
+        <div style={{ ...iconBubble, background: iconBg }}>{icon}</div>
+        {loading ? (
+          <div style={statTextWrap}>
+            <div style={skeletonBig} />
+            <div style={{ ...skeletonBar, width: "40%", marginTop: "8px" }} />
+          </div>
+        ) : (
+          <div style={statTextWrap}>
+            <span style={statLabel}>{label}</span>
+            <span style={statValue}>{valueRenderer(value)}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+}
