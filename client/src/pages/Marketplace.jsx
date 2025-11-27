@@ -176,13 +176,18 @@ export default function Marketplace() {
         return;
       }
 
-      const { data: myProfile } = await supabase
+      const { data: myProfile, error: profileError } = await supabase
         .from("profiles")
-        .select("id, name, avatar_url, contact_email, contact_phone, allow_contact")
+        .select("id, name, avatar_url") // 👉 only fields that definitely exist
         .eq("id", data.user.id)
         .single();
 
-      setProfile(myProfile || {});
+      if (profileError) {
+      console.error("Error loading profile in Marketplace:", profileError);
+      }
+
+      setProfile(myProfile || null);
+
       await fetchListings();
       setTimeout(() => setIsLoaded(true), 150);
     })();
@@ -232,8 +237,8 @@ export default function Marketplace() {
       <div style={bgLight("#3b82f6", "10%", "5%", 300)} />
       <div style={bgLight("#8b5cf6", "80%", "85%", 400)} />
 
-      {/* 🧭 Global NavBar with Marketplace link */}
-      <NavBar profile={profile} />
+      {/* 🧭 Global NavBar with active=marketplace */}
+      <NavBar profile={profile} active="marketplace" />
 
       <style>{`
         @keyframes shimmer {
@@ -422,8 +427,7 @@ export default function Marketplace() {
                     <button
                       style={{
                         ...contactBtn,
-                        background:
-                          "linear-gradient(135deg,#3b82f6,#1d4ed8)",
+                        background: "linear-gradient(135deg,#3b82f6,#1d4ed8)",
                       }}
                       onClick={() => navigate(`/estate/${estate.id}`)}
                     >
