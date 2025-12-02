@@ -48,6 +48,10 @@ export default function NavBar({ profile }) {
         <Link to="/my-estates" style={isActive("/my-estates")}>
           My Estates
         </Link>
+
+        <Link to="/messages" style={isActive("/messages")}>
+          Messages
+        </Link>
       </nav>
 
       {/* Profile pill */}

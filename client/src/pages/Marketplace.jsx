@@ -123,6 +123,69 @@ const loaderSpinner = {
   animation: "spin 1s linear infinite",
 };
 
+/* 🌟 Message sent modal styles (same vibe as AddEstate) */
+const sentOverlay = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  background: "rgba(0,0,0,0.7)",
+  backdropFilter: "blur(8px)",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: 9999,
+};
+
+const sentCard = {
+  background: "rgba(255,255,255,0.95)",
+  borderRadius: "24px",
+  padding: "3rem 2.5rem",
+  textAlign: "center",
+  boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
+};
+
+const sentCheckContainer = {
+  width: "80px",
+  height: "80px",
+  margin: "0 auto 1.5rem",
+  background: "linear-gradient(135deg, #10b981, #059669)",
+  borderRadius: "50%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
+
+const sentCheckMark = {
+  width: "24px",
+  height: "40px",
+  borderRight: "5px solid white",
+  borderBottom: "5px solid white",
+  transform: "rotate(45deg)",
+};
+
+const sentTitle = {
+  fontSize: "1.75rem",
+  fontWeight: "800",
+  color: "#0f172a",
+  marginBottom: "0.75rem",
+};
+
+const sentText = {
+  color: "#64748b",
+  fontSize: "1rem",
+  marginBottom: "1.5rem",
+};
+
+const sentProgress = {
+  width: "60px",
+  height: "4px",
+  background: "linear-gradient(90deg, #3b82f6, #8b5cf6)",
+  borderRadius: "2px",
+  margin: "0 auto",
+};
+
 /** ---------- Component ---------- */
 export default function Marketplace() {
   const navigate = useNavigate();
@@ -148,6 +211,9 @@ export default function Marketplace() {
   const [sellerProfile, setSellerProfile] = useState(null);
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
+
+  // ✅ message sent modal
+  const [showSentModal, setShowSentModal] = useState(false);
 
   const fetchListings = async () => {
     setLoading(true);
@@ -178,12 +244,12 @@ export default function Marketplace() {
 
       const { data: myProfile, error: profileError } = await supabase
         .from("profiles")
-        .select("id, name, avatar_url") // 👉 only fields that definitely exist
+        .select("id, name, avatar_url")
         .eq("id", data.user.id)
         .single();
 
       if (profileError) {
-      console.error("Error loading profile in Marketplace:", profileError);
+        console.error("Error loading profile in Marketplace:", profileError);
       }
 
       setProfile(myProfile || null);
@@ -196,13 +262,22 @@ export default function Marketplace() {
 
   const openContact = async (estate) => {
     setSelectedListing(estate);
-    const { data: sp } = await supabase
+    setSellerProfile(null);
+    setContactOpen(true);
+
+    const { data: sp, error } = await supabase
       .from("profiles")
-      .select("id, name, avatar_url, contact_email, contact_phone, allow_contact")
+      .select("id, name, avatar_url")
       .eq("id", estate.user_id)
       .single();
-    setSellerProfile(sp || null);
-    setContactOpen(true);
+
+    if (error) {
+      console.error("Error loading seller profile:", error);
+      setContactOpen(false);
+      return;
+    }
+
+    setSellerProfile(sp);
   };
 
   const sendMessage = async () => {
@@ -220,7 +295,10 @@ export default function Marketplace() {
       setMessage("");
       setSending(false);
       setContactOpen(false);
-      alert("Message sent to seller!");
+
+      // 🎉 show same style modal as AddEstate
+      setShowSentModal(true);
+      setTimeout(() => setShowSentModal(false), 2000);
     } catch (e) {
       console.error(e);
       setSending(false);
@@ -475,26 +553,9 @@ export default function Marketplace() {
                     <div style={{ fontWeight: 700 }}>
                       {sellerProfile.name || "Seller"}
                     </div>
-                    {sellerProfile.allow_contact &&
-                    (sellerProfile.contact_email ||
-                      sellerProfile.contact_phone) ? (
-                      <div style={{ fontSize: 14, color: "#475569" }}>
-                        {sellerProfile.contact_email
-                          ? `✉️ ${sellerProfile.contact_email}`
-                          : ""}
-                        {sellerProfile.contact_email &&
-                        sellerProfile.contact_phone
-                          ? " • "
-                          : ""}
-                        {sellerProfile.contact_phone
-                          ? `📞 ${sellerProfile.contact_phone}`
-                          : ""}
-                      </div>
-                    ) : (
-                      <div style={{ fontSize: 14, color: "#ef4444" }}>
-                        No public contact. Send an in-app message:
-                      </div>
-                    )}
+                    <div style={{ fontSize: 14, color: "#475569" }}>
+                      Send a private in-app message:
+                    </div>
                   </div>
                 </div>
 
@@ -556,6 +617,20 @@ export default function Marketplace() {
         </div>
       )}
 
+      {/* 🎉 Message Sent Modal (same style as AddEstate) */}
+      {showSentModal && (
+        <div style={sentOverlay}>
+          <div style={sentCard}>
+            <div style={sentCheckContainer}>
+              <div style={sentCheckMark} />
+            </div>
+            <h3 style={sentTitle}>Message Sent!</h3>
+            <p style={sentText}>Your message was delivered to the seller.</p>
+            <div style={sentProgress} />
+          </div>
+        </div>
+      )}
+
       {/* footer */}
       <footer style={footerStyle}>
         © {new Date().getFullYear()} Real Estate Marketplace | Built with ❤️
@@ -598,7 +673,7 @@ function SellerBadge({ userId }) {
   ) : null;
 }
 
-/** ---------- Modal styles ---------- */
+/** ---------- Modal styles for contact ---------- */
 const overlay = {
   position: "fixed",
   inset: 0,

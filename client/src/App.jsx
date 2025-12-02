@@ -10,13 +10,16 @@ import EstateDetail from "./pages/EstateDetail";
 import Profile from "./pages/Profile";
 import Marketplace from "./pages/Marketplace";
 
+/* NEW PAGES */
+import Messages from "./pages/Messages";
+import Conversation from "./pages/Conversation";
+
 function App() {
   return (
     <Routes>
       {/* 🔓 Public routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-
 
       {/* 🔐 Protected routes */}
       <Route path="/" element={<Navigate to="/dashboard" />} />
@@ -26,7 +29,14 @@ function App() {
       <Route path="/edit-estate/:id" element={<EditEstate />} />
       <Route path="/estate/:id" element={<EstateDetail />} />
       <Route path="/profile" element={<Profile />} />
-       <Route path="/marketplace" element={<Marketplace />} />
+      <Route path="/marketplace" element={<Marketplace />} />
+
+      {/* 📩 Messaging system */}
+      <Route path="/messages" element={<Messages />} />
+      <Route
+        path="/messages/:estateId/:otherUserId"
+        element={<Conversation />}
+      />
     </Routes>
   );
 }

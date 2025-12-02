@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
-import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import NavBar from "../components/NavBar";
 
 /* 🎨 Styles (defined first) */
 const pageContainer = (isLoaded) => ({
@@ -23,67 +24,6 @@ const bgLight = (color, top, left, size) => ({
   background: `radial-gradient(circle, ${color}33, transparent)`,
   borderRadius: "50%",
   filter: "blur(60px)",
-});
-
-const headerStyle = {
-  flexShrink: 0,
-  padding: "1.25rem 2rem",
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  background: "rgba(15, 23, 42, 0.6)",
-  backdropFilter: "blur(20px)",
-  borderBottom: "1px solid rgba(255,255,255,0.1)",
-  zIndex: 10,
-};
-
-const logoStyle = {
-  fontSize: "1.5rem",
-  fontWeight: "700",
-  background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
-  WebkitBackgroundClip: "text",
-  WebkitTextFillColor: "transparent",
-  textDecoration: "none",
-};
-
-const profileBox = {
-  display: "flex",
-  alignItems: "center",
-  gap: "0.75rem",
-  cursor: "pointer",
-  background: "rgba(255,255,255,0.05)",
-  border: "1px solid rgba(255,255,255,0.1)",
-  borderRadius: "50px",
-  padding: "0.4rem 0.9rem",
-  transition: "all 0.3s ease",
-};
-
-const avatarStyle = (isLoaded) => ({
-  width: "36px",
-  height: "36px",
-  borderRadius: "50%",
-  objectFit: "cover",
-  border: "2px solid rgba(255,255,255,0.2)",
-  opacity: isLoaded ? 1 : 0,
-  transition: "opacity 0.4s ease",
-});
-
-const avatarSkeleton = {
-  width: "36px",
-  height: "36px",
-  borderRadius: "50%",
-  background:
-    "linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%)",
-  backgroundSize: "200px 100%",
-  animation: "shimmer 1.5s infinite",
-};
-
-const profileName = (isLoaded) => ({
-  fontSize: "0.95rem",
-  fontWeight: "600",
-  color: "#E2E8F0",
-  opacity: isLoaded ? 1 : 0.5,
-  transition: "opacity 0.4s ease",
 });
 
 const mainStyle = {
@@ -195,6 +135,40 @@ const spinner = {
   animation: "spin 0.8s linear infinite",
 };
 
+/* 🌟 Toggle styles for "List on Marketplace" */
+const toggleWrapper = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  marginTop: "1rem",
+  userSelect: "none",
+  cursor: "pointer",
+};
+
+const toggleTrack = (on) => ({
+  width: 44,
+  height: 24,
+  borderRadius: 999,
+  background: on
+    ? "linear-gradient(135deg,#10b981,#059669)"
+    : "rgba(148,163,184,0.5)",
+  position: "relative",
+  transition: "background 0.2s ease",
+  flexShrink: 0,
+});
+
+const toggleThumb = (on) => ({
+  position: "absolute",
+  top: 3,
+  left: on ? 22 : 4,
+  width: 18,
+  height: 18,
+  borderRadius: "50%",
+  background: "#f9fafb",
+  boxShadow: "0 1px 4px rgba(15,23,42,0.35)",
+  transition: "left 0.2s ease",
+});
+
 /* Modal Styles */
 const modalOverlay = {
   position: "fixed",
@@ -261,7 +235,7 @@ const keyframes = `
 /* 🚀 Component */
 export default function AddEstate() {
   const navigate = useNavigate();
-  const location = useLocation(); // 👈 read pre-check from Marketplace
+  const location = useLocation(); // pre-check from Marketplace
   const [profile, setProfile] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -270,7 +244,7 @@ export default function AddEstate() {
     description: "",
     price: "",
     location: "",
-    is_public: false, // 👈 NEW: marketplace flag
+    is_public: false, // marketplace flag
   });
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -289,6 +263,7 @@ export default function AddEstate() {
         .single();
 
       setProfile(profileData || { id: userData.user.id });
+
       // pre-check when coming from Marketplace
       if (location.state?.listOnMarketplace) {
         setForm((f) => ({ ...f, is_public: true }));
@@ -327,11 +302,14 @@ export default function AddEstate() {
         setLoading(false);
         return;
       }
-      imageUrl = supabase.storage.from("estate-images").getPublicUrl(fileName).data.publicUrl;
+      imageUrl = supabase
+        .storage
+        .from("estate-images")
+        .getPublicUrl(fileName).data.publicUrl;
     }
 
     const { error } = await supabase.from("estates").insert([
-      { user_id: profile.id, ...form, image_url: imageUrl }, // 👈 includes is_public
+      { user_id: profile.id, ...form, image_url: imageUrl }, // includes is_public
     ]);
 
     setLoading(false);
@@ -348,36 +326,8 @@ export default function AddEstate() {
       <div style={bgLight("#8b5cf6", "80%", "85%", 400)} />
       <style>{keyframes}</style>
 
-      {/* 🧭 Header */}
-      <header style={headerStyle}>
-        <Link to="/dashboard" style={logoStyle}>
-          🏠 Real Estate
-        </Link>
-        <nav style={{ display: "flex", gap: "1rem" }}>
-          <Link to="/marketplace" style={{ color: "#e2e8f0" }}>
-            Marketplace
-          </Link>
-          <Link to="/my-estates" style={{ color: "#e2e8f0" }}>
-            My Estates
-          </Link>
-        </nav>
-
-        {/* 👤 Profile */}
-        <div style={profileBox} onClick={() => navigate("/profile")}>
-          {profile?.avatar_url ? (
-            <img
-              src={profile.avatar_url}
-              alt="Avatar"
-              style={avatarStyle(isLoaded)}
-            />
-          ) : (
-            <div style={avatarSkeleton} />
-          )}
-          <span style={profileName(isLoaded)}>
-            {profile?.name || "Loading..."}
-          </span>
-        </div>
-      </header>
+      {/* 🧭 Shared NavBar, same as Dashboard/Marketplace */}
+      <NavBar profile={profile} />
 
       {/* 📋 Form */}
       <main style={mainStyle}>
@@ -484,25 +434,28 @@ export default function AddEstate() {
             </div>
           </div>
 
-          {/* ✅ List on Marketplace */}
-          <label
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              marginTop: "1rem",
-              userSelect: "none",
-            }}
+          {/* ✅ List on Marketplace (pretty toggle) */}
+          <div
+            style={toggleWrapper}
+            onClick={() =>
+              setForm((f) => ({ ...f, is_public: !f.is_public }))
+            }
           >
+            <div style={toggleTrack(!!form.is_public)}>
+              <div style={toggleThumb(!!form.is_public)} />
+            </div>
+            <span>List on Marketplace</span>
+
+            {/* Hidden checkbox for accessibility / consistency */}
             <input
               type="checkbox"
               checked={!!form.is_public}
               onChange={(e) =>
                 setForm((f) => ({ ...f, is_public: e.target.checked }))
               }
+              style={{ display: "none" }}
             />
-            <span>List on Marketplace</span>
-          </label>
+          </div>
 
           {/* Submit */}
           <button type="submit" disabled={loading} style={submitButton(loading)}>
