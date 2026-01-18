@@ -24,7 +24,7 @@ export default function NavBar({ profile }) {
         zIndex: 10,
       }}
     >
-      {/* Logo */}
+      {/* Logo (keep site name as-is) */}
       <Link
         to="/dashboard"
         style={{
@@ -39,18 +39,18 @@ export default function NavBar({ profile }) {
         🏠 Real Estate
       </Link>
 
-      {/* MAIN NAVIGATION */}
+      {/* MAIN NAVIGATION (Bulgarian UI) */}
       <nav style={{ display: "flex", gap: "2rem", alignItems: "center" }}>
         <Link to="/marketplace" style={isActive("/marketplace")}>
-          Marketplace
+          Пазар
         </Link>
 
         <Link to="/my-estates" style={isActive("/my-estates")}>
-          My Estates
+          Моите имоти
         </Link>
 
         <Link to="/messages" style={isActive("/messages")}>
-          Messages
+          Съобщения
         </Link>
       </nav>
 
@@ -82,7 +82,7 @@ export default function NavBar({ profile }) {
           />
 
           <span style={{ fontWeight: 600, color: "#E2E8F0" }}>
-            {profile.name || "Profile"}
+            {profile.name || "Профил"}
           </span>
         </div>
       )}

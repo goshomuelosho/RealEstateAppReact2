@@ -3,6 +3,56 @@ import { supabase } from "../supabaseClient";
 import { useNavigate, useParams } from "react-router-dom";
 import NavBar from "../components/NavBar";
 
+/* ✅ Dropdown options */
+const PROPERTY_TYPES = [
+  "1-СТАЕН",
+  "2-СТАЕН",
+  "3-СТАЕН",
+  "4-СТАЕН",
+  "МНОГОСТАЕН",
+  "МЕЗОНЕТ",
+  "ОФИС",
+  "АТЕЛИЕ, ТАВАН",
+  "ЕТАЖ ОТ КЪЩА",
+  "КЪЩА",
+  "ВИЛА",
+  "МАГАЗИН",
+  "ЗАВЕДЕНИЕ",
+  "СКЛАД",
+  "ГАРАЖ, ПАРКОМЯСТО",
+  "ПРОМ. ПОМЕЩЕНИЕ",
+  "ХОТЕЛ",
+  "ПАРЦЕЛ",
+];
+
+const BUILDING_TYPES = [
+  "Тухла",
+  "Панел",
+  "ЕПК",
+  "ПК",
+  "Гредоред",
+  "Метална конструкция",
+  "Сглобяема",
+  "Друго",
+];
+
+const FLOORS = [
+  "Сутерен",
+  "Партер",
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10+",
+  "Последен",
+  "Не е приложимо",
+];
+
 /* 🎨 Reusable styles */
 const pageContainer = (isLoaded) => ({
   minHeight: "100vh",
@@ -24,6 +74,7 @@ const bgLight = (color, top, left, size) => ({
   background: `radial-gradient(circle, ${color}33, transparent)`,
   borderRadius: "50%",
   filter: "blur(60px)",
+  pointerEvents: "none",
 });
 
 const mainStyle = {
@@ -49,6 +100,15 @@ const cardStyle = {
   animation: "fadeIn 0.8s ease",
 };
 
+/* ✅ FIX: missing labelStyle */
+const labelStyle = {
+  display: "block",
+  fontSize: "0.85rem",
+  fontWeight: "600",
+  color: "#e2e8f0",
+  marginBottom: "0.5rem",
+};
+
 const inputStyle = {
   width: "100%",
   padding: "1rem 1.25rem",
@@ -58,6 +118,19 @@ const inputStyle = {
   color: "#f8fafc",
   fontSize: "1rem",
   outline: "none",
+};
+
+/* ✅ Select style like MyEstates (dark bg + readable text) */
+const selectStyle = {
+  padding: "0.7rem 1rem",
+  borderRadius: "12px",
+  border: "1px solid rgba(255,255,255,0.15)",
+  backgroundColor: "#1e293b",
+  color: "#f1f5f9",
+  fontSize: "1rem",
+  outline: "none",
+  cursor: "pointer",
+  width: "100%",
 };
 
 const switchRow = {
@@ -72,6 +145,19 @@ const switchRow = {
 };
 
 const hint = { color: "#cbd5e1", fontSize: "0.9rem" };
+
+/* ✅ Checkbox row style */
+const checkRow = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "1rem",
+  marginTop: "0.25rem",
+  padding: "0.9rem 1rem",
+  borderRadius: "12px",
+  border: "1px solid rgba(255,255,255,0.12)",
+  background: "rgba(255,255,255,0.06)",
+};
 
 const submitButton = (saving) => ({
   marginTop: "1.5rem",
@@ -108,6 +194,7 @@ const modalOverlay = {
   backdropFilter: "blur(8px)",
   zIndex: 9999,
 };
+
 const modalCard = {
   background: "rgba(255,255,255,0.95)",
   borderRadius: "24px",
@@ -115,6 +202,7 @@ const modalCard = {
   textAlign: "center",
   boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
 };
+
 const checkContainer = {
   width: "80px",
   height: "80px",
@@ -125,6 +213,7 @@ const checkContainer = {
   alignItems: "center",
   justifyContent: "center",
 };
+
 const checkMark = {
   width: "24px",
   height: "40px",
@@ -132,6 +221,7 @@ const checkMark = {
   borderBottom: "5px solid white",
   transform: "rotate(45deg)",
 };
+
 const progressBar = {
   width: "60px",
   height: "4px",
@@ -152,14 +242,22 @@ export default function EditEstate() {
 
   const [profile, setProfile] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
+
   const [form, setForm] = useState({
     title: "",
     description: "",
     price: "",
     location: "",
     image_url: "",
-    is_public: false, // 👈 marketplace visibility
+    is_public: false,
+
+    // ✅ NEW FIELDS
+    property_type: "",
+    has_act16: false,
+    building_type: "",
+    floor: "",
   });
+
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -191,16 +289,23 @@ export default function EditEstate() {
           location: data.location || "",
           image_url: data.image_url || "",
           is_public: !!data.is_public,
+
+          // ✅ load new fields
+          property_type: data.property_type || "",
+          has_act16: !!data.has_act16,
+          building_type: data.building_type || "",
+          floor: data.floor || "",
         });
       }
 
       setTimeout(() => setIsLoaded(true), 150);
     };
+
     fetchData();
   }, [id, navigate]);
 
   const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleTogglePublic = (e) =>
     setForm((prev) => ({ ...prev, is_public: e.target.checked }));
@@ -225,13 +330,16 @@ export default function EditEstate() {
       const { error: imgError } = await supabase.storage
         .from("estate-images")
         .upload(fileName, image, { upsert: true });
+
       if (imgError) {
         alert(imgError.message);
         setSaving(false);
         return;
       }
-      imageUrl = supabase.storage.from("estate-images").getPublicUrl(fileName)
-        .data.publicUrl;
+
+      imageUrl = supabase.storage
+        .from("estate-images")
+        .getPublicUrl(fileName).data.publicUrl;
     }
 
     const payload = {
@@ -240,7 +348,13 @@ export default function EditEstate() {
       price: Number(form.price) || 0,
       location: form.location,
       image_url: imageUrl,
-      is_public: !!form.is_public, // 👈 save flag
+      is_public: !!form.is_public,
+
+      // ✅ save new fields
+      property_type: form.property_type || null,
+      has_act16: !!form.has_act16,
+      building_type: form.building_type || null,
+      floor: form.floor || null,
     };
 
     const { error } = await supabase.from("estates").update(payload).eq("id", id);
@@ -261,10 +375,8 @@ export default function EditEstate() {
       <div style={bgLight("#8b5cf6", "80%", "85%", 400)} />
       <style>{keyframes}</style>
 
-      {/* 🧭 Global NavBar with Marketplace link */}
       <NavBar profile={profile} />
 
-      {/* ✏️ Edit Form */}
       <main style={mainStyle}>
         <div style={cardStyle}>
           <h2
@@ -278,7 +390,7 @@ export default function EditEstate() {
               WebkitTextFillColor: "transparent",
             }}
           >
-            ✏️ Edit Estate
+            ✏️ Редактирай имот
           </h2>
 
           {/* Marketplace visibility badge */}
@@ -298,7 +410,7 @@ export default function EditEstate() {
               color: form.is_public ? "#bbf7d0" : "#fecaca",
             }}
           >
-            {form.is_public ? "Visible on Marketplace" : "Hidden from Marketplace"}
+            {form.is_public ? "Видимо в Пазара" : "Скрито от Пазара"}
           </div>
 
           {currentImageUrl && (
@@ -320,11 +432,94 @@ export default function EditEstate() {
 
           <form
             onSubmit={handleSubmit}
-            style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}
+            style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}
           >
+            {/* ✅ Вид на имота */}
+            <div>
+              <label style={labelStyle}>Вид на имота</label>
+              <select
+                name="property_type"
+                value={form.property_type}
+                onChange={handleChange}
+                style={selectStyle}
+                required
+              >
+                <option value="" disabled>
+                  Избери…
+                </option>
+                {PROPERTY_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* ✅ Вид на сградата + Етаж */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "1rem",
+              }}
+            >
+              <div>
+                <label style={labelStyle}>Вид на сградата</label>
+                <select
+                  name="building_type"
+                  value={form.building_type}
+                  onChange={handleChange}
+                  style={selectStyle}
+                >
+                  <option value="">Избери…</option>
+                  {BUILDING_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Етаж</label>
+                <select
+                  name="floor"
+                  value={form.floor}
+                  onChange={handleChange}
+                  style={selectStyle}
+                >
+                  <option value="">Избери…</option>
+                  {FLOORS.map((f) => (
+                    <option key={f} value={f}>
+                      {f}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* ✅ Акт 16 */}
+            <div style={checkRow}>
+              <div>
+                <div style={{ fontWeight: 700 }}>Има Акт 16</div>
+                <div style={{ ...hint, marginTop: 4 }}>
+                  Маркирай, ако сградата е с въведена в експлоатация.
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={!!form.has_act16}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, has_act16: e.target.checked }))
+                }
+                style={{ width: 18, height: 18, accentColor: "#10b981" }}
+              />
+            </div>
+
+            {/* Existing fields */}
             <input
               name="title"
-              placeholder="Title"
+              placeholder="Заглавие"
               value={form.title}
               onChange={handleChange}
               required
@@ -332,7 +527,7 @@ export default function EditEstate() {
             />
             <textarea
               name="description"
-              placeholder="Description"
+              placeholder="Описание"
               value={form.description}
               onChange={handleChange}
               required
@@ -341,7 +536,7 @@ export default function EditEstate() {
             <input
               name="price"
               type="number"
-              placeholder="Price ($)"
+              placeholder="Цена ($)"
               value={form.price}
               onChange={handleChange}
               required
@@ -349,7 +544,7 @@ export default function EditEstate() {
             />
             <input
               name="location"
-              placeholder="Location"
+              placeholder="Локация"
               value={form.location}
               onChange={handleChange}
               required
@@ -367,9 +562,9 @@ export default function EditEstate() {
             {/* is_public toggle */}
             <div style={switchRow}>
               <div>
-                <div style={{ fontWeight: 700 }}>Show on Marketplace</div>
+                <div style={{ fontWeight: 700 }}>Покажи в Пазара</div>
                 <div style={hint}>
-                  If enabled, this listing will appear publicly in Marketplace.
+                  Ако е включено, обявата ще се вижда публично в „Пазар“.
                 </div>
               </div>
               <label
@@ -386,7 +581,7 @@ export default function EditEstate() {
                   onChange={handleTogglePublic}
                   style={{ width: 18, height: 18, accentColor: "#10b981" }}
                 />
-                <span>{form.is_public ? "Enabled" : "Disabled"}</span>
+                <span>{form.is_public ? "Включено" : "Изключено"}</span>
               </label>
             </div>
 
@@ -400,10 +595,10 @@ export default function EditEstate() {
                     gap: "0.5rem",
                   }}
                 >
-                  <div style={spinner} /> Updating...
+                  <div style={spinner} /> Обновяване...
                 </span>
               ) : (
-                "💾 Update Estate"
+                "💾 Обнови имота"
               )}
             </button>
           </form>
@@ -424,9 +619,9 @@ export default function EditEstate() {
                 marginBottom: "0.75rem",
               }}
             >
-              Estate Updated Successfully!
+              Имотът е обновен успешно!
             </h3>
-            <p style={{ color: "#64748b" }}>Redirecting...</p>
+            <p style={{ color: "#64748b" }}>Пренасочване...</p>
             <div style={progressBar} />
           </div>
         </div>

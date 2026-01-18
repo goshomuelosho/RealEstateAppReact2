@@ -86,7 +86,7 @@ export default function Profile() {
     });
 
     if (error) alert(error.message);
-    else showToastMessage("✅ Profile updated successfully!");
+    else showToastMessage("✅ Профилът е обновен успешно!");
     setSaving(false);
   };
 
@@ -96,16 +96,16 @@ export default function Profile() {
     setPasswordMessage("");
 
     if (!newPassword || newPassword.length < 6)
-      return setPasswordMessage("❌ Password must be at least 6 characters");
+      return setPasswordMessage("❌ Паролата трябва да е поне 6 символа");
     if (newPassword !== confirmPassword)
-      return setPasswordMessage("❌ Passwords do not match");
+      return setPasswordMessage("❌ Паролите не съвпадат");
 
     setPasswordLoading(true);
     const { error } = await supabase.auth.updateUser({ password: newPassword });
 
     if (error) setPasswordMessage(`⚠️ ${error.message}`);
     else {
-      showToastMessage("🔐 Password updated!");
+      showToastMessage("🔐 Паролата е обновена!");
       setNewPassword("");
       setConfirmPassword("");
       setShowPasswordForm(false);
@@ -154,7 +154,7 @@ export default function Profile() {
                     profile.avatar_url ||
                     "https://via.placeholder.com/120"
                   }
-                  alt="Avatar"
+                  alt="Аватар"
                   style={avatarStyle}
                 />
                 <label htmlFor="avatar" style={avatarEditBtn}>
@@ -172,7 +172,7 @@ export default function Profile() {
 
             {/* Name */}
             <div style={fieldGroup}>
-              <label style={labelStyle}>Full Name</label>
+              <label style={labelStyle}>Име и фамилия</label>
               <input
                 type="text"
                 value={profile.name || ""}
@@ -185,7 +185,7 @@ export default function Profile() {
 
             {/* Email */}
             <div style={fieldGroup}>
-              <label style={labelStyle}>Email</label>
+              <label style={labelStyle}>Имейл</label>
               <input
                 type="text"
                 value={user?.email || ""}
@@ -196,19 +196,19 @@ export default function Profile() {
 
             {/* Bio */}
             <div style={fieldGroup}>
-              <label style={labelStyle}>Bio</label>
+              <label style={labelStyle}>Описание</label>
               <textarea
                 value={profile.bio || ""}
                 onChange={(e) =>
                   setProfile({ ...profile, bio: e.target.value })
                 }
                 style={{ ...inputStyle, height: "100px", resize: "vertical" }}
-                placeholder="Tell us about yourself..."
+                placeholder="Разкажете ни за себе си..."
               />
             </div>
 
             <button type="submit" disabled={saving} style={saveButton(saving)}>
-              {saving ? "Saving..." : "💾 Save Changes"}
+              {saving ? "Запазване..." : "💾 Запази промените"}
             </button>
           </form>
 
@@ -216,7 +216,7 @@ export default function Profile() {
           {showPasswordForm ? (
             <form onSubmit={handlePasswordChange} style={{ marginTop: "2rem" }}>
               <div style={fieldGroup}>
-                <label style={labelStyle}>New Password</label>
+                <label style={labelStyle}>Нова парола</label>
                 <input
                   type="password"
                   value={newPassword}
@@ -225,7 +225,7 @@ export default function Profile() {
                 />
               </div>
               <div style={fieldGroup}>
-                <label style={labelStyle}>Confirm Password</label>
+                <label style={labelStyle}>Потвърди парола</label>
                 <input
                   type="password"
                   value={confirmPassword}
@@ -238,7 +238,7 @@ export default function Profile() {
                 disabled={passwordLoading}
                 style={saveButton(passwordLoading)}
               >
-                {passwordLoading ? "Updating..." : "🔄 Update Password"}
+                {passwordLoading ? "Обновяване..." : "🔄 Обнови паролата"}
               </button>
               {passwordMessage && (
                 <p
@@ -259,7 +259,7 @@ export default function Profile() {
                 onClick={() => setShowPasswordForm(false)}
                 style={cancelButton}
               >
-                Cancel
+                Отказ
               </button>
             </form>
           ) : (
@@ -267,13 +267,13 @@ export default function Profile() {
               onClick={() => setShowPasswordForm(true)}
               style={{ ...saveButton(false), marginTop: "1.5rem" }}
             >
-              🔑 Change Password
+              🔑 Смени паролата
             </button>
           )}
 
           {/* Logout */}
           <button onClick={handleLogout} style={logoutButton}>
-            🚪 Log Out
+            🚪 Изход
           </button>
         </div>
       </main>

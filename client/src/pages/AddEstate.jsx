@@ -73,6 +73,19 @@ const inputStyle = {
   outline: "none",
 };
 
+/* ✅ Select styles: same feel as MyEstates filterSelect */
+const selectStyle = {
+  padding: "1rem 1.25rem",
+  borderRadius: "12px",
+  border: "1px solid rgba(255,255,255,0.15)",
+  backgroundColor: "#1e293b",
+  color: "#f1f5f9",
+  fontSize: "1rem",
+  outline: "none",
+  cursor: "pointer",
+  width: "100%",
+};
+
 const uploadBoxStyle = (hasImage) => ({
   border: "2px dashed rgba(255,255,255,0.3)",
   borderRadius: "12px",
@@ -169,6 +182,21 @@ const toggleThumb = (on) => ({
   transition: "left 0.2s ease",
 });
 
+/* ✅ Checkbox row style */
+const checkRow = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "1rem",
+  marginTop: "1rem",
+  padding: "0.9rem 1rem",
+  borderRadius: "12px",
+  border: "1px solid rgba(255,255,255,0.12)",
+  background: "rgba(255,255,255,0.06)",
+};
+
+const hint = { color: "#cbd5e1", fontSize: "0.9rem", marginTop: 4 };
+
 /* Modal Styles */
 const modalOverlay = {
   position: "fixed",
@@ -232,6 +260,56 @@ const keyframes = `
   @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: 200px 0; } }
 `;
 
+/* ✅ Dropdown options */
+const PROPERTY_TYPES = [
+  "1-СТАЕН",
+  "2-СТАЕН",
+  "3-СТАЕН",
+  "4-СТАЕН",
+  "МНОГОСТАЕН",
+  "МЕЗОНЕТ",
+  "ОФИС",
+  "АТЕЛИЕ, ТАВАН",
+  "ЕТАЖ ОТ КЪЩА",
+  "КЪЩА",
+  "ВИЛА",
+  "МАГАЗИН",
+  "ЗАВЕДЕНИЕ",
+  "СКЛАД",
+  "ГАРАЖ, ПАРКОМЯСТО",
+  "ПРОМ. ПОМЕЩЕНИЕ",
+  "ХОТЕЛ",
+  "ПАРЦЕЛ",
+];
+
+const BUILDING_TYPES = [
+  "Тухла",
+  "Панел",
+  "ЕПК",
+  "ПК",
+  "Гредоред",
+  "Метална конструкция",
+  "Сглобяема",
+  "Друго",
+];
+
+const FLOORS = [
+  "Сутерен",
+  "Партер",
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10+",
+  "Последен",
+  "Не е приложимо",
+];
+
 /* 🚀 Component */
 export default function AddEstate() {
   const navigate = useNavigate();
@@ -245,7 +323,14 @@ export default function AddEstate() {
     price: "",
     location: "",
     is_public: false, // marketplace flag
+
+    // ✅ NEW FIELDS
+    property_type: "",
+    has_act16: false,
+    building_type: "",
+    floor: "",
   });
+
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -274,7 +359,7 @@ export default function AddEstate() {
   }, [navigate, location.state]);
 
   const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -302,14 +387,17 @@ export default function AddEstate() {
         setLoading(false);
         return;
       }
-      imageUrl = supabase
-        .storage
+      imageUrl = supabase.storage
         .from("estate-images")
         .getPublicUrl(fileName).data.publicUrl;
     }
 
     const { error } = await supabase.from("estates").insert([
-      { user_id: profile.id, ...form, image_url: imageUrl }, // includes is_public
+      {
+        user_id: profile.id,
+        ...form,
+        image_url: imageUrl, // includes is_public + new fields
+      },
     ]);
 
     setLoading(false);
@@ -326,39 +414,120 @@ export default function AddEstate() {
       <div style={bgLight("#8b5cf6", "80%", "85%", 400)} />
       <style>{keyframes}</style>
 
-      {/* 🧭 Shared NavBar, same as Dashboard/Marketplace */}
       <NavBar profile={profile} />
 
-      {/* 📋 Form */}
       <main style={mainStyle}>
         <form onSubmit={handleSubmit} style={formCard}>
           <div style={formHeader}>
             <div style={formIcon}>🏡</div>
-            <h2 style={formTitle}>Add New Estate</h2>
-            <p style={formSubtitle}>Fill in details to list your property</p>
+            <h2 style={formTitle}>Добави нов имот</h2>
+            <p style={formSubtitle}>Попълни детайли, за да публикуваш имота</p>
+          </div>
+
+          {/* ✅ Property type */}
+          <div>
+            <label style={labelStyle}>Вид на имота</label>
+            <select
+              name="property_type"
+              value={form.property_type}
+              onChange={handleChange}
+              style={selectStyle}
+              required
+            >
+              <option value="" disabled>
+                Избери…
+              </option>
+              {PROPERTY_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Title */}
-          <div>
-            <label style={labelStyle}>Property Title</label>
+          <div style={{ marginTop: "1rem" }}>
+            <label style={labelStyle}>Заглавие на имота</label>
             <input
               name="title"
               value={form.title}
               onChange={handleChange}
-              placeholder="Luxury Villa"
+              placeholder="Луксозна вила"
               style={inputStyle}
               required
             />
           </div>
 
+          {/* ✅ Building type + Floor (grid) */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "1rem",
+              marginTop: "1rem",
+            }}
+          >
+            <div>
+              <label style={labelStyle}>Вид на сградата</label>
+              <select
+                name="building_type"
+                value={form.building_type}
+                onChange={handleChange}
+                style={selectStyle}
+              >
+                <option value="">Избери…</option>
+                {BUILDING_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label style={labelStyle}>Етаж</label>
+              <select
+                name="floor"
+                value={form.floor}
+                onChange={handleChange}
+                style={selectStyle}
+              >
+                <option value="">Избери…</option>
+                {FLOORS.map((f) => (
+                  <option key={f} value={f}>
+                    {f}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* ✅ Act 16 checkbox */}
+          <div style={checkRow}>
+            <div>
+              <div style={{ fontWeight: 700 }}>Има Акт 16</div>
+              <div style={hint}>
+                Маркирай, ако сградата е с въведена в експлоатация.
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              checked={!!form.has_act16}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, has_act16: e.target.checked }))
+              }
+              style={{ width: 18, height: 18, accentColor: "#10b981" }}
+            />
+          </div>
+
           {/* Description */}
-          <div>
-            <label style={labelStyle}>Description</label>
+          <div style={{ marginTop: "1rem" }}>
+            <label style={labelStyle}>Описание</label>
             <textarea
               name="description"
               value={form.description}
               onChange={handleChange}
-              placeholder="Describe your property..."
+              placeholder="Опиши имота..."
               style={{ ...inputStyle, height: "120px" }}
               required
             />
@@ -370,10 +539,11 @@ export default function AddEstate() {
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
               gap: "1rem",
+              marginTop: "1rem",
             }}
           >
             <div>
-              <label style={labelStyle}>Price ($)</label>
+              <label style={labelStyle}>Цена ($)</label>
               <input
                 type="number"
                 name="price"
@@ -385,12 +555,12 @@ export default function AddEstate() {
               />
             </div>
             <div>
-              <label style={labelStyle}>Location</label>
+              <label style={labelStyle}>Локация</label>
               <input
                 name="location"
                 value={form.location}
                 onChange={handleChange}
-                placeholder="Miami, FL"
+                placeholder="София"
                 style={inputStyle}
                 required
               />
@@ -398,14 +568,14 @@ export default function AddEstate() {
           </div>
 
           {/* Upload */}
-          <div>
-            <label style={labelStyle}>Property Image</label>
+          <div style={{ marginTop: "1rem" }}>
+            <label style={labelStyle}>Снимка на имота</label>
             <div style={uploadBoxStyle(imagePreview)}>
               {imagePreview ? (
                 <div style={{ position: "relative" }}>
                   <img
                     src={imagePreview}
-                    alt="Preview"
+                    alt="Преглед"
                     style={previewImageStyle}
                   />
                   <button
@@ -422,7 +592,7 @@ export default function AddEstate() {
               ) : (
                 <div style={{ textAlign: "center" }}>
                   <div style={{ fontSize: "3rem" }}>📸</div>
-                  <p style={{ color: "#94a3b8" }}>Click to upload image</p>
+                  <p style={{ color: "#94a3b8" }}>Кликни, за да качиш снимка</p>
                 </div>
               )}
               <input
@@ -434,19 +604,16 @@ export default function AddEstate() {
             </div>
           </div>
 
-          {/* ✅ List on Marketplace (pretty toggle) */}
+          {/* List on Marketplace (toggle) */}
           <div
             style={toggleWrapper}
-            onClick={() =>
-              setForm((f) => ({ ...f, is_public: !f.is_public }))
-            }
+            onClick={() => setForm((f) => ({ ...f, is_public: !f.is_public }))}
           >
             <div style={toggleTrack(!!form.is_public)}>
               <div style={toggleThumb(!!form.is_public)} />
             </div>
-            <span>List on Marketplace</span>
+            <span>Публикувай в Пазара</span>
 
-            {/* Hidden checkbox for accessibility / consistency */}
             <input
               type="checkbox"
               checked={!!form.is_public}
@@ -468,24 +635,24 @@ export default function AddEstate() {
                   gap: "0.5rem",
                 }}
               >
-                <div style={spinner} /> Adding Estate...
+                <div style={spinner} /> Добавяне...
               </span>
             ) : (
-              "✨ Add Estate"
+              "✨ Добави имот"
             )}
           </button>
         </form>
       </main>
 
-      {/* ✅ Success Modal */}
+      {/* Success Modal */}
       {showModal && (
         <div style={modalOverlay}>
           <div style={modalCard}>
             <div style={checkContainer}>
               <div style={checkMark} />
             </div>
-            <h3 style={modalTitle}>Estate Added Successfully!</h3>
-            <p style={modalText}>Redirecting...</p>
+            <h3 style={modalTitle}>Имотът е добавен успешно!</h3>
+            <p style={modalText}>Пренасочване...</p>
             <div style={progressBar} />
           </div>
         </div>

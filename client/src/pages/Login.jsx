@@ -23,7 +23,7 @@ export default function Login() {
     setLoading(false);
 
     if (error) {
-      setError(error.message);
+      setError(error.message); // Supabase error (leave as-is)
     } else {
       navigate("/dashboard");
     }
@@ -37,7 +37,8 @@ export default function Login() {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)",
+        background:
+          "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)",
         position: "relative",
         overflow: "hidden",
         padding: "2rem",
@@ -51,10 +52,12 @@ export default function Login() {
           left: "10%",
           width: "400px",
           height: "400px",
-          background: "radial-gradient(circle, rgba(59, 130, 246, 0.25), transparent)",
+          background:
+            "radial-gradient(circle, rgba(59, 130, 246, 0.25), transparent)",
           borderRadius: "50%",
           filter: "blur(80px)",
           animation: "float 8s ease-in-out infinite",
+          pointerEvents: "none",
         }}
       />
       <div
@@ -64,10 +67,12 @@ export default function Login() {
           right: "15%",
           width: "350px",
           height: "350px",
-          background: "radial-gradient(circle, rgba(168, 85, 247, 0.25), transparent)",
+          background:
+            "radial-gradient(circle, rgba(168, 85, 247, 0.25), transparent)",
           borderRadius: "50%",
           filter: "blur(80px)",
           animation: "float 10s ease-in-out infinite reverse",
+          pointerEvents: "none",
         }}
       />
 
@@ -134,7 +139,7 @@ export default function Login() {
             WebkitTextFillColor: "transparent",
           }}
         >
-          Welcome Back
+          Добре дошъл отново
         </h2>
         <p
           style={{
@@ -143,7 +148,7 @@ export default function Login() {
             fontSize: "0.95rem",
           }}
         >
-          Sign in to manage your properties
+          Влез, за да управляваш имотите си
         </p>
 
         {/* 🧾 Login Form */}
@@ -158,7 +163,7 @@ export default function Login() {
         >
           {/* ✉️ Email */}
           <div>
-            <label style={labelStyle}>Email Address</label>
+            <label style={labelStyle}>Имейл адрес</label>
             <div style={{ position: "relative" }}>
               <span style={iconStyle}>📧</span>
               <input
@@ -174,12 +179,12 @@ export default function Login() {
 
           {/* 🔒 Password */}
           <div>
-            <label style={labelStyle}>Password</label>
+            <label style={labelStyle}>Парола</label>
             <div style={{ position: "relative" }}>
               <span style={iconStyle}>🔒</span>
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
+                placeholder="Въведи паролата си"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -189,6 +194,7 @@ export default function Login() {
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 style={eyeButtonStyle}
+                aria-label={showPassword ? "Скрий паролата" : "Покажи паролата"}
               >
                 {showPassword ? "🙈" : "👁️‍🗨️"}
               </button>
@@ -216,7 +222,14 @@ export default function Login() {
             }}
           >
             {loading ? (
-              <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
+              <span
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.5rem",
+                }}
+              >
                 <div
                   style={{
                     width: "20px",
@@ -227,10 +240,10 @@ export default function Login() {
                     animation: "spin 0.8s linear infinite",
                   }}
                 />
-                Logging in...
+                Влизане...
               </span>
             ) : (
-              "🚀 Login"
+              "🚀 Вход"
             )}
           </button>
         </form>
@@ -251,9 +264,16 @@ export default function Login() {
           }}
         >
           <p style={{ color: "#94a3b8", fontSize: "0.95rem" }}>
-            Don’t have an account?{" "}
-            <Link to="/register" style={{ color: "#3b82f6", fontWeight: "600", textDecoration: "none" }}>
-              Register
+            Нямаш акаунт?{" "}
+            <Link
+              to="/register"
+              style={{
+                color: "#3b82f6",
+                fontWeight: "600",
+                textDecoration: "none",
+              }}
+            >
+              Регистрация
             </Link>
           </p>
         </div>

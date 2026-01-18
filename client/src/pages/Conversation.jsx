@@ -14,6 +14,9 @@ export default function Conversation() {
   const [sending, setSending] = useState(false);
   const [content, setContent] = useState("");
 
+  // 👇 same fade-in state as Dashboard
+  const [isLoaded, setIsLoaded] = useState(false);
+
   useEffect(() => {
     (async () => {
       const { data: userData } = await supabase.auth.getUser();
@@ -53,6 +56,9 @@ export default function Conversation() {
       }
 
       setLoading(false);
+
+      // 👇 identical fade trigger to Dashboard
+      setTimeout(() => setIsLoaded(true), 150);
     })();
   }, [estateId, otherUserId, navigate]);
 
@@ -81,7 +87,7 @@ export default function Conversation() {
       setContent("");
     } catch (err) {
       console.error("Error sending message:", err);
-      alert("Could not send message.");
+      alert("Неуспешно изпращане на съобщение.");
     } finally {
       setSending(false);
     }
@@ -93,6 +99,8 @@ export default function Conversation() {
         minHeight: "100vh",
         background: "linear-gradient(135deg, #0f172a, #1e293b, #334155)",
         color: "#E2E8F0",
+        transition: "opacity 0.4s ease",
+        opacity: isLoaded ? 1 : 0,
       }}
     >
       <NavBar profile={profile} />
@@ -126,8 +134,9 @@ export default function Conversation() {
               cursor: "pointer",
             }}
           >
-            ← Back
+            ← Назад
           </button>
+
           {otherUser && (
             <>
               <img
@@ -148,7 +157,7 @@ export default function Conversation() {
                   fontWeight: 700,
                 }}
               >
-                Chat with {otherUser.name || "User"}
+                Чат с {otherUser.name || "Потребител"}
               </h2>
             </>
           )}
@@ -169,9 +178,11 @@ export default function Conversation() {
           }}
         >
           {loading ? (
-            <p style={{ color: "#94a3b8" }}>Loading messages…</p>
+            <p style={{ color: "#94a3b8" }}>Зареждане на съобщения…</p>
           ) : messages.length === 0 ? (
-            <p style={{ color: "#94a3b8" }}>No messages yet. Say hi 👋</p>
+            <p style={{ color: "#94a3b8" }}>
+              Няма съобщения. Кажи „Здрасти“ 👋
+            </p>
           ) : (
             messages.map((m) => {
               const isMine = m.sender_id === profile?.id;
@@ -210,7 +221,7 @@ export default function Conversation() {
             type="text"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Type your message…"
+            placeholder="Напиши съобщение…"
             style={{
               flex: 1,
               padding: "0.8rem 1rem",
@@ -236,7 +247,7 @@ export default function Conversation() {
               cursor: sending || !content.trim() ? "not-allowed" : "pointer",
             }}
           >
-            {sending ? "Sending…" : "Send"}
+            {sending ? "Изпращане…" : "Изпрати"}
           </button>
         </form>
       </main>

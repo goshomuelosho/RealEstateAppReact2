@@ -3,7 +3,57 @@ import { supabase } from "../supabaseClient";
 import { useNavigate, Link } from "react-router-dom";
 import NavBar from "../components/NavBar";
 
-/* 🎨 Styles (moved to top for ESLint + clarity) */
+/* ✅ Dropdown options (same as AddEstate) */
+const PROPERTY_TYPES = [
+  "1-СТАЕН",
+  "2-СТАЕН",
+  "3-СТАЕН",
+  "4-СТАЕН",
+  "МНОГОСТАЕН",
+  "МЕЗОНЕТ",
+  "ОФИС",
+  "АТЕЛИЕ, ТАВАН",
+  "ЕТАЖ ОТ КЪЩА",
+  "КЪЩА",
+  "ВИЛА",
+  "МАГАЗИН",
+  "ЗАВЕДЕНИЕ",
+  "СКЛАД",
+  "ГАРАЖ, ПАРКОМЯСТО",
+  "ПРОМ. ПОМЕЩЕНИЕ",
+  "ХОТЕЛ",
+  "ПАРЦЕЛ",
+];
+
+const BUILDING_TYPES = [
+  "Тухла",
+  "Панел",
+  "ЕПК",
+  "ПК",
+  "Гредоред",
+  "Метална конструкция",
+  "Сглобяема",
+  "Друго",
+];
+
+const FLOORS = [
+  "Сутерен",
+  "Партер",
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10+",
+  "Последен",
+  "Не е приложимо",
+];
+
+/* 🎨 Styles */
 const keyframes = `
   @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(30px); }
@@ -33,9 +83,14 @@ const bgLight = (color, top, left, size) => ({
   borderRadius: "50%",
   filter: "blur(60px)",
   opacity: 0.8,
+  pointerEvents: "none",
 });
 
-const mainStyle = { flex: 1, padding: "3rem 2rem", animation: "fadeInUp 0.8s ease" };
+const mainStyle = {
+  flex: 1,
+  padding: "3rem 2rem",
+  animation: "fadeInUp 0.8s ease",
+};
 
 const contentWrapper = { maxWidth: "1400px", margin: "0 auto" };
 
@@ -142,6 +197,41 @@ const visibilityPill = (isPublic) => ({
   }`,
 });
 
+/* ✅ meta pills */
+const metaRow = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: 8,
+  marginTop: 12,
+};
+
+const pill = (variant = "neutral") => ({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+  padding: "0.28rem 0.55rem",
+  borderRadius: 999,
+  fontSize: 12,
+  fontWeight: 800,
+  border: "1px solid rgba(0,0,0,0.08)",
+  background:
+    variant === "type"
+      ? "linear-gradient(135deg, rgba(59,130,246,0.16), rgba(37,99,235,0.16))"
+      : variant === "act16"
+      ? "linear-gradient(135deg, rgba(16,185,129,0.18), rgba(5,150,105,0.18))"
+      : variant === "floor"
+      ? "linear-gradient(135deg, rgba(139,92,246,0.16), rgba(124,58,237,0.16))"
+      : "rgba(15,23,42,0.06)",
+  color:
+    variant === "type"
+      ? "#1d4ed8"
+      : variant === "act16"
+      ? "#065f46"
+      : variant === "floor"
+      ? "#5b21b6"
+      : "#334155",
+});
+
 const cardActions = {
   padding: "1rem 1.5rem",
   display: "grid",
@@ -202,25 +292,44 @@ export default function MyEstates() {
   const [loading, setLoading] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
 
+  // filters
   const [titleSearch, setTitleSearch] = useState("");
   const [locationSearch, setLocationSearch] = useState("");
   const [sortOrder, setSortOrder] = useState("newest");
 
+  const [propertyType, setPropertyType] = useState("");
+  const [buildingType, setBuildingType] = useState("");
+  const [floor, setFloor] = useState("");
+  const [act16, setAct16] = useState("all"); // all | yes | no
+
   const navigate = useNavigate();
 
   const fetchEstates = useCallback(
-    async (userId) => {
+    async (userId, overrides = {}) => {
+      const {
+        title = titleSearch,
+        location = locationSearch,
+        sort = sortOrder,
+        pType = propertyType,
+        bType = buildingType,
+        fl = floor,
+        a16 = act16,
+      } = overrides;
+
       setLoading(true);
       let query = supabase.from("estates").select("*").eq("user_id", userId);
 
-      if (titleSearch.trim()) query = query.ilike("title", `%${titleSearch}%`);
-      if (locationSearch.trim())
-        query = query.ilike("location", `%${locationSearch}%`);
+      if (title.trim()) query = query.ilike("title", `%${title}%`);
+      if (location.trim()) query = query.ilike("location", `%${location}%`);
 
-      if (sortOrder === "low-high")
-        query = query.order("price", { ascending: true });
-      else if (sortOrder === "high-low")
-        query = query.order("price", { ascending: false });
+      if (pType) query = query.eq("property_type", pType);
+      if (bType) query = query.eq("building_type", bType);
+      if (fl) query = query.eq("floor", fl);
+      if (a16 === "yes") query = query.eq("has_act16", true);
+      if (a16 === "no") query = query.eq("has_act16", false);
+
+      if (sort === "low-high") query = query.order("price", { ascending: true });
+      else if (sort === "high-low") query = query.order("price", { ascending: false });
       else query = query.order("created_at", { ascending: false });
 
       const { data, error } = await query;
@@ -228,7 +337,7 @@ export default function MyEstates() {
       setLoading(false);
       setTimeout(() => setIsLoaded(true), 150);
     },
-    [titleSearch, locationSearch, sortOrder]
+    [titleSearch, locationSearch, sortOrder, propertyType, buildingType, floor, act16]
   );
 
   useEffect(() => {
@@ -251,8 +360,37 @@ export default function MyEstates() {
     init();
   }, [navigate, fetchEstates]);
 
+  /* ✅ AUTO-REFRESH on filter change (like Marketplace) */
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    const t = setTimeout(() => {
+      fetchEstates(profile.id, {
+        title: titleSearch,
+        location: locationSearch,
+        sort: sortOrder,
+        pType: propertyType,
+        bType: buildingType,
+        fl: floor,
+        a16: act16,
+      });
+    }, 400);
+
+    return () => clearTimeout(t);
+  }, [
+    profile,
+    titleSearch,
+    locationSearch,
+    sortOrder,
+    propertyType,
+    buildingType,
+    floor,
+    act16,
+    fetchEstates,
+  ]);
+
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this estate?")) return;
+    if (!window.confirm("Сигурни ли сте, че искате да изтриете този имот?")) return;
     const { error } = await supabase.from("estates").delete().eq("id", id);
     if (!error) setEstates((prev) => prev.filter((e) => e.id !== id));
   };
@@ -263,47 +401,29 @@ export default function MyEstates() {
       .from("estates")
       .update({ is_public: next })
       .eq("id", estate.id);
+
     if (!error) {
       setEstates((prev) =>
         prev.map((e) => (e.id === estate.id ? { ...e, is_public: next } : e))
       );
     } else {
-      alert("Could not update marketplace visibility.");
+      alert("Неуспешна промяна на видимостта в пазара.");
     }
   };
-
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter" && profile?.id) {
-      fetchEstates(profile.id);
-    }
-  };
-
-  useEffect(() => {
-    if (profile?.id) fetchEstates(profile.id);
-  }, [sortOrder, profile, fetchEstates]);
 
   return (
     <div style={{ ...pageContainer, opacity: isLoaded ? 1 : 0 }}>
-      {/* 🌌 Floating Gradient Lights */}
       <div style={bgLight("#3b82f6", "10%", "5%", 300)} />
       <div style={bgLight("#8b5cf6", "80%", "85%", 400)} />
       <style>{keyframes}</style>
 
-      {/* 🔝 Global NavBar with Marketplace link */}
       <NavBar profile={profile} />
 
       <main style={mainStyle}>
         <div style={contentWrapper}>
-          {/* Title */}
           <div style={titleBar}>
-            <h1 style={pageTitle}>My Estates</h1>
-            <div
-              style={{
-                display: "flex",
-                gap: "0.75rem",
-                alignItems: "center",
-              }}
-            >
+            <h1 style={pageTitle}>Моите имоти</h1>
+            <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
               <Link to="/marketplace">
                 <button
                   style={{
@@ -311,11 +431,11 @@ export default function MyEstates() {
                     background: "linear-gradient(135deg,#3b82f6,#1d4ed8)",
                   }}
                 >
-                  🛒 Marketplace
+                  🛒 Пазар
                 </button>
               </Link>
               <Link to="/add-estate">
-                <button style={addButton}>➕ Add Estate</button>
+                <button style={addButton}>➕ Добави имот</button>
               </Link>
             </div>
           </div>
@@ -324,29 +444,101 @@ export default function MyEstates() {
           <div style={filterBar}>
             <input
               type="text"
-              placeholder="Search Title..."
+              placeholder="Търсене по заглавие..."
               value={titleSearch}
               onChange={(e) => setTitleSearch(e.target.value)}
-              onKeyDown={handleKeyPress}
               style={filterInput({ flex: "1 1 220px" })}
             />
+
             <input
               type="text"
-              placeholder="Search Location..."
+              placeholder="Търсене по локация..."
               value={locationSearch}
               onChange={(e) => setLocationSearch(e.target.value)}
-              onKeyDown={handleKeyPress}
               style={filterInput({ flex: "1 1 220px" })}
             />
+
             <select
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
+              value={propertyType}
+              onChange={(e) => setPropertyType(e.target.value)}
               style={filterSelect}
             >
-              <option value="newest">🕒 Newest First</option>
-              <option value="low-high">💲 Price: Low → High</option>
-              <option value="high-low">💰 Price: High → Low</option>
+              <option value="">🏠 Вид на имота (всички)</option>
+              {PROPERTY_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
             </select>
+
+            <select value={act16} onChange={(e) => setAct16(e.target.value)} style={filterSelect}>
+              <option value="all">📄 Акт 16 (всички)</option>
+              <option value="yes">✅ Само с Акт 16</option>
+              <option value="no">❌ Само без Акт 16</option>
+            </select>
+
+            <select
+              value={buildingType}
+              onChange={(e) => setBuildingType(e.target.value)}
+              style={filterSelect}
+            >
+              <option value="">🏢 Вид на сградата (всички)</option>
+              {BUILDING_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+
+            <select value={floor} onChange={(e) => setFloor(e.target.value)} style={filterSelect}>
+              <option value="">🧱 Етаж (всички)</option>
+              {FLOORS.map((f) => (
+                <option key={f} value={f}>
+                  {f}
+                </option>
+              ))}
+            </select>
+
+            <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} style={filterSelect}>
+              <option value="newest">🕒 Най-нови първо</option>
+              <option value="low-high">💲 Цена: ниска → висока</option>
+              <option value="high-low">💰 Цена: висока → ниска</option>
+            </select>
+
+            <button
+              onClick={() => {
+                setTitleSearch("");
+                setLocationSearch("");
+                setPropertyType("");
+                setBuildingType("");
+                setFloor("");
+                setAct16("all");
+                setSortOrder("newest");
+
+                if (profile?.id) {
+                  fetchEstates(profile.id, {
+                    title: "",
+                    location: "",
+                    sort: "newest",
+                    pType: "",
+                    bType: "",
+                    fl: "",
+                    a16: "all",
+                  });
+                }
+              }}
+              style={{
+                padding: "0.7rem 1rem",
+                borderRadius: "9999px",
+                border: "1px solid rgba(255,255,255,0.25)",
+                background: "transparent",
+                color: "#fff",
+                fontWeight: 800,
+                cursor: "pointer",
+              }}
+            >
+              Нулирай
+            </button>
           </div>
 
           {/* Grid */}
@@ -369,13 +561,13 @@ export default function MyEstates() {
               ))}
             </div>
           ) : (
-            <p style={emptyState}>No estates found.</p>
+            <p style={emptyState}>Няма намерени имоти.</p>
           )}
         </div>
       </main>
 
       <footer style={footerStyle}>
-        © {new Date().getFullYear()} Real Estate Management | Built with ❤️
+        © {new Date().getFullYear()} Управление на имоти | Създадено с ❤️
       </footer>
     </div>
   );
@@ -392,6 +584,10 @@ function EstateCard({
 }) {
   const isPublic = !!estate.is_public;
 
+  const showFloor =
+    estate.floor && String(estate.floor).trim() !== "" && estate.floor !== "Не е приложимо";
+  const showAct16 = estate.has_act16 === true;
+
   return (
     <div
       style={{
@@ -400,10 +596,7 @@ function EstateCard({
           hoveredCard === estate.id
             ? "0 20px 60px rgba(59,130,246,0.4)"
             : "0 10px 40px rgba(0,0,0,0.3)",
-        transform:
-          hoveredCard === estate.id
-            ? "translateY(-8px) scale(1.02)"
-            : "translateY(0)",
+        transform: hoveredCard === estate.id ? "translateY(-8px) scale(1.02)" : "translateY(0)",
       }}
       onMouseEnter={() => setHoveredCard(estate.id)}
       onMouseLeave={() => setHoveredCard(null)}
@@ -421,35 +614,26 @@ function EstateCard({
           }}
         />
       )}
+
       <div style={{ padding: "1.5rem", flex: 1 }}>
-        <h3
-          style={{
-            fontSize: "1.4rem",
-            fontWeight: "700",
-            color: "#0f172a",
-            margin: 0,
-          }}
-        >
+        <h3 style={{ fontSize: "1.4rem", fontWeight: "700", color: "#0f172a", margin: 0 }}>
           {estate.title}
         </h3>
-        <p
-          style={{
-            color: "#64748b",
-            margin: "0.5rem 0 0.75rem",
-          }}
-        >
-          📍 {estate.location}
-        </p>
 
-        {/* Marketplace visibility pill */}
-        <div style={visibilityPill(isPublic)}>
-          {isPublic ? "Public on Marketplace" : "Private"}
+        <p style={{ color: "#64748b", margin: "0.5rem 0 0.75rem" }}>📍 {estate.location}</p>
+
+        <div style={visibilityPill(isPublic)}>{isPublic ? "Публично в пазара" : "Частно"}</div>
+
+        {/* meta pills */}
+        <div style={metaRow}>
+          {estate.property_type ? <span style={pill("type")}>🏠 {estate.property_type}</span> : null}
+          {showAct16 ? <span style={pill("act16")}>✅ Акт 16</span> : null}
+          {showFloor ? <span style={pill("floor")}>🧱 Етаж: {estate.floor}</span> : null}
+          {estate.building_type ? <span style={pill("neutral")}>🏢 {estate.building_type}</span> : null}
         </div>
 
         <div style={{ marginTop: "0.9rem" }}>
-          <span style={priceBadge}>
-            ${Number(estate.price || 0).toLocaleString()}
-          </span>
+          <span style={priceBadge}>${Number(estate.price || 0).toLocaleString()}</span>
         </div>
       </div>
 
@@ -457,18 +641,15 @@ function EstateCard({
         <button
           style={actionBtn("blue")}
           onClick={() => handleTogglePublic(estate)}
-          title={isPublic ? "Unlist from Marketplace" : "Publish to Marketplace"}
+          title={isPublic ? "Премахни от пазара" : "Публикувай в пазара"}
         >
-          {isPublic ? "🙈 Unlist" : "🌐 Publish"}
+          {isPublic ? "🙈" : "🌐"}
         </button>
-        <button
-          style={actionBtn("green")}
-          onClick={() => navigate(`/edit-estate/${estate.id}`)}
-        >
-          ✏️ Edit
+        <button style={actionBtn("green")} onClick={() => navigate(`/edit-estate/${estate.id}`)}>
+          ✏️
         </button>
         <button style={actionBtn()} onClick={() => handleDelete(estate.id)}>
-          🗑️ Delete
+          🗑️
         </button>
       </div>
     </div>

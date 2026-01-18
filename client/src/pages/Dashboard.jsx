@@ -16,6 +16,7 @@ const bgLight = (color, top, left, size) => ({
   borderRadius: "50%",
   filter: "blur(60px)",
   opacity: 0.8,
+  pointerEvents: "none", // ✅ don't block clicks
 });
 
 const btnPrimary = {
@@ -93,8 +94,17 @@ const iconBubble = {
 };
 
 const statTextWrap = { display: "flex", flexDirection: "column" };
-const statLabel = { color: "#cbd5e1", fontSize: "0.85rem", marginBottom: "0.15rem" };
-const statValue = { color: "#f8fafc", fontWeight: 800, fontSize: "1.25rem", lineHeight: 1 };
+const statLabel = {
+  color: "#cbd5e1",
+  fontSize: "0.85rem",
+  marginBottom: "0.15rem",
+};
+const statValue = {
+  color: "#f8fafc",
+  fontWeight: 800,
+  fontSize: "1.25rem",
+  lineHeight: 1,
+};
 
 const skeletonBar = {
   height: "16px",
@@ -150,7 +160,10 @@ export default function Dashboard() {
         .eq("user_id", data.user.id);
 
       const totalEstates = estates?.length || 0;
-      const totalValue = (estates || []).reduce((s, e) => s + (Number(e.price) || 0), 0);
+      const totalValue = (estates || []).reduce(
+        (s, e) => s + (Number(e.price) || 0),
+        0
+      );
       const avgPrice = totalEstates ? Math.round(totalValue / totalEstates) : 0;
 
       const thirtyDaysAgo = new Date();
@@ -173,7 +186,8 @@ export default function Dashboard() {
         width: "100%",
         display: "flex",
         flexDirection: "column",
-        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)",
+        background:
+          "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)",
         position: "relative",
         overflow: "hidden",
         color: "#E2E8F0",
@@ -231,7 +245,7 @@ export default function Dashboard() {
               opacity: isLoaded ? 1 : 0.3,
             }}
           >
-            Welcome to Your Real Estate Dashboard 👋
+            Добре дошъл във вашето табло за имоти 👋
           </h1>
           <p
             style={{
@@ -243,8 +257,8 @@ export default function Dashboard() {
               opacity: isLoaded ? 1 : 0.3,
             }}
           >
-            Manage your property listings with ease. Add, edit, and keep track of your real
-            estate portfolio — all in one place.
+            Управлявай лесно обявите си. Добавяй, редактирай и следи
+            портфолиото си от имоти — всичко на едно място.
           </p>
 
           {/* Action Buttons */}
@@ -259,11 +273,11 @@ export default function Dashboard() {
             }}
           >
             <Link to="/add-estate">
-              <button style={btnPrimary}>➕ Add New Estate</button>
+              <button style={btnPrimary}>➕ Добави нов имот</button>
             </Link>
 
             <Link to="/my-estates">
-              <button style={btnSecondary}>🏡 View My Estates</button>
+              <button style={btnSecondary}>🏡 Виж моите имоти</button>
             </Link>
           </div>
         </div>
@@ -277,8 +291,8 @@ export default function Dashboard() {
             <InsightCard
               icon="💰"
               iconBg="linear-gradient(135deg,#1f2937,#334155)"
-              label="Total Portfolio Value"
-              valueRenderer={(v) => `$${v.toLocaleString()}`}
+              label="Обща стойност на портфолиото"
+              valueRenderer={(v) => `${Number(v || 0).toLocaleString()} $`}
               loading={insightsLoading}
               valueKey="totalValue"
             />
@@ -287,7 +301,7 @@ export default function Dashboard() {
             <InsightCard
               icon="🏠"
               iconBg="linear-gradient(135deg,#0b3b62,#1e40af)"
-              label="Total Estates"
+              label="Общо имоти"
               valueRenderer={(v) => v}
               loading={insightsLoading}
               valueKey="totalEstates"
@@ -297,8 +311,10 @@ export default function Dashboard() {
             <InsightCard
               icon="📊"
               iconBg="linear-gradient(135deg,#14532d,#065f46)"
-              label="Average Price"
-              valueRenderer={(v) => (v ? `$${v.toLocaleString()}` : "—")}
+              label="Средна цена"
+              valueRenderer={(v) =>
+                v ? `${Number(v).toLocaleString()} $` : "—"
+              }
               loading={insightsLoading}
               valueKey="avgPrice"
             />
@@ -307,7 +323,7 @@ export default function Dashboard() {
             <InsightCard
               icon="🗓️"
               iconBg="linear-gradient(135deg,#5b21b6,#7c3aed)"
-              label="Added in Last 30 Days"
+              label="Добавени за последните 30 дни"
               valueRenderer={(v) => v}
               loading={insightsLoading}
               valueKey="added30d"
@@ -318,7 +334,7 @@ export default function Dashboard() {
 
       {/* 📜 Footer */}
       <footer style={footerStyle}>
-        © {new Date().getFullYear()} Real Estate Management | Built with ❤️
+        © {new Date().getFullYear()} Управление на имоти | Създадено с ❤️
       </footer>
     </div>
   );

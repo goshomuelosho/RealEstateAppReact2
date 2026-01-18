@@ -3,6 +3,56 @@ import { supabase } from "../supabaseClient";
 import { useNavigate } from "react-router-dom";
 import NavBar from "../components/NavBar";
 
+/** ---------- Dropdown options (same as AddEstate) ---------- */
+const PROPERTY_TYPES = [
+  "1-СТАЕН",
+  "2-СТАЕН",
+  "3-СТАЕН",
+  "4-СТАЕН",
+  "МНОГОСТАЕН",
+  "МЕЗОНЕТ",
+  "ОФИС",
+  "АТЕЛИЕ, ТАВАН",
+  "ЕТАЖ ОТ КЪЩА",
+  "КЪЩА",
+  "ВИЛА",
+  "МАГАЗИН",
+  "ЗАВЕДЕНИЕ",
+  "СКЛАД",
+  "ГАРАЖ, ПАРКОМЯСТО",
+  "ПРОМ. ПОМЕЩЕНИЕ",
+  "ХОТЕЛ",
+  "ПАРЦЕЛ",
+];
+
+const BUILDING_TYPES = [
+  "Тухла",
+  "Панел",
+  "ЕПК",
+  "ПК",
+  "Гредоред",
+  "Метална конструкция",
+  "Сглобяема",
+  "Друго",
+];
+
+const FLOORS = [
+  "Сутерен",
+  "Партер",
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10+",
+  "Последен",
+  "Не е приложимо",
+];
+
 /** ---------- Local styles ---------- */
 const bgLight = (color, top, left, size) => ({
   position: "absolute",
@@ -14,6 +64,7 @@ const bgLight = (color, top, left, size) => ({
   borderRadius: "50%",
   filter: "blur(60px)",
   opacity: 0.8,
+  pointerEvents: "none", // ✅ IMPORTANT: stops blocking clicks
 });
 
 const mainWrap = (isLoaded) => ({
@@ -29,11 +80,18 @@ const mainWrap = (isLoaded) => ({
   transition: "opacity 0.4s ease",
 });
 
-const content = { flex: 1, padding: "2rem", maxWidth: 1400, margin: "0 auto" };
+const content = {
+  flex: 1,
+  padding: "2rem",
+  maxWidth: 1400,
+  margin: "0 auto",
+  position: "relative",
+  zIndex: 1,
+};
 
 const filterBar = {
   display: "grid",
-  gridTemplateColumns: "1fr 1fr 1fr 1fr auto",
+  gridTemplateColumns: "repeat(6, minmax(180px, 1fr))",
   gap: "0.75rem",
   background: "rgba(255,255,255,0.08)",
   border: "1px solid rgba(255,255,255,0.1)",
@@ -51,7 +109,13 @@ const filterInput = {
   outline: "none",
 };
 
-const selectStyle = { ...filterInput, appearance: "none", cursor: "pointer" };
+const selectStyle = {
+  ...filterInput,
+  appearance: "none",
+  cursor: "pointer",
+  backgroundColor: "#1e293b",
+  color: "#f1f5f9",
+};
 
 const grid = {
   display: "grid",
@@ -97,6 +161,42 @@ const contactBtn = {
   borderRadius: 12,
 };
 
+/* ✅ NEW: meta pills */
+const metaRow = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: 8,
+  marginTop: 10,
+};
+
+const pill = (variant = "neutral") => ({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+  padding: "0.28rem 0.55rem",
+  borderRadius: 999,
+  fontSize: 12,
+  fontWeight: 800,
+  letterSpacing: 0.2,
+  border: "1px solid rgba(0,0,0,0.08)",
+  background:
+    variant === "type"
+      ? "linear-gradient(135deg, rgba(59,130,246,0.16), rgba(37,99,235,0.16))"
+      : variant === "act16"
+      ? "linear-gradient(135deg, rgba(16,185,129,0.18), rgba(5,150,105,0.18))"
+      : variant === "floor"
+      ? "linear-gradient(135deg, rgba(139,92,246,0.16), rgba(124,58,237,0.16))"
+      : "rgba(15,23,42,0.06)",
+  color:
+    variant === "type"
+      ? "#1d4ed8"
+      : variant === "act16"
+      ? "#065f46"
+      : variant === "floor"
+      ? "#5b21b6"
+      : "#334155",
+});
+
 const footerStyle = {
   textAlign: "center",
   padding: "1rem",
@@ -123,7 +223,7 @@ const loaderSpinner = {
   animation: "spin 1s linear infinite",
 };
 
-/* 🌟 Message sent modal styles (same vibe as AddEstate) */
+/* 🌟 Message sent modal styles */
 const sentOverlay = {
   position: "fixed",
   top: 0,
@@ -198,12 +298,18 @@ export default function Marketplace() {
   // page fade-in
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // filters
+  // filters (existing)
   const [qTitle, setQTitle] = useState("");
   const [qLocation, setQLocation] = useState("");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sort, setSort] = useState("newest");
+
+  // ✅ NEW filters
+  const [propertyType, setPropertyType] = useState("");
+  const [buildingType, setBuildingType] = useState("");
+  const [floor, setFloor] = useState("");
+  const [act16, setAct16] = useState("all"); // all | yes | no
 
   // contact modal state
   const [contactOpen, setContactOpen] = useState(false);
@@ -215,17 +321,38 @@ export default function Marketplace() {
   // ✅ message sent modal
   const [showSentModal, setShowSentModal] = useState(false);
 
-  const fetchListings = async () => {
+  const fetchListings = async ({
+    qTitleVal = qTitle,
+    qLocationVal = qLocation,
+    minPriceVal = minPrice,
+    maxPriceVal = maxPrice,
+    sortVal = sort,
+
+    // ✅ NEW vals
+    propertyTypeVal = propertyType,
+    buildingTypeVal = buildingType,
+    floorVal = floor,
+    act16Val = act16,
+  } = {}) => {
     setLoading(true);
+
     let query = supabase.from("estates").select("*").eq("is_public", true);
 
-    if (qTitle.trim()) query = query.ilike("title", `%${qTitle}%`);
-    if (qLocation.trim()) query = query.ilike("location", `%${qLocation}%`);
-    if (minPrice) query = query.gte("price", Number(minPrice));
-    if (maxPrice) query = query.lte("price", Number(maxPrice));
+    if (qTitleVal.trim()) query = query.ilike("title", `%${qTitleVal}%`);
+    if (qLocationVal.trim()) query = query.ilike("location", `%${qLocationVal}%`);
+    if (minPriceVal) query = query.gte("price", Number(minPriceVal));
+    if (maxPriceVal) query = query.lte("price", Number(maxPriceVal));
 
-    if (sort === "low-high") query = query.order("price", { ascending: true });
-    else if (sort === "high-low") query = query.order("price", { ascending: false });
+    if (propertyTypeVal) query = query.eq("property_type", propertyTypeVal);
+    if (buildingTypeVal) query = query.eq("building_type", buildingTypeVal);
+    if (floorVal) query = query.eq("floor", floorVal);
+
+    if (act16Val === "yes") query = query.eq("has_act16", true);
+    if (act16Val === "no") query = query.eq("has_act16", false);
+
+    if (sortVal === "low-high") query = query.order("price", { ascending: true });
+    else if (sortVal === "high-low")
+      query = query.order("price", { ascending: false });
     else query = query.order("created_at", { ascending: false });
 
     const { data, error } = await query;
@@ -233,7 +360,6 @@ export default function Marketplace() {
     setLoading(false);
   };
 
-  // on mount: get current user & profile, and initial listings
   useEffect(() => {
     (async () => {
       const { data } = await supabase.auth.getUser();
@@ -248,17 +374,45 @@ export default function Marketplace() {
         .eq("id", data.user.id)
         .single();
 
-      if (profileError) {
-        console.error("Error loading profile in Marketplace:", profileError);
-      }
+      if (profileError) console.error("Error loading profile in Marketplace:", profileError);
 
       setProfile(myProfile || null);
-
-      await fetchListings();
       setTimeout(() => setIsLoaded(true), 150);
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
+
+  useEffect(() => {
+    if (!profile) return;
+
+    const t = setTimeout(() => {
+      fetchListings({
+        qTitleVal: qTitle,
+        qLocationVal: qLocation,
+        minPriceVal: minPrice,
+        maxPriceVal: maxPrice,
+        sortVal: sort,
+
+        propertyTypeVal: propertyType,
+        buildingTypeVal: buildingType,
+        floorVal: floor,
+        act16Val: act16,
+      });
+    }, 400);
+
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    qTitle,
+    qLocation,
+    minPrice,
+    maxPrice,
+    sort,
+    propertyType,
+    buildingType,
+    floor,
+    act16,
+    profile,
+  ]);
 
   const openContact = async (estate) => {
     setSelectedListing(estate);
@@ -296,40 +450,33 @@ export default function Marketplace() {
       setSending(false);
       setContactOpen(false);
 
-      // 🎉 show same style modal as AddEstate
       setShowSentModal(true);
       setTimeout(() => setShowSentModal(false), 2000);
     } catch (e) {
       console.error(e);
       setSending(false);
-      alert(`Failed to send. Please try again. ${e?.message || ""}`);
+      alert(`Неуспешно изпращане. Моля, опитайте отново. ${e?.message || ""}`);
     }
   };
 
-  const clearAndSearch = () => fetchListings();
-
-  const title = "Marketplace";
+  const title = "Пазар";
 
   return (
     <div style={mainWrap(isLoaded)}>
       <div style={bgLight("#3b82f6", "10%", "5%", 300)} />
       <div style={bgLight("#8b5cf6", "80%", "85%", 400)} />
 
-      {/* 🧭 Global NavBar with active=marketplace */}
       <NavBar profile={profile} active="marketplace" />
 
       <style>{`
-        @keyframes shimmer {
-          0% { background-position: -200px 0; }
-          100% { background-position: 200px 0; }
-        }
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ✅ keep dropdown options readable */
+        select option { background: #0f172a; color: #f1f5f9; }
       `}</style>
 
       <main style={content}>
@@ -359,63 +506,91 @@ export default function Marketplace() {
         {/* Filters */}
         <div style={filterBar}>
           <input
-            placeholder="Search Title"
+            placeholder="Търси по заглавие"
             value={qTitle}
             onChange={(e) => setQTitle(e.target.value)}
             style={filterInput}
           />
           <input
-            placeholder="Search Location"
+            placeholder="Търси по локация"
             value={qLocation}
             onChange={(e) => setQLocation(e.target.value)}
             style={filterInput}
           />
           <input
-            placeholder="Min Price"
+            placeholder="Минимална цена"
             type="number"
             value={minPrice}
             onChange={(e) => setMinPrice(e.target.value)}
             style={filterInput}
           />
           <input
-            placeholder="Max Price"
+            placeholder="Максимална цена"
             type="number"
             value={maxPrice}
             onChange={(e) => setMaxPrice(e.target.value)}
             style={filterInput}
           />
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            style={selectStyle}
-          >
-            <option value="newest">🕒 Newest</option>
-            <option value="low-high">💲 Price: Low → High</option>
-            <option value="high-low">💰 Price: High → Low</option>
+
+          <select value={propertyType} onChange={(e) => setPropertyType(e.target.value)} style={selectStyle}>
+            <option value="">🏠 Вид на имота (всички)</option>
+            {PROPERTY_TYPES.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
           </select>
+
+          <select value={act16} onChange={(e) => setAct16(e.target.value)} style={selectStyle}>
+            <option value="all">📄 Акт 16 (всички)</option>
+            <option value="yes">✅ Само с Акт 16</option>
+            <option value="no">❌ Само без Акт 16</option>
+          </select>
+
+          <select value={buildingType} onChange={(e) => setBuildingType(e.target.value)} style={selectStyle}>
+            <option value="">🏢 Вид на сградата (всички)</option>
+            {BUILDING_TYPES.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+
+          <select value={floor} onChange={(e) => setFloor(e.target.value)} style={selectStyle}>
+            <option value="">🧱 Етаж (всички)</option>
+            {FLOORS.map((f) => (
+              <option key={f} value={f}>{f}</option>
+            ))}
+          </select>
+
+          <select value={sort} onChange={(e) => setSort(e.target.value)} style={selectStyle}>
+            <option value="newest">🕒 Най-нови</option>
+            <option value="low-high">💲 Цена: ниска → висока</option>
+            <option value="high-low">💰 Цена: висока → ниска</option>
+          </select>
+
           <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8 }}>
             <button
-              onClick={clearAndSearch}
-              style={{
-                padding: "0.7rem 1rem",
-                borderRadius: 12,
-                border: "none",
-                background: "linear-gradient(135deg,#10b981,#059669)",
-                color: "#fff",
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-            >
-              Apply
-            </button>
-            <button
               onClick={() => {
+                const cleared = {
+                  qTitleVal: "",
+                  qLocationVal: "",
+                  minPriceVal: "",
+                  maxPriceVal: "",
+                  sortVal: "newest",
+                  propertyTypeVal: "",
+                  buildingTypeVal: "",
+                  floorVal: "",
+                  act16Val: "all",
+                };
+
                 setQTitle("");
                 setQLocation("");
                 setMinPrice("");
                 setMaxPrice("");
                 setSort("newest");
-                fetchListings();
+                setPropertyType("");
+                setBuildingType("");
+                setFloor("");
+                setAct16("all");
+
+                fetchListings(cleared);
               }}
               style={{
                 padding: "0.7rem 1rem",
@@ -427,7 +602,7 @@ export default function Marketplace() {
                 cursor: "pointer",
               }}
             >
-              Reset
+              Нулирай
             </button>
           </div>
         </div>
@@ -439,85 +614,106 @@ export default function Marketplace() {
           </div>
         ) : estates.length ? (
           <div style={{ ...grid, animation: "fadeInUp 0.6s ease" }}>
-            {estates.map((estate) => (
-              <div key={estate.id} style={card}>
-                {estate.image_url && (
-                  <img
-                    src={estate.image_url}
-                    alt={estate.title}
-                    style={{ width: "100%", height: 200, objectFit: "cover" }}
-                    loading="lazy"
-                  />
-                )}
-                <div style={{ padding: "1rem 1.1rem", flex: 1 }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      gap: 8,
-                    }}
-                  >
-                    <h3
+            {estates.map((estate) => {
+              const showFloor =
+                estate.floor &&
+                estate.floor !== "Не е приложимо" &&
+                String(estate.floor).trim() !== "";
+              const showAct16 = estate.has_act16 === true;
+
+              return (
+                <div key={estate.id} style={card}>
+                  {estate.image_url && (
+                    <img
+                      src={estate.image_url}
+                      alt={estate.title}
+                      style={{ width: "100%", height: 200, objectFit: "cover" }}
+                      loading="lazy"
+                    />
+                  )}
+
+                  <div style={{ padding: "1rem 1.1rem", flex: 1 }}>
+                    <div
                       style={{
-                        margin: 0,
-                        fontSize: "1.4rem",
-                        fontWeight: "700",
-                        color: "#0f172a",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: 8,
                       }}
                     >
-                      {estate.title}
-                    </h3>
-                    <span style={priceBadge}>
-                      ${Number(estate.price || 0).toLocaleString()}
-                    </span>
-                  </div>
-                  <p
-                    style={{
-                      margin: "0.4rem 0 0.5rem",
-                      color: "#475569",
-                    }}
-                  >
-                    📍 {estate.location}
-                  </p>
-                  <p style={{ margin: 0, color: "#6b7280" }}>
-                    {(estate.description || "").slice(0, 120)}
-                    {(estate.description || "").length > 120 ? "…" : ""}
-                  </p>
+                      <h3
+                        style={{
+                          margin: 0,
+                          fontSize: "1.4rem",
+                          fontWeight: "700",
+                          color: "#0f172a",
+                        }}
+                      >
+                        {estate.title}
+                      </h3>
+                      <span style={priceBadge}>
+                        ${Number(estate.price || 0).toLocaleString()}
+                      </span>
+                    </div>
 
-                  {/* Seller mini row */}
-                  <SellerBadge userId={estate.user_id} />
+                    <p style={{ margin: "0.4rem 0 0.5rem", color: "#475569" }}>
+                      📍 {estate.location}
+                    </p>
 
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: 10,
-                      marginTop: 12,
-                    }}
-                  >
-                    <button
-                      style={contactBtn}
-                      onClick={() => openContact(estate)}
-                    >
-                      ✉️ Contact
-                    </button>
-                    <button
+                    <p style={{ margin: 0, color: "#6b7280" }}>
+                      {(estate.description || "").slice(0, 120)}
+                      {(estate.description || "").length > 120 ? "…" : ""}
+                    </p>
+
+                    {/* ✅ NEW: meta pills */}
+                    <div style={metaRow}>
+                      {estate.property_type ? (
+                        <span style={pill("type")}>🏠 {estate.property_type}</span>
+                      ) : null}
+
+                      {showAct16 ? (
+                        <span style={pill("act16")}>✅ Акт 16</span>
+                      ) : null}
+
+                      {showFloor ? (
+                        <span style={pill("floor")}>🧱 Етаж: {estate.floor}</span>
+                      ) : null}
+
+                      {estate.building_type ? (
+                        <span style={pill("neutral")}>🏢 {estate.building_type}</span>
+                      ) : null}
+                    </div>
+
+                    <SellerBadge userId={estate.user_id} />
+
+                    <div
                       style={{
-                        ...contactBtn,
-                        background: "linear-gradient(135deg,#3b82f6,#1d4ed8)",
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 10,
+                        marginTop: 12,
                       }}
-                      onClick={() => navigate(`/estate/${estate.id}`)}
                     >
-                      🔎 Details
-                    </button>
+                      <button style={contactBtn} onClick={() => openContact(estate)}>
+                        ✉️ Контакт
+                      </button>
+                      <button
+                        style={{
+                          ...contactBtn,
+                          background: "linear-gradient(135deg,#3b82f6,#1d4ed8)",
+                        }}
+                        onClick={() => navigate(`/estate/${estate.id}`)}
+                      >
+                        🔎 Детайли
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
-          <p style={{ color: "#94a3b8" }}>No listings found.</p>
+          <p style={{ color: "#94a3b8" }}>Няма намерени обяви.</p>
         )}
       </main>
 
@@ -525,7 +721,7 @@ export default function Marketplace() {
       {contactOpen && selectedListing && (
         <div style={overlay}>
           <div style={modal}>
-            <h3 style={{ marginTop: 0, marginBottom: 8 }}>Contact Seller</h3>
+            <h3 style={{ marginTop: 0, marginBottom: 8 }}>Свържи се с продавача</h3>
             {sellerProfile ? (
               <>
                 <div
@@ -537,35 +733,24 @@ export default function Marketplace() {
                   }}
                 >
                   <img
-                    src={
-                      sellerProfile.avatar_url ||
-                      "https://via.placeholder.com/40"
-                    }
+                    src={sellerProfile.avatar_url || "https://via.placeholder.com/40"}
                     alt="seller"
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: "50%",
-                      objectFit: "cover",
-                    }}
+                    style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover" }}
                   />
                   <div>
-                    <div style={{ fontWeight: 700 }}>
-                      {sellerProfile.name || "Seller"}
-                    </div>
+                    <div style={{ fontWeight: 700 }}>{sellerProfile.name || "Продавач"}</div>
                     <div style={{ fontSize: 14, color: "#475569" }}>
-                      Send a private in-app message:
+                      Изпрати лично съобщение в приложението:
                     </div>
                   </div>
                 </div>
 
-                {/* In-app message composer */}
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder={`Hi ${
-                    sellerProfile.name || "there"
-                  }, I'm interested in "${selectedListing.title}".`}
+                  placeholder={`Здравей ${
+                    sellerProfile.name || "там"
+                  }, интересувам се от "${selectedListing.title}".`}
                   style={{
                     width: "100%",
                     minHeight: 110,
@@ -575,6 +760,7 @@ export default function Marketplace() {
                     padding: "0.8rem 1rem",
                   }}
                 />
+
                 <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
                   <button
                     disabled={sending}
@@ -592,8 +778,9 @@ export default function Marketplace() {
                       cursor: sending ? "not-allowed" : "pointer",
                     }}
                   >
-                    {sending ? "Sending..." : "Send Message"}
+                    {sending ? "Изпращане..." : "Изпрати"}
                   </button>
+
                   <button
                     onClick={() => setContactOpen(false)}
                     style={{
@@ -606,40 +793,39 @@ export default function Marketplace() {
                       cursor: "pointer",
                     }}
                   >
-                    Close
+                    Затвори
                   </button>
                 </div>
               </>
             ) : (
-              <p>Loading seller…</p>
+              <p>Зареждане на продавача…</p>
             )}
           </div>
         </div>
       )}
 
-      {/* 🎉 Message Sent Modal (same style as AddEstate) */}
+      {/* 🎉 Message Sent Modal */}
       {showSentModal && (
         <div style={sentOverlay}>
           <div style={sentCard}>
             <div style={sentCheckContainer}>
               <div style={sentCheckMark} />
             </div>
-            <h3 style={sentTitle}>Message Sent!</h3>
-            <p style={sentText}>Your message was delivered to the seller.</p>
+            <h3 style={sentTitle}>Съобщението е изпратено!</h3>
+            <p style={sentText}>Вашето съобщение беше доставено на продавача.</p>
             <div style={sentProgress} />
           </div>
         </div>
       )}
 
-      {/* footer */}
       <footer style={footerStyle}>
-        © {new Date().getFullYear()} Real Estate Marketplace | Built with ❤️
+        © {new Date().getFullYear()} Real Estate Management | Създадено с ❤️
       </footer>
     </div>
   );
 }
 
-/** ---------- Small seller badge component (fetch per card) ---------- */
+/** ---------- Small seller badge component ---------- */
 function SellerBadge({ userId }) {
   const [seller, setSeller] = useState(null);
 
@@ -659,15 +845,10 @@ function SellerBadge({ userId }) {
       <img
         src={seller.avatar_url || "https://via.placeholder.com/28"}
         alt="seller"
-        style={{
-          width: 28,
-          height: 28,
-          borderRadius: "50%",
-          objectFit: "cover",
-        }}
+        style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }}
       />
       <span style={{ fontSize: 14, color: "#334155" }}>
-        By {seller.name || "Seller"}
+        От {seller.name || "Продавач"}
       </span>
     </div>
   ) : null;

@@ -38,7 +38,7 @@ export default function EstateDetail() {
         .single();
 
       if (error || !data) {
-        alert("Estate not found!");
+        alert("Имотът не е намерен!");
         navigate("/my-estates");
         return;
       }
@@ -52,7 +52,8 @@ export default function EstateDetail() {
   }, [id, navigate]);
 
   const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this estate?")) return;
+    if (!window.confirm("Сигурни ли сте, че искате да изтриете този имот?"))
+      return;
     const { error } = await supabase.from("estates").delete().eq("id", id);
     if (error) alert(error.message);
     else navigate("/my-estates");
@@ -82,15 +83,51 @@ export default function EstateDetail() {
       <main style={mainStyle}>
         <div style={estateCard}>
           {estate.image_url && (
-            <img
-              src={estate.image_url}
-              alt={estate.title}
-              style={estateImage}
-            />
+            <img src={estate.image_url} alt={estate.title} style={estateImage} />
           )}
+
           <h1 style={estateTitle}>{estate.title}</h1>
-          <p style={estateLocation}>📍 {estate.location}</p>
-          <p style={estatePrice}>${Number(estate.price || 0).toLocaleString()}</p>
+
+          <div style={metaRow}>
+            <p style={estateLocation}>📍 {estate.location}</p>
+            <p style={estatePrice}>
+              ${Number(estate.price || 0).toLocaleString()}
+            </p>
+          </div>
+
+          {/* ✅ NEW: Extra details */}
+          <div style={detailsWrap}>
+            <h3 style={detailsTitle}>Детайли</h3>
+
+            <div style={detailsGrid}>
+              <div style={detailItem}>
+                <span style={detailLabel}>Вид на имота</span>
+                <span style={detailValue}>
+                  {estate.property_type || "—"}
+                </span>
+              </div>
+
+              <div style={detailItem}>
+                <span style={detailLabel}>Вид на сградата</span>
+                <span style={detailValue}>
+                  {estate.building_type || "—"}
+                </span>
+              </div>
+
+              <div style={detailItem}>
+                <span style={detailLabel}>Етаж</span>
+                <span style={detailValue}>{estate.floor || "—"}</span>
+              </div>
+
+              <div style={detailItem}>
+                <span style={detailLabel}>Акт 16</span>
+                <span style={actBadge(!!estate.has_act16)}>
+                  {estate.has_act16 ? "✅ Има" : "❌ Няма"}
+                </span>
+              </div>
+            </div>
+          </div>
+
           <p style={estateDescription}>{estate.description}</p>
 
           {/* Only show Edit/Delete if this is the owner's estate */}
@@ -100,10 +137,10 @@ export default function EstateDetail() {
                 onClick={() => navigate(`/edit-estate/${estate.id}`)}
                 style={editButton}
               >
-                ✏️ Edit
+                ✏️ Редакция
               </button>
               <button onClick={handleDelete} style={deleteButton}>
-                🗑️ Delete
+                🗑️ Изтрий
               </button>
             </div>
           )}
@@ -112,7 +149,7 @@ export default function EstateDetail() {
 
       {/* 📜 Footer */}
       <footer style={footerStyle}>
-        © {new Date().getFullYear()} Real Estate Management | Built with ❤️
+        © {new Date().getFullYear()} Управление на имоти | Създадено с ❤️
       </footer>
     </div>
   );
@@ -166,6 +203,7 @@ const bgLight = (color, top, left, size) => ({
   borderRadius: "50%",
   filter: "blur(60px)",
   opacity: 0.8,
+  pointerEvents: "none",
 });
 
 const mainStyle = {
@@ -184,7 +222,7 @@ const estateCard = {
   borderRadius: "24px",
   padding: "2.5rem",
   width: "100%",
-  maxWidth: "800px",
+  maxWidth: "900px",
   boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
 };
 
@@ -199,22 +237,88 @@ const estateImage = {
 const estateTitle = {
   fontSize: "2rem",
   fontWeight: 800,
-  marginBottom: "0.5rem",
-  color: "#0f172a", // 👈 match MyEstates card title color
+  marginBottom: "0.75rem",
+  color: "#0f172a",
+};
+
+const metaRow = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: "1rem",
+  flexWrap: "wrap",
+  marginBottom: "1.25rem",
 };
 
 const estateLocation = {
   fontSize: "1.1rem",
   color: "#475569",
-  marginBottom: "0.5rem",
+  margin: 0,
 };
 
 const estatePrice = {
   fontSize: "1.6rem",
-  fontWeight: 700,
+  fontWeight: 800,
   color: "#3b82f6",
-  margin: "1rem 0",
+  margin: 0,
 };
+
+const detailsWrap = {
+  borderRadius: "16px",
+  border: "1px solid rgba(15,23,42,0.08)",
+  background: "rgba(241,245,249,0.6)",
+  padding: "1.25rem",
+  marginBottom: "1.5rem",
+};
+
+const detailsTitle = {
+  margin: "0 0 0.9rem",
+  fontSize: "1.1rem",
+  fontWeight: 800,
+  color: "#0f172a",
+};
+
+const detailsGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+  gap: "0.9rem",
+};
+
+const detailItem = {
+  background: "rgba(255,255,255,0.7)",
+  border: "1px solid rgba(15,23,42,0.08)",
+  borderRadius: "12px",
+  padding: "0.85rem 0.95rem",
+  display: "flex",
+  flexDirection: "column",
+  gap: "0.35rem",
+};
+
+const detailLabel = {
+  fontSize: "0.8rem",
+  color: "#64748b",
+  fontWeight: 700,
+};
+
+const detailValue = {
+  fontSize: "1rem",
+  color: "#0f172a",
+  fontWeight: 800,
+};
+
+const actBadge = (has) => ({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "fit-content",
+  padding: "0.25rem 0.6rem",
+  borderRadius: 999,
+  fontSize: "0.85rem",
+  fontWeight: 800,
+  color: has ? "#065f46" : "#991b1b",
+  background: has ? "rgba(16,185,129,0.18)" : "rgba(239,68,68,0.18)",
+  border: `1px solid ${has ? "rgba(16,185,129,0.35)" : "rgba(239,68,68,0.35)"}`,
+});
 
 const estateDescription = {
   fontSize: "1rem",
@@ -235,7 +339,7 @@ const editButton = {
   border: "none",
   borderRadius: "12px",
   color: "#fff",
-  fontWeight: 600,
+  fontWeight: 700,
   cursor: "pointer",
   boxShadow: "0 4px 15px rgba(59,130,246,0.3)",
 };

@@ -17,7 +17,7 @@ export default function Register() {
     setMessage("");
     setLoading(true);
 
-    const {error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
     });
@@ -25,9 +25,9 @@ export default function Register() {
     setLoading(false);
 
     if (error) {
-      setError(error.message);
+      setError(error.message); // (auth error from Supabase - keep as is)
     } else {
-      setMessage("✅ Check your email to confirm your account!");
+      setMessage("✅ Провери имейла си, за да потвърдиш акаунта!");
       setTimeout(() => navigate("/login"), 2500);
     }
   };
@@ -40,7 +40,8 @@ export default function Register() {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)",
+        background:
+          "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)",
         position: "relative",
         overflow: "hidden",
         padding: "2rem",
@@ -54,10 +55,12 @@ export default function Register() {
           left: "10%",
           width: "400px",
           height: "400px",
-          background: "radial-gradient(circle, rgba(59, 130, 246, 0.25), transparent)",
+          background:
+            "radial-gradient(circle, rgba(59, 130, 246, 0.25), transparent)",
           borderRadius: "50%",
           filter: "blur(80px)",
           animation: "float 8s ease-in-out infinite",
+          pointerEvents: "none",
         }}
       />
       <div
@@ -67,10 +70,12 @@ export default function Register() {
           right: "15%",
           width: "350px",
           height: "350px",
-          background: "radial-gradient(circle, rgba(168, 85, 247, 0.25), transparent)",
+          background:
+            "radial-gradient(circle, rgba(168, 85, 247, 0.25), transparent)",
           borderRadius: "50%",
           filter: "blur(80px)",
           animation: "float 10s ease-in-out infinite reverse",
+          pointerEvents: "none",
         }}
       />
 
@@ -142,7 +147,7 @@ export default function Register() {
             WebkitTextFillColor: "transparent",
           }}
         >
-          Create Account
+          Създай акаунт
         </h2>
         <p
           style={{
@@ -151,7 +156,7 @@ export default function Register() {
             fontSize: "0.95rem",
           }}
         >
-          Join Real Estate to list your properties
+          Присъедини се, за да публикуваш имотите си
         </p>
 
         <form
@@ -165,7 +170,7 @@ export default function Register() {
         >
           {/* ✉️ Email */}
           <div>
-            <label style={labelStyle}>Email Address</label>
+            <label style={labelStyle}>Имейл адрес</label>
             <div style={{ position: "relative" }}>
               <span style={iconStyle}>📧</span>
               <input
@@ -181,12 +186,12 @@ export default function Register() {
 
           {/* 🔒 Password */}
           <div>
-            <label style={labelStyle}>Password</label>
+            <label style={labelStyle}>Парола</label>
             <div style={{ position: "relative" }}>
               <span style={iconStyle}>🔒</span>
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="Minimum 6 characters"
+                placeholder="Минимум 6 символа"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -196,12 +201,19 @@ export default function Register() {
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 style={eyeButtonStyle}
+                aria-label={showPassword ? "Скрий паролата" : "Покажи паролата"}
               >
                 {showPassword ? "🙈" : "👁️‍🗨️"}
               </button>
             </div>
-            <p style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "0.5rem" }}>
-              Must be at least 6 characters long
+            <p
+              style={{
+                fontSize: "0.75rem",
+                color: "#64748b",
+                marginTop: "0.5rem",
+              }}
+            >
+              Трябва да е поне 6 символа
             </p>
           </div>
 
@@ -226,7 +238,14 @@ export default function Register() {
             }}
           >
             {loading ? (
-              <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
+              <span
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.5rem",
+                }}
+              >
                 <div
                   style={{
                     width: "20px",
@@ -237,10 +256,10 @@ export default function Register() {
                     animation: "spin 0.8s linear infinite",
                   }}
                 />
-                Creating Account...
+                Създаване...
               </span>
             ) : (
-              "🚀 Create Account"
+              "🚀 Създай акаунт"
             )}
           </button>
         </form>
@@ -268,9 +287,16 @@ export default function Register() {
           }}
         >
           <p style={{ color: "#94a3b8", fontSize: "0.95rem" }}>
-            Already have an account?{" "}
-            <Link to="/login" style={{ color: "#3b82f6", fontWeight: "600", textDecoration: "none" }}>
-              Login
+            Вече имаш акаунт?{" "}
+            <Link
+              to="/login"
+              style={{
+                color: "#3b82f6",
+                fontWeight: "600",
+                textDecoration: "none",
+              }}
+            >
+              Вход
             </Link>
           </p>
         </div>

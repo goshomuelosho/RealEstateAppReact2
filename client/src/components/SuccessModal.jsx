@@ -47,7 +47,7 @@ export default function SuccessModal({
           animation: "popIn 0.3s ease",
         }}
       >
-        <h3 style={{ marginBottom: "0.5rem", fontSize: "1.25rem" }}>✅ Success!</h3>
+        <h3 style={{ marginBottom: "0.5rem", fontSize: "1.25rem" }}>✅ Успешно!</h3>
         <p style={{ fontSize: "1rem", color: "#475569" }}>{message}</p>
       </div>
     </div>
