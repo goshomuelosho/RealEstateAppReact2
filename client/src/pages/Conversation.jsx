@@ -28,14 +28,14 @@ export default function Conversation() {
 
       const { data: me } = await supabase
         .from("profiles")
-        .select("id, name, avatar_url")
+        .select("id, name, avatar_url, is_admin")
         .eq("id", currentUserId)
         .single();
       setProfile(me || { id: currentUserId });
 
       const { data: other } = await supabase
         .from("profiles")
-        .select("id, name, avatar_url")
+        .select("id, name, avatar_url, is_admin")
         .eq("id", otherUserId)
         .single();
       setOtherUser(other || { id: otherUserId });

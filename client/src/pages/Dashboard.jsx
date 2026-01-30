@@ -145,7 +145,7 @@ export default function Dashboard() {
 
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("id, name, avatar_url")
+        .select("id, name, avatar_url, is_admin")
         .eq("id", data.user.id)
         .single();
 

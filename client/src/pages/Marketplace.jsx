@@ -292,39 +292,32 @@ const favStarBtn = (active) => ({
   position: "absolute",
   top: 10,
   right: 10,
-  width: 46,
-  height: 46,
+  width: 48,
+  height: 48,
   borderRadius: 16,
   border: active
     ? "1px solid rgba(245,158,11,0.45)"
     : "1px solid rgba(148,163,184,0.45)",
   background: active
     ? "linear-gradient(135deg, rgba(245,158,11,0.22), rgba(253,230,138,0.22))"
-    : "rgba(15,23,42,0.08)", // ✅ grey-ish
+    : "rgba(15,23,42,0.08)",
   boxShadow: active
     ? "0 10px 25px rgba(245,158,11,0.22)"
     : "0 8px 20px rgba(0,0,0,0.14)",
   cursor: "pointer",
-
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   padding: 0,
   lineHeight: 0,
-  fontSize: 0,
-  userSelect: "none",
   transition: "transform 0.12s ease, filter 0.2s ease",
 });
 
 const favStarGlyph = (active) => ({
-  fontSize: 26,
+  fontSize: 28,
   lineHeight: 1,
-
-  // ✅ makes the hollow star grey-ish, and the filled star light yellow
-  color: active ? "#fbbf24" : "#94a3b8",
+  color: active ? "#fbbf24" : "#94a3b8", // ✅ yellow vs grey
 });
-
-
 
 /* ⭐ nicer toggle pill (Only favorites) */
 const favToggleRow = {
@@ -439,7 +432,8 @@ export default function Marketplace() {
     }
 
     if (sortVal === "low-high") query = query.order("price", { ascending: true });
-    else if (sortVal === "high-low") query = query.order("price", { ascending: false });
+    else if (sortVal === "high-low")
+      query = query.order("price", { ascending: false });
     else query = query.order("created_at", { ascending: false });
 
     const { data, error } = await query;
@@ -455,18 +449,29 @@ export default function Marketplace() {
         return;
       }
 
+      // ✅ 3A.2: load is_admin too
       const { data: myProfile, error: profileError } = await supabase
         .from("profiles")
-        .select("id, name, avatar_url")
+        .select("id, name, avatar_url, is_admin")
         .eq("id", data.user.id)
         .single();
 
       if (profileError) console.error("Error loading profile in Marketplace:", profileError);
 
-      const currentProfile = myProfile || { id: data.user.id };
+      // ✅ 3A.3: safe fallback
+      const currentProfile = myProfile || {
+        id: data.user.id,
+        name: "",
+        avatar_url: "",
+        is_admin: false,
+      };
+
+      // if column missing or null
+      currentProfile.is_admin = !!currentProfile.is_admin;
+
       setProfile(currentProfile);
 
-      // load favorites for this user
+      // load favorites
       const { data: favs, error: favErr } = await supabase
         .from("favorites")
         .select("estate_id")
@@ -544,9 +549,9 @@ export default function Marketplace() {
         });
       }
     } else {
-      const { error } = await supabase.from("favorites").insert([
-        { user_id: profile.id, estate_id: estateId },
-      ]);
+      const { error } = await supabase
+        .from("favorites")
+        .insert([{ user_id: profile.id, estate_id: estateId }]);
 
       if (error) {
         console.error("Error adding favorite:", error);
@@ -567,7 +572,7 @@ export default function Marketplace() {
 
     const { data: sp, error } = await supabase
       .from("profiles")
-      .select("id, name, avatar_url")
+      .select("id, name, avatar_url, is_admin")
       .eq("id", estate.user_id)
       .single();
 
@@ -624,7 +629,15 @@ export default function Marketplace() {
       `}</style>
 
       <main style={content}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 16 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: 16,
+          }}
+        >
           <h1
             style={{
               margin: 0,
@@ -668,7 +681,11 @@ export default function Marketplace() {
             style={filterInput}
           />
 
-          <select value={propertyType} onChange={(e) => setPropertyType(e.target.value)} style={selectStyle}>
+          <select
+            value={propertyType}
+            onChange={(e) => setPropertyType(e.target.value)}
+            style={selectStyle}
+          >
             <option value="">🏠 Вид на имота (всички)</option>
             {PROPERTY_TYPES.map((t) => (
               <option key={t} value={t}>
@@ -683,7 +700,11 @@ export default function Marketplace() {
             <option value="no">❌ Само без Акт 16</option>
           </select>
 
-          <select value={buildingType} onChange={(e) => setBuildingType(e.target.value)} style={selectStyle}>
+          <select
+            value={buildingType}
+            onChange={(e) => setBuildingType(e.target.value)}
+            style={selectStyle}
+          >
             <option value="">🏢 Вид на сградата (всички)</option>
             {BUILDING_TYPES.map((t) => (
               <option key={t} value={t}>
@@ -793,29 +814,18 @@ export default function Marketplace() {
 
               return (
                 <div key={estate.id} style={card}>
-                <button
-  onClick={() => toggleFavorite(estate.id)}
-  title={isFav ? "Remove from favorites" : "Add to favorites"}
-  style={favStarBtn(isFav)}
->
-  <span style={favStarGlyph(isFav)}>
-    {isFav ? "★" : "☆"}
-  </span>
-</button>
-
-<button
-  onClick={() => toggleFavorite(estate.id)}
-  title={isFav ? "Премахни от любими" : "Добави в любими"}
-  style={favStarBtn(isFav)}
-  onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.96)")}
-  onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
-  onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
->
-  <span style={{ fontSize: 26, lineHeight: 1 }}>
-    {isFav ? "⭐" : "☆"}
-  </span>
-</button>
-
+                  {/* ✅ single star button only */}
+                  <button
+                    onClick={() => toggleFavorite(estate.id)}
+                    title={isFav ? "Премахни от любими" : "Добави в любими"}
+                    style={favStarBtn(isFav)}
+                    onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.96)")}
+                    onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                    aria-label={isFav ? "Премахни от любими" : "Добави в любими"}
+                  >
+                    <span style={favStarGlyph(isFav)}>{isFav ? "★" : "☆"}</span>
+                  </button>
 
                   {estate.image_url && (
                     <img
@@ -827,14 +837,31 @@ export default function Marketplace() {
                   )}
 
                   <div style={{ padding: "1rem 1.1rem", flex: 1 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-                      <h3 style={{ margin: 0, fontSize: "1.4rem", fontWeight: "700", color: "#0f172a", paddingRight: 52 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: 10,
+                      }}
+                    >
+                      <h3
+                        style={{
+                          margin: 0,
+                          fontSize: "1.4rem",
+                          fontWeight: "700",
+                          color: "#0f172a",
+                          paddingRight: 52,
+                        }}
+                      >
                         {estate.title}
                       </h3>
                       <span style={priceBadge}>${Number(estate.price || 0).toLocaleString()}</span>
                     </div>
 
-                    <p style={{ margin: "0.4rem 0 0.5rem", color: "#475569" }}>📍 {estate.location}</p>
+                    <p style={{ margin: "0.4rem 0 0.5rem", color: "#475569" }}>
+                      📍 {estate.location}
+                    </p>
 
                     <p style={{ margin: 0, color: "#6b7280" }}>
                       {(estate.description || "").slice(0, 120)}
@@ -842,20 +869,34 @@ export default function Marketplace() {
                     </p>
 
                     <div style={metaRow}>
-                      {estate.property_type ? <span style={pill("type")}>🏠 {estate.property_type}</span> : null}
+                      {estate.property_type ? (
+                        <span style={pill("type")}>🏠 {estate.property_type}</span>
+                      ) : null}
                       {showAct16 ? <span style={pill("act16")}>✅ Акт 16</span> : null}
                       {showFloor ? <span style={pill("floor")}>🧱 Етаж: {estate.floor}</span> : null}
-                      {estate.building_type ? <span style={pill("neutral")}>🏢 {estate.building_type}</span> : null}
+                      {estate.building_type ? (
+                        <span style={pill("neutral")}>🏢 {estate.building_type}</span>
+                      ) : null}
                     </div>
 
                     <SellerBadge userId={estate.user_id} />
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 10,
+                        marginTop: 12,
+                      }}
+                    >
                       <button style={contactBtn} onClick={() => openContact(estate)}>
                         ✉️ Контакт
                       </button>
                       <button
-                        style={{ ...contactBtn, background: "linear-gradient(135deg,#3b82f6,#1d4ed8)" }}
+                        style={{
+                          ...contactBtn,
+                          background: "linear-gradient(135deg,#3b82f6,#1d4ed8)",
+                        }}
                         onClick={() => navigate(`/estate/${estate.id}`)}
                       >
                         🔎 Детайли
@@ -886,14 +927,18 @@ export default function Marketplace() {
                   />
                   <div>
                     <div style={{ fontWeight: 700 }}>{sellerProfile.name || "Продавач"}</div>
-                    <div style={{ fontSize: 14, color: "#475569" }}>Изпрати лично съобщение в приложението:</div>
+                    <div style={{ fontSize: 14, color: "#475569" }}>
+                      Изпрати лично съобщение в приложението:
+                    </div>
                   </div>
                 </div>
 
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder={`Здравей ${sellerProfile.name || "там"}, интересувам се от "${selectedListing.title}".`}
+                  placeholder={`Здравей ${sellerProfile.name || "там"}, интересувам се от "${
+                    selectedListing.title
+                  }".`}
                   style={{
                     width: "100%",
                     minHeight: 110,

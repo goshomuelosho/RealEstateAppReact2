@@ -10,7 +10,9 @@ export default function EstateDetail() {
   const [estate, setEstate] = useState(null);
   const [profile, setProfile] = useState(null); // current user profile for NavBar
   const [loading, setLoading] = useState(true);
+
   const [isOwner, setIsOwner] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -22,40 +24,50 @@ export default function EstateDetail() {
 
       const currentUserId = userData.user.id;
 
-      // 👤 Fetch profile (for NavBar)
-      const { data: profileData } = await supabase
+      // 👤 Fetch profile (for NavBar + admin check)
+      const { data: profileData, error: profileErr } = await supabase
         .from("profiles")
-        .select("id, name, avatar_url")
+        .select("id, name, avatar_url, is_admin")
         .eq("id", currentUserId)
         .single();
-      setProfile(profileData || { id: currentUserId });
+
+      if (profileErr) console.error("Error loading profile:", profileErr);
+
+      const currentProfile = profileData || { id: currentUserId, is_admin: false };
+      setProfile(currentProfile);
+      setIsAdmin(!!currentProfile.is_admin);
 
       // 🏡 Fetch estate
-      const { data, error } = await supabase
-        .from("estates")
-        .select("*")
-        .eq("id", id)
-        .single();
+      const { data, error } = await supabase.from("estates").select("*").eq("id", id).single();
 
       if (error || !data) {
         alert("Имотът не е намерен!");
-        navigate("/my-estates");
+        navigate("/marketplace");
         return;
       }
 
       setEstate(data);
-      setIsOwner(data.user_id === currentUserId); // 👈 owner check
+      setIsOwner(data.user_id === currentUserId);
       setLoading(false);
     };
 
     fetchData();
   }, [id, navigate]);
 
+  const canManage = isOwner || isAdmin;
+
   const handleDelete = async () => {
-    if (!window.confirm("Сигурни ли сте, че искате да изтриете този имот?"))
-      return;
+    if (!window.confirm("Сигурни ли сте, че искате да изтриете този имот?")) return;
+
     const { error } = await supabase.from("estates").delete().eq("id", id);
-    if (error) alert(error.message);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    // ✅ if admin deletes from marketplace / details, send back to marketplace
+    if (isAdmin) navigate("/marketplace");
     else navigate("/my-estates");
   };
 
@@ -76,42 +88,32 @@ export default function EstateDetail() {
       <div style={bgLight("#8b5cf6", "80%", "85%", 400)} />
       <style>{keyframes}</style>
 
-      {/* 🧭 Global NavBar with Marketplace link */}
       <NavBar profile={profile} />
 
-      {/* 🏡 Estate Details Card */}
       <main style={mainStyle}>
         <div style={estateCard}>
-          {estate.image_url && (
-            <img src={estate.image_url} alt={estate.title} style={estateImage} />
-          )}
+          {estate.image_url && <img src={estate.image_url} alt={estate.title} style={estateImage} />}
 
           <h1 style={estateTitle}>{estate.title}</h1>
 
           <div style={metaRow}>
             <p style={estateLocation}>📍 {estate.location}</p>
-            <p style={estatePrice}>
-              ${Number(estate.price || 0).toLocaleString()}
-            </p>
+            <p style={estatePrice}>${Number(estate.price || 0).toLocaleString()}</p>
           </div>
 
-          {/* ✅ NEW: Extra details */}
+          {/* ✅ Extra details */}
           <div style={detailsWrap}>
             <h3 style={detailsTitle}>Детайли</h3>
 
             <div style={detailsGrid}>
               <div style={detailItem}>
                 <span style={detailLabel}>Вид на имота</span>
-                <span style={detailValue}>
-                  {estate.property_type || "—"}
-                </span>
+                <span style={detailValue}>{estate.property_type || "—"}</span>
               </div>
 
               <div style={detailItem}>
                 <span style={detailLabel}>Вид на сградата</span>
-                <span style={detailValue}>
-                  {estate.building_type || "—"}
-                </span>
+                <span style={detailValue}>{estate.building_type || "—"}</span>
               </div>
 
               <div style={detailItem}>
@@ -130,13 +132,10 @@ export default function EstateDetail() {
 
           <p style={estateDescription}>{estate.description}</p>
 
-          {/* Only show Edit/Delete if this is the owner's estate */}
-          {isOwner && (
+          {/* ✅ Owner OR Admin */}
+          {canManage && (
             <div style={buttonGroup}>
-              <button
-                onClick={() => navigate(`/edit-estate/${estate.id}`)}
-                style={editButton}
-              >
+              <button onClick={() => navigate(`/edit-estate/${estate.id}`)} style={editButton}>
                 ✏️ Редакция
               </button>
               <button onClick={handleDelete} style={deleteButton}>
@@ -147,7 +146,6 @@ export default function EstateDetail() {
         </div>
       </main>
 
-      {/* 📜 Footer */}
       <footer style={footerStyle}>
         © {new Date().getFullYear()} Управление на имоти | Създадено с ❤️
       </footer>
@@ -161,9 +159,7 @@ const keyframes = `
     from { opacity: 0; transform: translateY(30px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 `;
 
 const loaderContainer = {
@@ -250,18 +246,9 @@ const metaRow = {
   marginBottom: "1.25rem",
 };
 
-const estateLocation = {
-  fontSize: "1.1rem",
-  color: "#475569",
-  margin: 0,
-};
+const estateLocation = { fontSize: "1.1rem", color: "#475569", margin: 0 };
 
-const estatePrice = {
-  fontSize: "1.6rem",
-  fontWeight: 800,
-  color: "#3b82f6",
-  margin: 0,
-};
+const estatePrice = { fontSize: "1.6rem", fontWeight: 800, color: "#3b82f6", margin: 0 };
 
 const detailsWrap = {
   borderRadius: "16px",
@@ -294,17 +281,9 @@ const detailItem = {
   gap: "0.35rem",
 };
 
-const detailLabel = {
-  fontSize: "0.8rem",
-  color: "#64748b",
-  fontWeight: 700,
-};
+const detailLabel = { fontSize: "0.8rem", color: "#64748b", fontWeight: 700 };
 
-const detailValue = {
-  fontSize: "1rem",
-  color: "#0f172a",
-  fontWeight: 800,
-};
+const detailValue = { fontSize: "1rem", color: "#0f172a", fontWeight: 800 };
 
 const actBadge = (has) => ({
   display: "inline-flex",
@@ -327,11 +306,7 @@ const estateDescription = {
   marginBottom: "2rem",
 };
 
-const buttonGroup = {
-  display: "flex",
-  justifyContent: "flex-end",
-  gap: "1rem",
-};
+const buttonGroup = { display: "flex", justifyContent: "flex-end", gap: "1rem" };
 
 const editButton = {
   padding: "0.9rem 1.5rem",

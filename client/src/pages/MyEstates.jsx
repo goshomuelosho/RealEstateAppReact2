@@ -122,38 +122,34 @@ const addButton = {
   boxShadow: "0 4px 15px rgba(16,185,129,0.4)",
 };
 
+/* ✅ Marketplace-like filter layout (compact) */
 const filterBar = {
-  display: "flex",
-  flexWrap: "wrap",
-  gap: "1rem",
+  display: "grid",
+  gridTemplateColumns: "repeat(6, minmax(180px, 1fr))",
+  gap: "0.75rem",
   background: "rgba(255,255,255,0.08)",
-  backdropFilter: "blur(10px)",
-  padding: "1rem 1.25rem",
-  borderRadius: "16px",
   border: "1px solid rgba(255,255,255,0.1)",
+  borderRadius: 16,
+  padding: "1rem",
   marginBottom: "2rem",
 };
 
-const filterInput = (extra) => ({
-  padding: "0.7rem 1rem",
-  borderRadius: "9999px",
+const filterInput = {
+  padding: "0.8rem 1rem",
+  borderRadius: 12,
   border: "1px solid rgba(255,255,255,0.15)",
   background: "rgba(255,255,255,0.1)",
-  color: "white",
-  fontSize: "0.9rem",
+  color: "#fff",
   outline: "none",
-  ...extra,
-});
+  width: "100%",
+};
 
 const filterSelect = {
-  padding: "0.7rem 1rem",
-  borderRadius: "9999px",
-  border: "1px solid rgba(255,255,255,0.15)",
+  ...filterInput,
+  appearance: "none",
+  cursor: "pointer",
   backgroundColor: "#1e293b",
   color: "#f1f5f9",
-  fontSize: "0.9rem",
-  outline: "none",
-  cursor: "pointer",
 };
 
 const grid = {
@@ -350,7 +346,7 @@ export default function MyEstates() {
 
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("id, name, avatar_url")
+        .select("id, name, avatar_url, is_admin")
         .eq("id", userData.user.id)
         .single();
 
@@ -415,7 +411,11 @@ export default function MyEstates() {
     <div style={{ ...pageContainer, opacity: isLoaded ? 1 : 0 }}>
       <div style={bgLight("#3b82f6", "10%", "5%", 300)} />
       <div style={bgLight("#8b5cf6", "80%", "85%", 400)} />
-      <style>{keyframes}</style>
+
+      <style>{`
+        ${keyframes}
+        select option { background: #0f172a; color: #f1f5f9; }
+      `}</style>
 
       <NavBar profile={profile} />
 
@@ -440,14 +440,14 @@ export default function MyEstates() {
             </div>
           </div>
 
-          {/* Filters */}
+          {/* Filters (Marketplace-like grid) */}
           <div style={filterBar}>
             <input
               type="text"
               placeholder="Търсене по заглавие..."
               value={titleSearch}
               onChange={(e) => setTitleSearch(e.target.value)}
-              style={filterInput({ flex: "1 1 220px" })}
+              style={filterInput}
             />
 
             <input
@@ -455,7 +455,7 @@ export default function MyEstates() {
               placeholder="Търсене по локация..."
               value={locationSearch}
               onChange={(e) => setLocationSearch(e.target.value)}
-              style={filterInput({ flex: "1 1 220px" })}
+              style={filterInput}
             />
 
             <select
@@ -505,40 +505,43 @@ export default function MyEstates() {
               <option value="high-low">💰 Цена: висока → ниска</option>
             </select>
 
-            <button
-              onClick={() => {
-                setTitleSearch("");
-                setLocationSearch("");
-                setPropertyType("");
-                setBuildingType("");
-                setFloor("");
-                setAct16("all");
-                setSortOrder("newest");
+            {/* Reset row full width */}
+            <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8 }}>
+              <button
+                onClick={() => {
+                  setTitleSearch("");
+                  setLocationSearch("");
+                  setPropertyType("");
+                  setBuildingType("");
+                  setFloor("");
+                  setAct16("all");
+                  setSortOrder("newest");
 
-                if (profile?.id) {
-                  fetchEstates(profile.id, {
-                    title: "",
-                    location: "",
-                    sort: "newest",
-                    pType: "",
-                    bType: "",
-                    fl: "",
-                    a16: "all",
-                  });
-                }
-              }}
-              style={{
-                padding: "0.7rem 1rem",
-                borderRadius: "9999px",
-                border: "1px solid rgba(255,255,255,0.25)",
-                background: "transparent",
-                color: "#fff",
-                fontWeight: 800,
-                cursor: "pointer",
-              }}
-            >
-              Нулирай
-            </button>
+                  if (profile?.id) {
+                    fetchEstates(profile.id, {
+                      title: "",
+                      location: "",
+                      sort: "newest",
+                      pType: "",
+                      bType: "",
+                      fl: "",
+                      a16: "all",
+                    });
+                  }
+                }}
+                style={{
+                  padding: "0.7rem 1rem",
+                  borderRadius: 12,
+                  border: "1px solid rgba(255,255,255,0.25)",
+                  background: "transparent",
+                  color: "#fff",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                Нулирай
+              </button>
+            </div>
           </div>
 
           {/* Grid */}

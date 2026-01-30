@@ -23,7 +23,7 @@ export default function Messages() {
       // 👤 Load my profile for NavBar
       const { data: myProfile } = await supabase
         .from("profiles")
-        .select("id, name, avatar_url")
+        .select("id, name, avatar_url, is_admin")
         .eq("id", userId)
         .single();
 
@@ -63,7 +63,7 @@ export default function Messages() {
       // 👥 Load profiles for those users (names + avatars)
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, name, avatar_url")
+        .select("id, name, avatar_url, is_admin")
         .in("id", allUserIds);
 
       if (profilesError) {

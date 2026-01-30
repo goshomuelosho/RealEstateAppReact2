@@ -9,6 +9,8 @@ export default function NavBar({ profile }) {
       ? { color: "#3b82f6", fontWeight: 700 }
       : { color: "#e2e8f0" };
 
+  const isAdmin = !!profile?.is_admin;
+
   return (
     <header
       style={{
@@ -24,7 +26,7 @@ export default function NavBar({ profile }) {
         zIndex: 10,
       }}
     >
-      {/* Logo (keep site name as-is) */}
+      {/* Logo */}
       <Link
         to="/dashboard"
         style={{
@@ -39,7 +41,7 @@ export default function NavBar({ profile }) {
         🏠 Real Estate
       </Link>
 
-      {/* MAIN NAVIGATION (Bulgarian UI) */}
+      {/* MAIN NAVIGATION */}
       <nav style={{ display: "flex", gap: "2rem", alignItems: "center" }}>
         <Link to="/marketplace" style={isActive("/marketplace")}>
           Пазар
@@ -52,6 +54,13 @@ export default function NavBar({ profile }) {
         <Link to="/messages" style={isActive("/messages")}>
           Съобщения
         </Link>
+
+        {/* ✅ Admin link (only for admins) */}
+        {isAdmin && (
+          <Link to="/admin" style={isActive("/admin")}>
+            Админ
+          </Link>
+        )}
       </nav>
 
       {/* Profile pill */}
