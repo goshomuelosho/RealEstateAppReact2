@@ -178,18 +178,8 @@ const input = {
   outline: "none",
 };
 
-const footerStyle = {
-  textAlign: "center",
-  padding: "1rem",
-  color: "#94a3b8",
-  fontSize: "0.9rem",
-  borderTop: "1px solid rgba(255,255,255,0.1)",
-  backdropFilter: "blur(10px)",
-  background: "rgba(15,23,42,0.5)",
-};
-
 function fmtMoney(n) {
-  return `${Number(n || 0).toLocaleString()} $`;
+  return `${Number(n || 0).toLocaleString()} €`;
 }
 
 function shortId(id) {
@@ -480,9 +470,6 @@ export default function AdminDashboard() {
         </div>
       </main>
 
-      <footer style={footerStyle}>
-        © {new Date().getFullYear()} RealEstate | Създадено с ❤️
-      </footer>
     </div>
   );
 }

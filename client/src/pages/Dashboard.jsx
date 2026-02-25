@@ -45,16 +45,6 @@ const btnSecondary = {
   boxShadow: "0 4px 20px rgba(16,185,129,0.4)",
 };
 
-const footerStyle = {
-  textAlign: "center",
-  padding: "1rem",
-  color: "#94a3b8",
-  fontSize: "0.9rem",
-  borderTop: "1px solid rgba(255,255,255,0.1)",
-  backdropFilter: "blur(10px)",
-  background: "rgba(15,23,42,0.5)",
-};
-
 /* === Insights styles === */
 const insightsWrap = {
   width: "100%",
@@ -292,7 +282,7 @@ export default function Dashboard() {
               icon="💰"
               iconBg="linear-gradient(135deg,#1f2937,#334155)"
               label="Обща стойност на портфолиото"
-              valueRenderer={(v) => `${Number(v || 0).toLocaleString()} $`}
+              valueRenderer={(v) => `${Number(v || 0).toLocaleString()} €`}
               loading={insightsLoading}
               valueKey="totalValue"
             />
@@ -313,7 +303,7 @@ export default function Dashboard() {
               iconBg="linear-gradient(135deg,#14532d,#065f46)"
               label="Средна цена"
               valueRenderer={(v) =>
-                v ? `${Number(v).toLocaleString()} $` : "—"
+                v ? `${Number(v).toLocaleString()} €` : "—"
               }
               loading={insightsLoading}
               valueKey="avgPrice"
@@ -332,10 +322,6 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {/* 📜 Footer */}
-      <footer style={footerStyle}>
-        © {new Date().getFullYear()} RealEstate | Създадено с ❤️
-      </footer>
     </div>
   );
 

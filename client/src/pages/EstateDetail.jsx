@@ -99,7 +99,7 @@ export default function EstateDetail() {
 
           <div style={metaRow}>
             <p style={estateLocation}>📍 {estate.location}</p>
-            <p style={estatePrice}>${Number(estate.price || 0).toLocaleString()}</p>
+            <p style={estatePrice}>€{Number(estate.price || 0).toLocaleString()}</p>
           </div>
 
           <LocationPinMap location={estate.location} />
@@ -149,9 +149,6 @@ export default function EstateDetail() {
         </div>
       </main>
 
-      <footer style={footerStyle}>
-        © {new Date().getFullYear()} RealEstate | Създадено с ❤️
-      </footer>
     </div>
   );
 }
@@ -328,12 +325,3 @@ const deleteButton = {
   boxShadow: "0 4px 15px rgba(239,68,68,0.3)",
 };
 
-const footerStyle = {
-  textAlign: "center",
-  padding: "1rem",
-  color: "#94a3b8",
-  fontSize: "0.9rem",
-  borderTop: "1px solid rgba(255,255,255,0.1)",
-  backdropFilter: "blur(10px)",
-  background: "rgba(15,23,42,0.5)",
-};

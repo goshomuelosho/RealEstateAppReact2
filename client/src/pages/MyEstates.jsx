@@ -270,16 +270,6 @@ const loaderSpinner = {
 
 const emptyState = { color: "#94a3b8", textAlign: "center", marginTop: "2rem" };
 
-const footerStyle = {
-  textAlign: "center",
-  padding: "1rem",
-  color: "#94a3b8",
-  fontSize: "0.9rem",
-  borderTop: "1px solid rgba(255,255,255,0.1)",
-  backdropFilter: "blur(10px)",
-  background: "rgba(15,23,42,0.5)",
-};
-
 /* 🧭 Component */
 export default function MyEstates() {
   const [hoveredCard, setHoveredCard] = useState(null);
@@ -569,9 +559,6 @@ export default function MyEstates() {
         </div>
       </main>
 
-      <footer style={footerStyle}>
-        © {new Date().getFullYear()} RealEstate | Създадено с ❤️
-      </footer>
     </div>
   );
 }
@@ -636,7 +623,7 @@ function EstateCard({
         </div>
 
         <div style={{ marginTop: "0.9rem" }}>
-          <span style={priceBadge}>${Number(estate.price || 0).toLocaleString()}</span>
+          <span style={priceBadge}>€{Number(estate.price || 0).toLocaleString()}</span>
         </div>
       </div>
 
