@@ -245,7 +245,7 @@ export default function Dashboard() {
               opacity: isLoaded ? 1 : 0.3,
             }}
           >
-            Добре дошъл във вашето табло за имоти 👋
+            Добре дошли във вашето табло за имоти 
           </h1>
           <p
             style={{
@@ -273,11 +273,11 @@ export default function Dashboard() {
             }}
           >
             <Link to="/add-estate">
-              <button style={btnPrimary}>➕ Добави нов имот</button>
+              <button style={btnPrimary}>Добави нов имот</button>
             </Link>
 
             <Link to="/my-estates">
-              <button style={btnSecondary}>🏡 Виж моите имоти</button>
+              <button style={btnSecondary}>Виж моите имоти</button>
             </Link>
           </div>
         </div>
@@ -334,7 +334,7 @@ export default function Dashboard() {
 
       {/* 📜 Footer */}
       <footer style={footerStyle}>
-        © {new Date().getFullYear()} Управление на имоти | Създадено с ❤️
+        © {new Date().getFullYear()} RealEstate | Създадено с ❤️
       </footer>
     </div>
   );

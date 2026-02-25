@@ -136,10 +136,10 @@ export default function EstateDetail() {
           {canManage && (
             <div style={buttonGroup}>
               <button onClick={() => navigate(`/edit-estate/${estate.id}`)} style={editButton}>
-                ✏️ Редакция
+                 ✏️  
               </button>
               <button onClick={handleDelete} style={deleteButton}>
-                🗑️ Изтрий
+                🗑️ 
               </button>
             </div>
           )}
@@ -147,7 +147,7 @@ export default function EstateDetail() {
       </main>
 
       <footer style={footerStyle}>
-        © {new Date().getFullYear()} Управление на имоти | Създадено с ❤️
+        © {new Date().getFullYear()} RealEstate | Създадено с ❤️
       </footer>
     </div>
   );

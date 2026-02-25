@@ -638,7 +638,7 @@ export default function AddEstate() {
                 <div style={spinner} /> Добавяне...
               </span>
             ) : (
-              "✨ Добави имот"
+              "Добави имот"
             )}
           </button>
         </form>

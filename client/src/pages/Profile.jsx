@@ -208,7 +208,7 @@ export default function Profile() {
             </div>
 
             <button type="submit" disabled={saving} style={saveButton(saving)}>
-              {saving ? "Запазване..." : "💾 Запази промените"}
+              {saving ? "Запазване..." : "Запази промените"}
             </button>
           </form>
 
@@ -238,7 +238,7 @@ export default function Profile() {
                 disabled={passwordLoading}
                 style={saveButton(passwordLoading)}
               >
-                {passwordLoading ? "Обновяване..." : "🔄 Обнови паролата"}
+                {passwordLoading ? "Обновяване..." : "Обнови паролата"}
               </button>
               {passwordMessage && (
                 <p
@@ -267,13 +267,13 @@ export default function Profile() {
               onClick={() => setShowPasswordForm(true)}
               style={{ ...saveButton(false), marginTop: "1.5rem" }}
             >
-              🔑 Смени паролата
+              Смени паролата
             </button>
           )}
 
           {/* Logout */}
           <button onClick={handleLogout} style={logoutButton}>
-            🚪 Изход
+            Изход
           </button>
         </div>
       </main>

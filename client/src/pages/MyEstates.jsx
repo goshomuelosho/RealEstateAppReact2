@@ -431,11 +431,11 @@ export default function MyEstates() {
                     background: "linear-gradient(135deg,#3b82f6,#1d4ed8)",
                   }}
                 >
-                  🛒 Пазар
+                  🛒
                 </button>
               </Link>
               <Link to="/add-estate">
-                <button style={addButton}>➕ Добави имот</button>
+                <button style={addButton}>➕</button>
               </Link>
             </div>
           </div>
@@ -463,7 +463,7 @@ export default function MyEstates() {
               onChange={(e) => setPropertyType(e.target.value)}
               style={filterSelect}
             >
-              <option value="">🏠 Вид на имота (всички)</option>
+              <option value="">Вид на имота (всички)</option>
               {PROPERTY_TYPES.map((t) => (
                 <option key={t} value={t}>
                   {t}
@@ -472,9 +472,9 @@ export default function MyEstates() {
             </select>
 
             <select value={act16} onChange={(e) => setAct16(e.target.value)} style={filterSelect}>
-              <option value="all">📄 Акт 16 (всички)</option>
-              <option value="yes">✅ Само с Акт 16</option>
-              <option value="no">❌ Само без Акт 16</option>
+              <option value="all">Акт 16 (всички)</option>
+              <option value="yes">Само с Акт 16</option>
+              <option value="no">Само без Акт 16</option>
             </select>
 
             <select
@@ -482,7 +482,7 @@ export default function MyEstates() {
               onChange={(e) => setBuildingType(e.target.value)}
               style={filterSelect}
             >
-              <option value="">🏢 Вид на сградата (всички)</option>
+              <option value="">Вид на сградата (всички)</option>
               {BUILDING_TYPES.map((t) => (
                 <option key={t} value={t}>
                   {t}
@@ -491,7 +491,7 @@ export default function MyEstates() {
             </select>
 
             <select value={floor} onChange={(e) => setFloor(e.target.value)} style={filterSelect}>
-              <option value="">🧱 Етаж (всички)</option>
+              <option value="">Етаж (всички)</option>
               {FLOORS.map((f) => (
                 <option key={f} value={f}>
                   {f}
@@ -500,9 +500,9 @@ export default function MyEstates() {
             </select>
 
             <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} style={filterSelect}>
-              <option value="newest">🕒 Най-нови първо</option>
-              <option value="low-high">💲 Цена: ниска → висока</option>
-              <option value="high-low">💰 Цена: висока → ниска</option>
+              <option value="newest">Най-нови първо</option>
+              <option value="low-high">Цена: ниска → висока</option>
+              <option value="high-low">Цена: висока → ниска</option>
             </select>
 
             {/* Reset row full width */}
@@ -570,7 +570,7 @@ export default function MyEstates() {
       </main>
 
       <footer style={footerStyle}>
-        © {new Date().getFullYear()} Управление на имоти | Създадено с ❤️
+        © {new Date().getFullYear()} RealEstate | Създадено с ❤️
       </footer>
     </div>
   );

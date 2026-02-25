@@ -686,7 +686,7 @@ export default function Marketplace() {
             onChange={(e) => setPropertyType(e.target.value)}
             style={selectStyle}
           >
-            <option value="">🏠 Вид на имота (всички)</option>
+            <option value="">Вид на имота (всички)</option>
             {PROPERTY_TYPES.map((t) => (
               <option key={t} value={t}>
                 {t}
@@ -695,9 +695,9 @@ export default function Marketplace() {
           </select>
 
           <select value={act16} onChange={(e) => setAct16(e.target.value)} style={selectStyle}>
-            <option value="all">📄 Акт 16 (всички)</option>
-            <option value="yes">✅ Само с Акт 16</option>
-            <option value="no">❌ Само без Акт 16</option>
+            <option value="all">Акт 16 (всички)</option>
+            <option value="yes">Само с Акт 16</option>
+            <option value="no">Само без Акт 16</option>
           </select>
 
           <select
@@ -705,7 +705,7 @@ export default function Marketplace() {
             onChange={(e) => setBuildingType(e.target.value)}
             style={selectStyle}
           >
-            <option value="">🏢 Вид на сградата (всички)</option>
+            <option value="">Вид на сградата (всички)</option>
             {BUILDING_TYPES.map((t) => (
               <option key={t} value={t}>
                 {t}
@@ -714,7 +714,7 @@ export default function Marketplace() {
           </select>
 
           <select value={floor} onChange={(e) => setFloor(e.target.value)} style={selectStyle}>
-            <option value="">🧱 Етаж (всички)</option>
+            <option value="">Етаж (всички)</option>
             {FLOORS.map((f) => (
               <option key={f} value={f}>
                 {f}
@@ -723,15 +723,15 @@ export default function Marketplace() {
           </select>
 
           <select value={sort} onChange={(e) => setSort(e.target.value)} style={selectStyle}>
-            <option value="newest">🕒 Най-нови</option>
-            <option value="low-high">💲 Цена: ниска → висока</option>
-            <option value="high-low">💰 Цена: висока → ниска</option>
+            <option value="newest">Най-нови</option>
+            <option value="low-high">Цена: ниска → висока</option>
+            <option value="high-low">Цена: висока → ниска</option>
           </select>
 
           {/* Only favorites toggle */}
           <div style={favToggleRow}>
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <div style={{ fontWeight: 900, letterSpacing: 0.2 }}>⭐ Само любими</div>
+              <div style={{ fontWeight: 900, letterSpacing: 0.2 }}>⭐</div>
               <div style={{ fontSize: 13, color: "rgba(226,232,240,0.8)" }}>
                 Показва само имотите, които си отбелязал като любими.
               </div>
@@ -890,7 +890,7 @@ export default function Marketplace() {
                       }}
                     >
                       <button style={contactBtn} onClick={() => openContact(estate)}>
-                        ✉️ Контакт
+                        ✉️
                       </button>
                       <button
                         style={{
@@ -899,7 +899,7 @@ export default function Marketplace() {
                         }}
                         onClick={() => navigate(`/estate/${estate.id}`)}
                       >
-                        🔎 Детайли
+                        🔎
                       </button>
                     </div>
                   </div>
@@ -1007,7 +1007,7 @@ export default function Marketplace() {
       )}
 
       <footer style={footerStyle}>
-        © {new Date().getFullYear()} Real Estate Management | Създадено с ❤️
+        © {new Date().getFullYear()} RealEstate | Създадено с ❤️
       </footer>
     </div>
   );

@@ -481,7 +481,7 @@ export default function AdminDashboard() {
       </main>
 
       <footer style={footerStyle}>
-        © {new Date().getFullYear()} Admin Panel | Създадено с ❤️
+        © {new Date().getFullYear()} RealEstate | Създадено с ❤️
       </footer>
     </div>
   );

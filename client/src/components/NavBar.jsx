@@ -38,7 +38,7 @@ export default function NavBar({ profile }) {
           textDecoration: "none",
         }}
       >
-        🏠 Real Estate
+        🏠 RealEstate
       </Link>
 
       {/* MAIN NAVIGATION */}

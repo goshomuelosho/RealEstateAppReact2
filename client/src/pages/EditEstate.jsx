@@ -630,7 +630,7 @@ export default function EditEstate() {
                     <div style={spinner} /> Обновяване...
                   </span>
                 ) : (
-                  "💾 Обнови имота"
+                  "Обнови имота"
                 )}
               </button>
             </form>
