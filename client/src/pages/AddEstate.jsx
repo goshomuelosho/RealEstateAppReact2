@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate, useLocation } from "react-router-dom";
 import NavBar from "../components/NavBar";
+import LocationPicker from "../components/LocationPicker";
 
 /* 🎨 Styles (defined first) */
 const pageContainer = (isLoaded) => ({
@@ -533,38 +534,31 @@ export default function AddEstate() {
             />
           </div>
 
-          {/* Price + Location */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "1rem",
-              marginTop: "1rem",
-            }}
-          >
-            <div>
-              <label style={labelStyle}>Цена ($)</label>
-              <input
-                type="number"
-                name="price"
-                value={form.price}
-                onChange={handleChange}
-                placeholder="500000"
-                style={inputStyle}
-                required
-              />
-            </div>
-            <div>
-              <label style={labelStyle}>Локация</label>
-              <input
-                name="location"
-                value={form.location}
-                onChange={handleChange}
-                placeholder="София"
-                style={inputStyle}
-                required
-              />
-            </div>
+          {/* Price */}
+          <div style={{ marginTop: "1rem" }}>
+            <label style={labelStyle}>Цена (€)</label>
+            <input
+              type="number"
+              name="price"
+              value={form.price}
+              onChange={handleChange}
+              placeholder="500000"
+              style={inputStyle}
+              required
+            />
+          </div>
+
+          {/* Location with map picker */}
+          <div style={{ marginTop: "1rem" }}>
+            <LocationPicker
+              value={form.location}
+              onChange={(nextLocation) =>
+                setForm((prev) => ({ ...prev, location: nextLocation }))
+              }
+              required
+              inputStyle={inputStyle}
+              labelStyle={labelStyle}
+            />
           </div>
 
           {/* Upload */}

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import NavBar from "../components/NavBar";
+import LocationPinMap from "../components/LocationPinMap";
 
 export default function EstateDetail() {
   const { id } = useParams();
@@ -100,6 +101,8 @@ export default function EstateDetail() {
             <p style={estateLocation}>📍 {estate.location}</p>
             <p style={estatePrice}>${Number(estate.price || 0).toLocaleString()}</p>
           </div>
+
+          <LocationPinMap location={estate.location} />
 
           {/* ✅ Extra details */}
           <div style={detailsWrap}>

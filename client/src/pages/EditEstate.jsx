@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate, useParams } from "react-router-dom";
 import NavBar from "../components/NavBar";
+import LocationPicker from "../components/LocationPicker";
 
 /* ✅ Dropdown options */
 const PROPERTY_TYPES = [
@@ -589,19 +590,21 @@ export default function EditEstate() {
               <input
                 name="price"
                 type="number"
-                placeholder="Цена ($)"
+                placeholder="Цена (€)"
                 value={form.price}
                 onChange={handleChange}
                 required
                 style={inputStyle}
               />
-              <input
-                name="location"
-                placeholder="Локация"
+              <LocationPicker
                 value={form.location}
-                onChange={handleChange}
+                onChange={(nextLocation) =>
+                  setForm((prev) => ({ ...prev, location: nextLocation }))
+                }
                 required
-                style={inputStyle}
+                autoLocateOnInitialValue
+                inputStyle={inputStyle}
+                labelStyle={labelStyle}
               />
 
               {/* Image input */}

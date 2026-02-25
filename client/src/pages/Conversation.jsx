@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { io } from "socket.io-client";
 import { supabase } from "../supabaseClient";
 import NavBar from "../components/NavBar";
 
@@ -13,6 +14,7 @@ export default function Conversation() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [content, setContent] = useState("");
+  const socketRef = useRef(null);
 
   // 👇 same fade-in state as Dashboard
   const [isLoaded, setIsLoaded] = useState(false);
@@ -45,8 +47,9 @@ export default function Conversation() {
         .from("messages")
         .select("*")
         .eq("estate_id", estateId)
-        .or(`sender_id.eq.${currentUserId},receiver_id.eq.${currentUserId}`)
-        .or(`sender_id.eq.${otherUserId},receiver_id.eq.${otherUserId}`)
+        .or(
+          `and(sender_id.eq.${currentUserId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${currentUserId})`
+        )
         .order("created_at", { ascending: true });
 
       if (error) {
@@ -61,6 +64,54 @@ export default function Conversation() {
       setTimeout(() => setIsLoaded(true), 150);
     })();
   }, [estateId, otherUserId, navigate]);
+
+  useEffect(() => {
+    if (!profile?.id || !otherUser?.id || !estateId || loading) return;
+
+    const socket = io(
+      import.meta.env.VITE_SOCKET_URL || "http://localhost:5000"
+    );
+    socketRef.current = socket;
+
+    const roomPayload = {
+      estateId: String(estateId),
+      userA: profile.id,
+      userB: otherUser.id,
+    };
+
+    const handleConnect = () => {
+      socket.emit("join_conversation", roomPayload);
+    };
+
+    const handleConversationMessage = (incomingMessage) => {
+      if (!incomingMessage?.id) return;
+
+      setMessages((prev) => {
+        if (prev.some((message) => message.id === incomingMessage.id)) {
+          return prev;
+        }
+        return [...prev, incomingMessage];
+      });
+    };
+
+    socket.on("connect", handleConnect);
+    socket.on("conversation_message", handleConversationMessage);
+
+    if (socket.connected) {
+      handleConnect();
+    }
+
+    return () => {
+      socket.emit("leave_conversation", roomPayload);
+      socket.off("connect", handleConnect);
+      socket.off("conversation_message", handleConversationMessage);
+      socket.disconnect();
+
+      if (socketRef.current === socket) {
+        socketRef.current = null;
+      }
+    };
+  }, [estateId, loading, otherUser?.id, profile?.id]);
 
   const handleSend = async (e) => {
     e.preventDefault();
@@ -83,7 +134,20 @@ export default function Conversation() {
 
       if (error) throw error;
 
-      setMessages((prev) => [...prev, data]);
+      setMessages((prev) => {
+        if (prev.some((message) => message.id === data.id)) {
+          return prev;
+        }
+        return [...prev, data];
+      });
+
+      socketRef.current?.emit("conversation_message", {
+        estateId: String(estateId),
+        senderId: profile.id,
+        receiverId: otherUser.id,
+        message: data,
+      });
+
       setContent("");
     } catch (err) {
       console.error("Error sending message:", err);
