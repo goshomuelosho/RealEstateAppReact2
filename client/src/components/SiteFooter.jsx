@@ -61,26 +61,6 @@ const metaRow = {
   fontSize: "0.84rem",
 };
 
-const supportBadges = {
-  display: "flex",
-  alignItems: "center",
-  flexWrap: "wrap",
-  gap: "0.5rem",
-  marginTop: "0.7rem",
-};
-
-const badge = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "0.35rem",
-  border: "1px solid rgba(148,163,184,0.32)",
-  borderRadius: 999,
-  padding: "0.2rem 0.55rem",
-  fontSize: "0.8rem",
-  color: "#cbd5e1",
-  background: "rgba(15,23,42,0.5)",
-};
-
 export default function SiteFooter() {
   return (
     <footer style={footerWrap} role="contentinfo">
@@ -185,4 +165,3 @@ export default function SiteFooter() {
     </footer>
   );
 }
-

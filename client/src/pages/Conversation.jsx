@@ -69,45 +69,96 @@ export default function Conversation() {
   useEffect(() => {
     if (!profile?.id || !otherUser?.id || !estateId || loading) return;
 
-    const { url: socketUrl, path: socketPath } = getSocketConfig();
-    const socket = io(socketUrl, {
-      path: socketPath,
-      withCredentials: true,
-    });
-    socketRef.current = socket;
-
     const roomPayload = {
       estateId: String(estateId),
       userA: profile.id,
       userB: otherUser.id,
     };
 
-    const handleConnect = () => {
-      socket.emit("join_conversation", roomPayload);
-    };
+    let isCancelled = false;
+    let socket = null;
+    let handleConnect = null;
+    let handleConversationMessage = null;
+    let handleConnectError = null;
 
-    const handleConversationMessage = (incomingMessage) => {
-      if (!incomingMessage?.id) return;
-
-      setMessages((prev) => {
-        if (prev.some((message) => message.id === incomingMessage.id)) {
-          return prev;
+    const connectSocket = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("Socket auth session error:", error);
+          return;
         }
-        return [...prev, incomingMessage];
-      });
+
+        const token = data?.session?.access_token;
+        if (!token) {
+          console.error("Socket auth token missing.");
+          return;
+        }
+
+        const { url: socketUrl, path: socketPath } = getSocketConfig();
+        socket = io(socketUrl, {
+          path: socketPath,
+          withCredentials: true,
+          auth: { token },
+        });
+
+        if (isCancelled) {
+          socket.disconnect();
+          return;
+        }
+
+        socketRef.current = socket;
+
+        handleConnect = () => {
+          socket.emit("join_conversation", roomPayload);
+        };
+
+        handleConversationMessage = (incomingMessage) => {
+          if (!incomingMessage?.id) return;
+
+          setMessages((prev) => {
+            if (prev.some((message) => message.id === incomingMessage.id)) {
+              return prev;
+            }
+            return [...prev, incomingMessage];
+          });
+        };
+
+        socket.on("connect", handleConnect);
+        socket.on("conversation_message", handleConversationMessage);
+
+        if (socket.connected) {
+          handleConnect();
+        }
+
+        handleConnectError = (socketError) => {
+          console.error(
+            "Socket connection error:",
+            socketError?.message || socketError
+          );
+        };
+        socket.on("connect_error", handleConnectError);
+      } catch (connectError) {
+        console.error("Socket setup failed:", connectError);
+      }
     };
 
-    socket.on("connect", handleConnect);
-    socket.on("conversation_message", handleConversationMessage);
-
-    if (socket.connected) {
-      handleConnect();
-    }
+    connectSocket();
 
     return () => {
+      isCancelled = true;
+      if (!socket) return;
+
       socket.emit("leave_conversation", roomPayload);
-      socket.off("connect", handleConnect);
-      socket.off("conversation_message", handleConversationMessage);
+      if (handleConnect) {
+        socket.off("connect", handleConnect);
+      }
+      if (handleConversationMessage) {
+        socket.off("conversation_message", handleConversationMessage);
+      }
+      if (handleConnectError) {
+        socket.off("connect_error", handleConnectError);
+      }
       socket.disconnect();
 
       if (socketRef.current === socket) {
