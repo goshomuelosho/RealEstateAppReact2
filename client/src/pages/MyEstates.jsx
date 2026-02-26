@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate, Link } from "react-router-dom";
 import NavBar from "../components/NavBar";
+import useViewportWidth from "../hooks/useViewportWidth";
 
 /* ✅ Dropdown options (same as AddEstate) */
 const PROPERTY_TYPES = [
@@ -272,6 +273,9 @@ const emptyState = { color: "#94a3b8", textAlign: "center", marginTop: "2rem" };
 
 /* 🧭 Component */
 export default function MyEstates() {
+  const viewportWidth = useViewportWidth();
+  const isMobile = viewportWidth <= 768;
+  const isTablet = viewportWidth <= 1200;
   const [hoveredCard, setHoveredCard] = useState(null);
   const [estates, setEstates] = useState([]);
   const [profile, setProfile] = useState(null);
@@ -409,11 +413,18 @@ export default function MyEstates() {
 
       <NavBar profile={profile} />
 
-      <main style={mainStyle}>
+      <main
+        style={{
+          ...mainStyle,
+          padding: isMobile ? "1rem 0.85rem 1.4rem" : isTablet ? "2rem 1.25rem" : mainStyle.padding,
+        }}
+      >
         <div style={contentWrapper}>
-          <div style={titleBar}>
-            <h1 style={pageTitle}>Моите имоти</h1>
-            <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+          <div style={{ ...titleBar, alignItems: isMobile ? "stretch" : titleBar.alignItems }}>
+            <h1 style={{ ...pageTitle, fontSize: isMobile ? "1.75rem" : pageTitle.fontSize }}>
+              Моите имоти
+            </h1>
+            <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
               <Link to="/marketplace">
                 <button
                   style={{
@@ -431,7 +442,16 @@ export default function MyEstates() {
           </div>
 
           {/* Filters (Marketplace-like grid) */}
-          <div style={filterBar}>
+          <div
+            style={{
+              ...filterBar,
+              gridTemplateColumns: isMobile
+                ? "1fr"
+                : isTablet
+                ? "repeat(2, minmax(180px, 1fr))"
+                : filterBar.gridTemplateColumns,
+            }}
+          >
             <input
               type="text"
               placeholder="Търсене по заглавие..."
@@ -496,7 +516,7 @@ export default function MyEstates() {
             </select>
 
             {/* Reset row full width */}
-            <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8 }}>
+            <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button
                 onClick={() => {
                   setTitleSearch("");
@@ -540,7 +560,13 @@ export default function MyEstates() {
               <div style={loaderSpinner} />
             </div>
           ) : estates.length > 0 ? (
-            <div style={grid}>
+            <div
+              style={{
+                ...grid,
+                gridTemplateColumns: isMobile ? "1fr" : grid.gridTemplateColumns,
+                gap: isMobile ? "1rem" : grid.gap,
+              }}
+            >
               {estates.map((estate) => (
                 <EstateCard
                   key={estate.id}

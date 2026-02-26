@@ -12,6 +12,19 @@ body,
   padding: 0;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
 /* 🎨 Theme Variables */
 :root {
   --bg-gradient-start: #0f172a; /* dark navy */

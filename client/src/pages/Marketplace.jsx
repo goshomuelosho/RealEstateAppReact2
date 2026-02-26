@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate } from "react-router-dom";
 import NavBar from "../components/NavBar";
+import useViewportWidth from "../hooks/useViewportWidth";
 
 /** ---------- Dropdown options (same as AddEstate) ---------- */
 const PROPERTY_TYPES = [
@@ -350,6 +351,9 @@ const toggleKnob = (on) => ({
 
 /** ---------- Component ---------- */
 export default function Marketplace() {
+  const viewportWidth = useViewportWidth();
+  const isMobile = viewportWidth <= 768;
+  const isTablet = viewportWidth <= 1200;
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
 
@@ -618,7 +622,12 @@ export default function Marketplace() {
         select option { background: #0f172a; color: #f1f5f9; }
       `}</style>
 
-      <main style={content}>
+      <main
+        style={{
+          ...content,
+          padding: isMobile ? "1rem 0.85rem 1.2rem" : isTablet ? "1.5rem 1.2rem" : content.padding,
+        }}
+      >
         <div
           style={{
             display: "flex",
@@ -631,7 +640,7 @@ export default function Marketplace() {
           <h1
             style={{
               margin: 0,
-              fontSize: "2rem",
+              fontSize: isMobile ? "1.65rem" : "2rem",
               fontWeight: 800,
               background: "linear-gradient(135deg,#fff,#94a3b8)",
               WebkitBackgroundClip: "text",
@@ -643,7 +652,16 @@ export default function Marketplace() {
         </div>
 
         {/* Filters */}
-        <div style={filterBar}>
+        <div
+          style={{
+            ...filterBar,
+            gridTemplateColumns: isMobile
+              ? "1fr"
+              : isTablet
+              ? "repeat(2, minmax(180px, 1fr))"
+              : filterBar.gridTemplateColumns,
+          }}
+        >
           <input
             placeholder="Търси по заглавие"
             value={qTitle}
@@ -719,7 +737,13 @@ export default function Marketplace() {
           </select>
 
           {/* Only favorites toggle */}
-          <div style={favToggleRow}>
+          <div
+            style={{
+              ...favToggleRow,
+              flexDirection: isMobile ? "column" : "row",
+              alignItems: isMobile ? "flex-start" : "center",
+            }}
+          >
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
               <div style={{ fontWeight: 900, letterSpacing: 0.2 }}>⭐</div>
               <div style={{ fontSize: 13, color: "rgba(226,232,240,0.8)" }}>
@@ -735,14 +759,17 @@ export default function Marketplace() {
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") setOnlyFavorites((v) => !v);
               }}
-              style={toggleTrack(onlyFavorites)}
+              style={{
+                ...toggleTrack(onlyFavorites),
+                alignSelf: isMobile ? "flex-end" : "auto",
+              }}
               title={onlyFavorites ? "Показва любими" : "Показва всички"}
             >
               <div style={toggleKnob(onlyFavorites)} />
             </div>
           </div>
 
-          <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8 }}>
+          <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8, flexWrap: "wrap" }}>
             <button
               onClick={() => {
                 const cleared = {
@@ -792,7 +819,14 @@ export default function Marketplace() {
             <div style={loaderSpinner} />
           </div>
         ) : estates.length ? (
-          <div style={{ ...grid, animation: "fadeInUp 0.6s ease" }}>
+          <div
+            style={{
+              ...grid,
+              gridTemplateColumns: isMobile ? "1fr" : grid.gridTemplateColumns,
+              gap: isMobile ? "1rem" : grid.gap,
+              animation: "fadeInUp 0.6s ease",
+            }}
+          >
             {estates.map((estate) => {
               const showFloor =
                 estate.floor &&
@@ -831,17 +865,18 @@ export default function Marketplace() {
                       style={{
                         display: "flex",
                         justifyContent: "space-between",
-                        alignItems: "center",
+                        alignItems: isMobile ? "flex-start" : "center",
                         gap: 10,
+                        flexWrap: isMobile ? "wrap" : "nowrap",
                       }}
                     >
                       <h3
                         style={{
                           margin: 0,
-                          fontSize: "1.4rem",
+                          fontSize: isMobile ? "1.2rem" : "1.4rem",
                           fontWeight: "700",
                           color: "#0f172a",
-                          paddingRight: 52,
+                          paddingRight: isMobile ? 0 : 52,
                         }}
                       >
                         {estate.title}
@@ -1036,12 +1071,15 @@ const overlay = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
+  padding: "0.8rem",
   zIndex: 50,
 };
 
 const modal = {
   width: "100%",
   maxWidth: 520,
+  maxHeight: "calc(100vh - 1.6rem)",
+  overflowY: "auto",
   background: "#fff",
   color: "#0f172a",
   borderRadius: 18,

@@ -1,100 +1,114 @@
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import "./NavBar.css";
+
+const BASE_NAV_ITEMS = [
+  { path: "/marketplace", label: "Пазар" },
+  { path: "/my-estates", label: "Моите имоти" },
+  { path: "/messages", label: "Съобщения" },
+];
 
 export default function NavBar({ profile }) {
   const location = useLocation();
   const navigate = useNavigate();
-
-  const isActive = (path) =>
-    location.pathname.startsWith(path)
-      ? { color: "#3b82f6", fontWeight: 700 }
-      : { color: "#e2e8f0" };
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const isAdmin = !!profile?.is_admin;
+  const navItems = useMemo(
+    () =>
+      isAdmin
+        ? [...BASE_NAV_ITEMS, { path: "/admin", label: "Админ" }]
+        : BASE_NAV_ITEMS,
+    [isAdmin]
+  );
+
+  const isActive = (path) => location.pathname.startsWith(path);
+
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setIsMenuOpen(false);
+    };
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, []);
+
+  const goToProfile = () => navigate("/profile");
 
   return (
-    <header
-      style={{
-        padding: "1.25rem 2rem",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        background: "rgba(15,23,42,0.6)",
-        backdropFilter: "blur(20px)",
-        borderBottom: "1px solid rgba(255,255,255,0.1)",
-        position: "sticky",
-        top: 0,
-        zIndex: 10,
-      }}
-    >
-      {/* Logo */}
-      <Link
-        to="/dashboard"
-        style={{
-          fontSize: "1.5rem",
-          fontWeight: 700,
-          background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          textDecoration: "none",
-        }}
-      >
-        🏠 RealEstate
-      </Link>
-
-      {/* MAIN NAVIGATION */}
-      <nav style={{ display: "flex", gap: "2rem", alignItems: "center" }}>
-        <Link to="/marketplace" style={isActive("/marketplace")}>
-          Пазар
-        </Link>
-
-        <Link to="/my-estates" style={isActive("/my-estates")}>
-          Моите имоти
-        </Link>
-
-        <Link to="/messages" style={isActive("/messages")}>
-          Съобщения
-        </Link>
-
-        {/* ✅ Admin link (only for admins) */}
-        {isAdmin && (
-          <Link to="/admin" style={isActive("/admin")}>
-            Админ
-          </Link>
-        )}
-      </nav>
-
-      {/* Profile pill */}
-      {profile && (
-        <div
-          onClick={() => navigate("/profile")}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.75rem",
-            cursor: "pointer",
-            background: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: "50px",
-            padding: "0.4rem 0.9rem",
-          }}
-        >
-          <img
-            src={profile.avatar_url || "https://via.placeholder.com/40"}
-            alt="avatar"
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: "50%",
-              objectFit: "cover",
-              border: "2px solid rgba(255,255,255,0.2)",
-            }}
-          />
-
-          <span style={{ fontWeight: 600, color: "#E2E8F0" }}>
-            {profile.name || "Профил"}
+    <div className="app-navbar-shell">
+      <header className="app-navbar">
+        <Link to="/dashboard" className="app-navbar__logo" aria-label="Начало">
+          <span className="app-navbar__logo-icon" aria-hidden="true">
+            🏠
           </span>
+          <span className="app-navbar__logo-text">RealEstate</span>
+        </Link>
+
+        <nav className="app-navbar__links" aria-label="Основна навигация">
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`app-navbar__link${isActive(item.path) ? " is-active" : ""}`}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="app-navbar__actions">
+          <button
+            type="button"
+            className={`app-navbar__menu-button${isMenuOpen ? " is-open" : ""}`}
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-nav-links"
+            aria-label={isMenuOpen ? "Затвори менюто" : "Отвори менюто"}
+          >
+            <span className="app-navbar__menu-line" />
+          </button>
+
+          {profile && (
+            <button
+              type="button"
+              className="app-navbar__profile"
+              onClick={goToProfile}
+              aria-label="Профил"
+            >
+              <img
+                src={profile.avatar_url || "https://via.placeholder.com/40"}
+                alt="avatar"
+                className="app-navbar__avatar"
+              />
+              <span className="app-navbar__profile-name">
+                {profile.name || "Профил"}
+              </span>
+            </button>
+          )}
         </div>
-      )}
-    </header>
+      </header>
+
+      <nav
+        id="mobile-nav-links"
+        className={`app-navbar__mobile-menu${isMenuOpen ? " is-open" : ""}`}
+        aria-label="Мобилна навигация"
+      >
+        {navItems.map((item) => (
+          <Link
+            key={`mobile-${item.path}`}
+            to={item.path}
+            onClick={() => setIsMenuOpen(false)}
+            className={`app-navbar__mobile-link${isActive(item.path) ? " is-active" : ""}`}
+          >
+            {item.label}
+          </Link>
+        ))}
+      </nav>
+    </div>
   );
 }
