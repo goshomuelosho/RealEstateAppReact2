@@ -1,32 +1,25 @@
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "../supabaseClient";
+import NavBar from "./NavBar";
 
 const page = {
   minHeight: "100vh",
+  display: "flex",
+  flexDirection: "column",
   background:
     "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)",
   color: "#e2e8f0",
+};
+
+const main = {
+  flex: 1,
   padding: "2rem 1rem 2.5rem",
 };
 
 const wrap = {
   maxWidth: 980,
   margin: "0 auto",
-};
-
-const topNav = {
-  display: "flex",
-  flexWrap: "wrap",
-  alignItems: "center",
-  gap: "0.6rem",
-  marginBottom: "1rem",
-  color: "#94a3b8",
-  fontSize: "0.9rem",
-};
-
-const topLink = {
-  color: "#bfdbfe",
-  textDecoration: "none",
-  fontWeight: 700,
 };
 
 const card = {
@@ -90,65 +83,87 @@ export default function InfoPageLayout({
   sections,
   children,
 }) {
+  const navigate = useNavigate();
+  const [navProfile, setNavProfile] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setAuthLoading(false);
+        navigate("/login", { replace: true });
+        return;
+      }
+
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("id, name, avatar_url, is_admin")
+        .eq("id", user.id)
+        .single();
+
+      setNavProfile(
+        profileData || {
+          id: user.id,
+          name: user.email || "Профил",
+          avatar_url: "",
+          is_admin: false,
+        }
+      );
+      setAuthLoading(false);
+    };
+
+    loadUserProfile();
+  }, [navigate]);
+
+  if (authLoading) {
+    return (
+      <div style={{ ...page, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ color: "#cbd5e1", fontWeight: 700 }}>Зареждане...</div>
+      </div>
+    );
+  }
+
   return (
     <div style={page}>
-      <style>{`
-        .info-top-link:hover {
-          color: #ffffff;
-          text-decoration: underline;
-        }
-        .info-top-link:focus-visible {
-          outline: 2px solid #38bdf8;
-          outline-offset: 2px;
-          border-radius: 6px;
-        }
-      `}</style>
+      <NavBar profile={navProfile} />
 
-      <div style={wrap}>
-        <nav style={topNav} aria-label="Навигация до основни секции">
-          <Link className="info-top-link" style={topLink} to="/">
-            Начало
-          </Link>
-          <span>/</span>
-          <Link className="info-top-link" style={topLink} to="/marketplace">
-            Пазар
-          </Link>
-          <span>/</span>
-          <Link className="info-top-link" style={topLink} to="/sitemap">
-            Карта на сайта
-          </Link>
-        </nav>
+      <main style={main}>
+        <div style={wrap}>
+          <article style={card}>
+            <header>
+              <h1 style={title}>{titleText}</h1>
+              <p style={subtitle}>{subtitleText}</p>
+              <p style={updatedAt}>{updatedText}</p>
+            </header>
 
-        <article style={card}>
-          <header>
-            <h1 style={title}>{titleText}</h1>
-            <p style={subtitle}>{subtitleText}</p>
-            <p style={updatedAt}>{updatedText}</p>
-          </header>
+            {sections.map((sectionItem) => (
+              <section key={sectionItem.title} style={section}>
+                <h2 style={sectionTitle}>{sectionItem.title}</h2>
 
-          {sections.map((sectionItem) => (
-            <section key={sectionItem.title} style={section}>
-              <h2 style={sectionTitle}>{sectionItem.title}</h2>
+                {(sectionItem.paragraphs || []).map((text, idx) => (
+                  <p key={`${sectionItem.title}-p-${idx}`} style={paragraph}>
+                    {text}
+                  </p>
+                ))}
 
-              {(sectionItem.paragraphs || []).map((text, idx) => (
-                <p key={`${sectionItem.title}-p-${idx}`} style={paragraph}>
-                  {text}
-                </p>
-              ))}
+                {sectionItem.list?.length ? (
+                  <ul style={list}>
+                    {sectionItem.list.map((item, idx) => (
+                      <li key={`${sectionItem.title}-li-${idx}`}>{item}</li>
+                    ))}
+                  </ul>
+                ) : null}
+              </section>
+            ))}
 
-              {sectionItem.list?.length ? (
-                <ul style={list}>
-                  {sectionItem.list.map((item, idx) => (
-                    <li key={`${sectionItem.title}-li-${idx}`}>{item}</li>
-                  ))}
-                </ul>
-              ) : null}
-            </section>
-          ))}
-
-          {children ? <section style={section}>{children}</section> : null}
-        </article>
-      </div>
+            {children ? <section style={section}>{children}</section> : null}
+          </article>
+        </div>
+      </main>
     </div>
   );
 }

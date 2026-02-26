@@ -1,18 +1,22 @@
 import { useState } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate, Link } from "react-router-dom";
+import { PASSWORD_RESET_REDIRECT_URL } from "../utils/authRedirects";
 
 export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [infoMessage, setInfoMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+    setInfoMessage("");
     setLoading(true);
 
     const { error } = await supabase.auth.signInWithPassword({
@@ -27,6 +31,29 @@ export default function Login() {
     } else {
       navigate("/dashboard");
     }
+  };
+
+  const handleResetPassword = async () => {
+    setError("");
+    setInfoMessage("");
+
+    if (!email.trim()) {
+      setError("Въведи имейл адрес, за да изпратим линк за нова парола.");
+      return;
+    }
+
+    setResetLoading(true);
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: PASSWORD_RESET_REDIRECT_URL,
+    });
+    setResetLoading(false);
+
+    if (resetError) {
+      setError(resetError.message);
+      return;
+    }
+
+    setInfoMessage("📩 Изпратихме линк за нова парола на имейла ти.");
   };
 
   return (
@@ -199,6 +226,14 @@ export default function Login() {
                 {showPassword ? "🙈" : "👁️‍🗨️"}
               </button>
             </div>
+            <button
+              type="button"
+              onClick={handleResetPassword}
+              disabled={resetLoading}
+              style={forgotBtn(resetLoading)}
+            >
+              {resetLoading ? "Изпращане..." : "Забравена парола?"}
+            </button>
           </div>
 
           {/* 🚀 Submit Button */}
@@ -252,6 +287,12 @@ export default function Login() {
         {error && (
           <div style={errorStyle}>
             <span>⚠️</span> {error}
+          </div>
+        )}
+
+        {infoMessage && (
+          <div style={successStyle}>
+            <span>✅</span> {infoMessage}
           </div>
         )}
 
@@ -339,3 +380,31 @@ const errorStyle = {
   justifyContent: "center",
   gap: "0.5rem",
 };
+
+const successStyle = {
+  marginTop: "1rem",
+  padding: "1rem",
+  background: "rgba(16,185,129,0.1)",
+  border: "1px solid rgba(16,185,129,0.3)",
+  borderRadius: "10px",
+  color: "#10b981",
+  fontSize: "0.9rem",
+  fontWeight: "600",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "0.5rem",
+};
+
+const forgotBtn = (disabled) => ({
+  marginTop: "0.65rem",
+  padding: 0,
+  background: "transparent",
+  border: "none",
+  boxShadow: "none",
+  color: disabled ? "#64748b" : "#60a5fa",
+  fontSize: "0.9rem",
+  fontWeight: "600",
+  cursor: disabled ? "not-allowed" : "pointer",
+  textDecoration: "underline",
+});

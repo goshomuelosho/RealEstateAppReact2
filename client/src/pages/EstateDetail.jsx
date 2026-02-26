@@ -56,6 +56,12 @@ export default function EstateDetail() {
   }, [id, navigate]);
 
   const canManage = isOwner || isAdmin;
+  const fallbackBackRoute = isOwner ? "/my-estates" : "/marketplace";
+
+  const handleBack = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate(fallbackBackRoute);
+  };
 
   const handleDelete = async () => {
     if (!window.confirm("Сигурни ли сте, че искате да изтриете този имот?")) return;
@@ -93,6 +99,10 @@ export default function EstateDetail() {
 
       <main style={mainStyle}>
         <div style={estateCard}>
+          <button type="button" style={backButton} onClick={handleBack}>
+            ⬅ Назад
+          </button>
+
           {estate.image_url && <img src={estate.image_url} alt={estate.title} style={estateImage} />}
 
           <h1 style={estateTitle}>{estate.title}</h1>
@@ -307,6 +317,18 @@ const estateDescription = {
 };
 
 const buttonGroup = { display: "flex", justifyContent: "flex-end", gap: "1rem" };
+
+const backButton = {
+  marginBottom: "1rem",
+  padding: "0.7rem 1rem",
+  borderRadius: "10px",
+  border: "1px solid rgba(15,23,42,0.14)",
+  background: "rgba(15,23,42,0.04)",
+  color: "#0f172a",
+  fontWeight: 700,
+  cursor: "pointer",
+  boxShadow: "none",
+};
 
 const editButton = {
   padding: "0.9rem 1.5rem",

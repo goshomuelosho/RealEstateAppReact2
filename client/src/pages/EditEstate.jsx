@@ -420,6 +420,12 @@ export default function EditEstate() {
   };
 
   const currentImageUrl = imagePreview || form.image_url;
+  const fallbackBackRoute = isAdmin && !isOwner ? "/marketplace" : "/my-estates";
+
+  const handleBack = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate(fallbackBackRoute);
+  };
 
   return (
     <div style={pageContainer(isLoaded)}>
@@ -451,6 +457,10 @@ export default function EditEstate() {
           </div>
         ) : (
           <div style={cardStyle}>
+            <button type="button" style={{ ...backBtn, marginTop: 0, marginBottom: "1rem" }} onClick={handleBack}>
+              ⬅ Назад
+            </button>
+
             <h2
               style={{
                 textAlign: "center",

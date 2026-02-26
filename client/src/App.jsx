@@ -4,6 +4,7 @@ import { supabase } from "./supabaseClient";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import MyEstates from "./pages/MyEstates";
 import AddEstate from "./pages/AddEstate";
@@ -228,6 +229,7 @@ function App() {
         {/* 🔓 Public routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* ✅ Info routes */}
         <Route path="/help" element={<HelpCenter />} />

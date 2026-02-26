@@ -6,7 +6,7 @@ import NavBar from "../components/NavBar";
 export default function Profile() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState({ name: "", bio: "", avatar_url: "" });
+  const [profile, setProfile] = useState({ name: "", avatar_url: "" });
   const [avatarFile, setAvatarFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -80,7 +80,6 @@ export default function Profile() {
     const { error } = await supabase.from("profiles").upsert({
       id: user.id,
       name: profile.name,
-      bio: profile.bio,
       avatar_url,
       updated_at: new Date(),
     });
@@ -191,19 +190,6 @@ export default function Profile() {
                 value={user?.email || ""}
                 style={{ ...inputStyle, opacity: 0.6 }}
                 disabled
-              />
-            </div>
-
-            {/* Bio */}
-            <div style={fieldGroup}>
-              <label style={labelStyle}>Описание</label>
-              <textarea
-                value={profile.bio || ""}
-                onChange={(e) =>
-                  setProfile({ ...profile, bio: e.target.value })
-                }
-                style={{ ...inputStyle, height: "100px", resize: "vertical" }}
-                placeholder="Разкажете ни за себе си..."
               />
             </div>
 
