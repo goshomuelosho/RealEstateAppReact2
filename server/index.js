@@ -10,11 +10,33 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-const clientOrigin = process.env.CLIENT_URL || "http://localhost:5173";
+const rawClientOrigins =
+  process.env.CLIENT_URLS ||
+  process.env.CLIENT_URL ||
+  "http://localhost:5173,http://127.0.0.1:5173";
+
+const allowedClientOrigins = rawClientOrigins
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+  return allowedClientOrigins.includes(origin);
+}
+
+function corsOriginValidator(origin, callback) {
+  if (isAllowedOrigin(origin)) {
+    callback(null, true);
+    return;
+  }
+
+  callback(new Error(`CORS blocked for origin: ${origin}`));
+}
 
 app.use(
   cors({
-    origin: clientOrigin,
+    origin: corsOriginValidator,
     credentials: true,
   })
 );
@@ -39,7 +61,7 @@ function getConversationRoom({ estateId, userA, userB }) {
 
 const io = new Server(server, {
   cors: {
-    origin: clientOrigin,
+    origin: corsOriginValidator,
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -75,4 +97,7 @@ io.on("connection", (socket) => {
 });
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Allowed client origins: ${allowedClientOrigins.join(", ")}`);
+});

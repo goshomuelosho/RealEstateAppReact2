@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import { supabase } from "../supabaseClient";
 import NavBar from "../components/NavBar";
+import { getSocketConfig } from "../utils/socket";
 
 export default function Conversation() {
   const { estateId, otherUserId } = useParams();
@@ -68,9 +69,11 @@ export default function Conversation() {
   useEffect(() => {
     if (!profile?.id || !otherUser?.id || !estateId || loading) return;
 
-    const socket = io(
-      import.meta.env.VITE_SOCKET_URL || "http://localhost:5000"
-    );
+    const { url: socketUrl, path: socketPath } = getSocketConfig();
+    const socket = io(socketUrl, {
+      path: socketPath,
+      withCredentials: true,
+    });
     socketRef.current = socket;
 
     const roomPayload = {
