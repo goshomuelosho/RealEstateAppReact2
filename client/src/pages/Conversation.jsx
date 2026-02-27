@@ -5,6 +5,45 @@ import { supabase } from "../supabaseClient";
 import NavBar from "../components/NavBar";
 import { getSocketConfig } from "../utils/socket";
 
+function isConversationMessage(message, estateId, firstUserId, secondUserId) {
+  if (!message) return false;
+
+  if (String(message.estate_id || "") !== String(estateId || "")) {
+    return false;
+  }
+
+  const senderId = String(message.sender_id || "");
+  const receiverId = String(message.receiver_id || "");
+  const userA = String(firstUserId || "");
+  const userB = String(secondUserId || "");
+
+  return (
+    (senderId === userA && receiverId === userB) ||
+    (senderId === userB && receiverId === userA)
+  );
+}
+
+function mergeMessage(prevMessages, incomingMessage) {
+  if (!incomingMessage?.id) return prevMessages;
+
+  const existingIndex = prevMessages.findIndex(
+    (message) => message.id === incomingMessage.id
+  );
+
+  if (existingIndex !== -1) {
+    const next = [...prevMessages];
+    next[existingIndex] = { ...next[existingIndex], ...incomingMessage };
+    return next;
+  }
+
+  const next = [...prevMessages, incomingMessage];
+  next.sort(
+    (a, b) =>
+      new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
+  );
+  return next;
+}
+
 export default function Conversation() {
   const { estateId, otherUserId } = useParams();
   const navigate = useNavigate();
@@ -114,14 +153,18 @@ export default function Conversation() {
         };
 
         handleConversationMessage = (incomingMessage) => {
-          if (!incomingMessage?.id) return;
+          if (
+            !isConversationMessage(
+              incomingMessage,
+              estateId,
+              profile.id,
+              otherUser.id
+            )
+          ) {
+            return;
+          }
 
-          setMessages((prev) => {
-            if (prev.some((message) => message.id === incomingMessage.id)) {
-              return prev;
-            }
-            return [...prev, incomingMessage];
-          });
+          setMessages((prev) => mergeMessage(prev, incomingMessage));
         };
 
         socket.on("connect", handleConnect);
@@ -167,6 +210,79 @@ export default function Conversation() {
     };
   }, [estateId, loading, otherUser?.id, profile?.id]);
 
+  useEffect(() => {
+    if (!profile?.id || !otherUser?.id || !estateId) return;
+
+    const firstUserId = String(profile.id);
+    const secondUserId = String(otherUser.id);
+    const channelName = `conversation:db:${String(estateId)}:${[
+      firstUserId,
+      secondUserId,
+    ]
+      .sort()
+      .join(":")}`;
+
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `estate_id=eq.${estateId}`,
+        },
+        (payload) => {
+          const incomingMessage = payload.new;
+          if (
+            !isConversationMessage(
+              incomingMessage,
+              estateId,
+              firstUserId,
+              secondUserId
+            )
+          ) {
+            return;
+          }
+
+          setMessages((prev) => mergeMessage(prev, incomingMessage));
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "messages",
+          filter: `estate_id=eq.${estateId}`,
+        },
+        (payload) => {
+          const incomingMessage = payload.new;
+          if (
+            !isConversationMessage(
+              incomingMessage,
+              estateId,
+              firstUserId,
+              secondUserId
+            )
+          ) {
+            return;
+          }
+
+          setMessages((prev) => mergeMessage(prev, incomingMessage));
+        }
+      )
+      .subscribe((status) => {
+        if (status === "CHANNEL_ERROR") {
+          console.error("Conversation realtime channel error.");
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [estateId, otherUser?.id, profile?.id]);
+
   const handleSend = async (e) => {
     e.preventDefault();
     if (!content.trim() || !profile || !otherUser) return;
@@ -188,12 +304,7 @@ export default function Conversation() {
 
       if (error) throw error;
 
-      setMessages((prev) => {
-        if (prev.some((message) => message.id === data.id)) {
-          return prev;
-        }
-        return [...prev, data];
-      });
+      setMessages((prev) => mergeMessage(prev, data));
 
       socketRef.current?.emit("conversation_message", {
         estateId: String(estateId),

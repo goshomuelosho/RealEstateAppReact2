@@ -3,6 +3,32 @@ import { supabase } from "../supabaseClient";
 import { useNavigate } from "react-router-dom";
 import NavBar from "../components/NavBar";
 
+function mapConversations(messages, currentUserId, profileById) {
+  const map = new Map();
+  const normalizedUserId = String(currentUserId || "");
+
+  messages.forEach((message) => {
+    const senderId = String(message.sender_id || "");
+    const receiverId = String(message.receiver_id || "");
+    const otherUserId = senderId === normalizedUserId ? receiverId : senderId;
+
+    const otherUser =
+      profileById[otherUserId] || { id: otherUserId, name: "Потребител" };
+
+    const key = `${otherUserId}-${message.estate_id}`;
+    if (!map.has(key)) {
+      map.set(key, {
+        otherUser,
+        estateId: message.estate_id,
+        lastMessage: message.content,
+        lastAt: message.created_at,
+      });
+    }
+  });
+
+  return Array.from(map.values());
+}
+
 export default function Messages() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
@@ -11,51 +37,38 @@ export default function Messages() {
   const [isLoaded, setIsLoaded] = useState(false); // 👈 same as Dashboard
 
   useEffect(() => {
-    (async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) {
-        navigate("/login");
-        return;
-      }
+    let isCancelled = false;
+    let fadeTimerId = null;
+    let refreshTimerId = null;
+    let messagesChannel = null;
 
-      const userId = userData.user.id;
-
-      // 👤 Load my profile for NavBar
-      const { data: myProfile } = await supabase
-        .from("profiles")
-        .select("id, name, avatar_url, is_admin")
-        .eq("id", userId)
-        .single();
-
-      setProfile(myProfile || { id: userId });
+    const loadConversations = async (userId) => {
+      const normalizedUserId = String(userId || "");
 
       // 💬 Load all messages where I'm sender OR receiver
       const { data: msgs, error } = await supabase
         .from("messages")
         .select("id, estate_id, sender_id, receiver_id, content, created_at")
-        .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+        .or(`sender_id.eq.${normalizedUserId},receiver_id.eq.${normalizedUserId}`)
         .order("created_at", { ascending: false });
 
       if (error) {
         console.error("Error loading messages:", error);
-        setLoading(false);
-        // still allow fade-in so page doesn’t sit invisible
-        setTimeout(() => setIsLoaded(true), 150);
         return;
       }
 
       if (!msgs || msgs.length === 0) {
-        setConversations([]);
-        setLoading(false);
-        setTimeout(() => setIsLoaded(true), 150); // 👈 same “after data” timing
+        if (!isCancelled) {
+          setConversations([]);
+        }
         return;
       }
 
       // 📌 Collect all unique userIds that appear in these messages
       const userIdSet = new Set();
       msgs.forEach((m) => {
-        userIdSet.add(m.sender_id);
-        userIdSet.add(m.receiver_id);
+        userIdSet.add(String(m.sender_id || ""));
+        userIdSet.add(String(m.receiver_id || ""));
       });
 
       const allUserIds = Array.from(userIdSet);
@@ -72,36 +85,92 @@ export default function Messages() {
 
       const profileById = {};
       (profilesData || []).forEach((p) => {
-        profileById[p.id] = p;
+        profileById[String(p.id)] = p;
       });
 
-      // 🧠 Group conversations by (otherUserId + estateId)
-      const map = new Map();
+      if (!isCancelled) {
+        setConversations(mapConversations(msgs, normalizedUserId, profileById));
+      }
+    };
 
-      msgs.forEach((m) => {
-        const otherUserId = m.sender_id === userId ? m.receiver_id : m.sender_id;
-        const otherUser =
-          profileById[otherUserId] || { id: otherUserId, name: "Потребител" };
+    const scheduleConversationsReload = (userId) => {
+      if (refreshTimerId) {
+        window.clearTimeout(refreshTimerId);
+      }
 
-        const key = `${otherUserId}-${m.estate_id}`;
+      refreshTimerId = window.setTimeout(() => {
+        loadConversations(userId);
+      }, 120);
+    };
 
-        // only keep the *first* (latest, because we sorted desc) message per convo
-        if (!map.has(key)) {
-          map.set(key, {
-            otherUser,
-            estateId: m.estate_id,
-            lastMessage: m.content,
-            lastAt: m.created_at,
-          });
-        }
-      });
+    const bootstrap = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        navigate("/login");
+        return;
+      }
 
-      setConversations(Array.from(map.values()));
-      setLoading(false);
+      const userId = String(userData.user.id);
 
-      // 👇 fade-in AFTER all loading & grouping like Dashboard
-      setTimeout(() => setIsLoaded(true), 150);
-    })();
+      // 👤 Load my profile for NavBar
+      const { data: myProfile } = await supabase
+        .from("profiles")
+        .select("id, name, avatar_url, is_admin")
+        .eq("id", userId)
+        .single();
+
+      if (!isCancelled) {
+        setProfile(myProfile || { id: userId });
+      }
+
+      await loadConversations(userId);
+
+      if (!isCancelled) {
+        setLoading(false);
+        fadeTimerId = window.setTimeout(() => setIsLoaded(true), 150);
+      }
+
+      messagesChannel = supabase
+        .channel(`messages:list:${userId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "messages",
+          },
+          (payload) => {
+            const changedMessage = payload.new || payload.old;
+            if (!changedMessage) return;
+
+            const senderId = String(changedMessage.sender_id || "");
+            const receiverId = String(changedMessage.receiver_id || "");
+            if (senderId !== userId && receiverId !== userId) return;
+
+            scheduleConversationsReload(userId);
+          }
+        )
+        .subscribe((status) => {
+          if (status === "CHANNEL_ERROR") {
+            console.error("Messages realtime channel error.");
+          }
+        });
+    };
+
+    bootstrap();
+
+    return () => {
+      isCancelled = true;
+      if (fadeTimerId) {
+        window.clearTimeout(fadeTimerId);
+      }
+      if (refreshTimerId) {
+        window.clearTimeout(refreshTimerId);
+      }
+      if (messagesChannel) {
+        supabase.removeChannel(messagesChannel);
+      }
+    };
   }, [navigate]);
 
   return (
@@ -157,9 +226,9 @@ export default function Messages() {
               transition: "opacity 0.4s ease",
             }}
           >
-            {conversations.map((conv, idx) => (
+            {conversations.map((conv) => (
               <button
-                key={idx}
+                key={`${conv.estateId}-${conv.otherUser.id}`}
                 onClick={() =>
                   navigate(`/messages/${conv.estateId}/${conv.otherUser.id}`)
                 }

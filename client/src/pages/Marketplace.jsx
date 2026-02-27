@@ -580,10 +580,10 @@ export default function Marketplace() {
   };
 
   const sendMessage = async () => {
-    if (!message.trim() || !sellerProfile) return;
+    if (!message.trim() || !sellerProfile || !selectedListing || !profile?.id) return;
     try {
       setSending(true);
-      await supabase.from("messages").insert([
+      const { error: insertError } = await supabase.from("messages").insert([
         {
           estate_id: selectedListing.id,
           sender_id: profile.id,
@@ -591,16 +591,21 @@ export default function Marketplace() {
           content: message.trim(),
         },
       ]);
+
+      if (insertError) {
+        throw insertError;
+      }
+
       setMessage("");
-      setSending(false);
       setContactOpen(false);
 
       setShowSentModal(true);
       setTimeout(() => setShowSentModal(false), 2000);
     } catch (e) {
       console.error(e);
-      setSending(false);
       alert(`Неуспешно изпращане. Моля, опитайте отново. ${e?.message || ""}`);
+    } finally {
+      setSending(false);
     }
   };
 
