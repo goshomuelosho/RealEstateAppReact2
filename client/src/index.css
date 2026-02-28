@@ -1,7 +1,7 @@
 /* =============================
    GLOBAL RESET & BASE
 ============================= */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
 
 html,
 body,
@@ -38,9 +38,10 @@ canvas {
   --error-color: #ef4444;
   --success-color: #22c55e;
 
-  font-family: 'Poppins', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  font-family: 'Manrope', 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-weight: 400;
-  line-height: 1.6;
+  line-height: 1.5;
   color: var(--text-color);
   background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
 }
@@ -75,6 +76,7 @@ a:hover {
 
 h1, h2, h3 {
   font-weight: 700;
+  letter-spacing: -0.015em;
   margin: 0;
   color: #f1f5f9;
 }
@@ -85,12 +87,12 @@ h1, h2, h3 {
 button {
   font-family: inherit;
   border: none;
-  border-radius: 10px;
-  padding: 0.8rem 1.6rem;
+  border-radius: 8px;
+  padding: 0.65rem 1.2rem;
   background: linear-gradient(135deg, var(--primary-color), #3b82f6);
   color: #ffffff;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.95rem;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
@@ -115,12 +117,12 @@ button:focus-visible {
 input, textarea, select {
   width: 100%;
   font-family: inherit;
-  padding: 0.75rem 1rem;
+  padding: 0.6rem 0.85rem;
   border: 1px solid #475569;
-  border-radius: 8px;
+  border-radius: 7px;
   background: #f8fafc;
   color: #0f172a;
-  font-size: 1rem;
+  font-size: 0.95rem;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   box-sizing: border-box;
 }
@@ -139,7 +141,7 @@ select:focus {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 2rem;
+  padding: 1.5rem;
   box-sizing: border-box;
   overflow-y: auto;
 }
@@ -155,9 +157,9 @@ select:focus {
 
 .card {
   background: rgba(255, 255, 255, 0.95);
-  border-radius: 16px;
+  border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-  padding: 2rem;
+  padding: 1.5rem;
   color: #0f172a;
 }
 
@@ -183,6 +185,6 @@ select:focus {
 ============================= */
 @media (max-width: 768px) {
   .main-container {
-    padding: 1.25rem;
+    padding: 1rem;
   }
 }

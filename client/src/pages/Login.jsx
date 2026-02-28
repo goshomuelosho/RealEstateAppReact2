@@ -278,7 +278,7 @@ export default function Login() {
                 Влизане...
               </span>
             ) : (
-              "🚀 Вход"
+              "Вход"
             )}
           </button>
         </form>
