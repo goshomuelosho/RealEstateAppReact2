@@ -91,19 +91,29 @@ const content = {
   zIndex: 1,
 };
 
+const compactToggleBtn = {
+  padding: "0.55rem 0.85rem",
+  borderRadius: 10,
+  border: "1px solid rgba(255,255,255,0.25)",
+  background: "rgba(15,23,42,0.35)",
+  color: "#e2e8f0",
+  fontWeight: 700,
+  cursor: "pointer",
+};
+
 const filterBar = {
   display: "grid",
-  gridTemplateColumns: "repeat(6, minmax(180px, 1fr))",
-  gap: "0.75rem",
+  gridTemplateColumns: "repeat(6, minmax(160px, 1fr))",
+  gap: "0.65rem",
   background: "rgba(255,255,255,0.08)",
   border: "1px solid rgba(255,255,255,0.1)",
   borderRadius: 16,
-  padding: "1rem",
-  marginBottom: "1.5rem",
+  padding: "0.85rem",
+  marginBottom: "1.25rem",
 };
 
 const filterInput = {
-  padding: "0.8rem 1rem",
+  padding: "0.68rem 0.85rem",
   borderRadius: 12,
   border: "1px solid rgba(255,255,255,0.15)",
   background: "rgba(255,255,255,0.1)",
@@ -121,8 +131,8 @@ const selectStyle = {
 
 const grid = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-  gap: "1.25rem",
+  gridTemplateColumns: "repeat(auto-fill, minmax(270px, 1fr))",
+  gap: "1rem",
 };
 
 const card = {
@@ -138,12 +148,12 @@ const card = {
 
 const priceBadge = {
   display: "inline-block",
-  padding: "0.45rem 1rem",
+  padding: "0.4rem 0.9rem",
   background: "linear-gradient(135deg, #3b82f6, #2563eb)",
   color: "#fff",
   fontWeight: 800,
   borderRadius: 10,
-  fontSize: "1.1rem",
+  fontSize: "1.02rem",
 };
 
 const sellerRow = {
@@ -154,8 +164,8 @@ const sellerRow = {
 };
 
 const contactBtn = {
-  width: 46,
-  height: 42,
+  width: 42,
+  height: 38,
   padding: 0,
   border: "1px solid rgba(255,255,255,0.22)",
   background: "linear-gradient(135deg,#10b981,#059669)",
@@ -286,13 +296,13 @@ const sentProgress = {
 };
 
 /* ⭐ Big star button (top-right) */
-const favStarBtn = (active) => ({
+const favStarBtn = (active, compact = false) => ({
   position: "absolute",
-  top: 10,
-  right: 10,
-  width: 48,
-  height: 48,
-  borderRadius: 16,
+  top: compact ? 8 : 10,
+  right: compact ? 8 : 10,
+  width: compact ? 42 : 48,
+  height: compact ? 42 : 48,
+  borderRadius: compact ? 14 : 16,
   border: active
     ? "1px solid rgba(245,158,11,0.45)"
     : "1px solid rgba(148,163,184,0.45)",
@@ -311,8 +321,8 @@ const favStarBtn = (active) => ({
   transition: "transform 0.12s ease, filter 0.2s ease",
 });
 
-const favStarGlyph = (active) => ({
-  fontSize: 28,
+const favStarGlyph = (active, compact = false) => ({
+  fontSize: compact ? 24 : 28,
   lineHeight: 1,
   color: active ? "#fbbf24" : "#94a3b8", // ✅ yellow vs grey
 });
@@ -324,7 +334,7 @@ const favToggleRow = {
   alignItems: "center",
   justifyContent: "space-between",
   gap: 14,
-  padding: "0.85rem 1rem",
+  padding: "0.72rem 0.85rem",
   borderRadius: 14,
   border: "1px solid rgba(255,255,255,0.14)",
   background: "rgba(255,255,255,0.06)",
@@ -360,9 +370,11 @@ const toggleKnob = (on) => ({
 export default function Marketplace() {
   const viewportWidth = useViewportWidth();
   const isMobile = viewportWidth <= 768;
-  const isTablet = viewportWidth <= 1200;
+  const isCompactLayout = viewportWidth <= 1400;
+  const isNarrowTablet = viewportWidth <= 1024;
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
+  const [filtersOpen, setFiltersOpen] = useState(() => !isCompactLayout);
 
   const [estates, setEstates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -393,6 +405,14 @@ export default function Marketplace() {
 
   // sent modal
   const [showSentModal, setShowSentModal] = useState(false);
+
+  const filterColumns = isMobile
+    ? "1fr"
+    : isNarrowTablet
+    ? "repeat(2, minmax(150px, 1fr))"
+    : isCompactLayout
+    ? "repeat(3, minmax(160px, 1fr))"
+    : filterBar.gridTemplateColumns;
 
   const fetchListings = async ({
     qTitleVal = qTitle,
@@ -441,6 +461,10 @@ export default function Marketplace() {
     if (!error) setEstates(data || []);
     setLoading(false);
   };
+
+  useEffect(() => {
+    if (!isCompactLayout) setFiltersOpen(true);
+  }, [isCompactLayout]);
 
   useEffect(() => {
     (async () => {
@@ -637,7 +661,11 @@ export default function Marketplace() {
       <main
         style={{
           ...content,
-          padding: isMobile ? "1rem 0.85rem 1.2rem" : isTablet ? "1.5rem 1.2rem" : content.padding,
+          padding: isMobile
+            ? "1rem 0.85rem 1.2rem"
+            : isCompactLayout
+            ? "1.4rem 1rem 1.25rem"
+            : content.padding,
         }}
       >
         <div
@@ -652,7 +680,7 @@ export default function Marketplace() {
           <h1
             style={{
               margin: 0,
-              fontSize: isMobile ? "1.65rem" : "2rem",
+              fontSize: isMobile ? "1.65rem" : isCompactLayout ? "1.85rem" : "2rem",
               fontWeight: 800,
               background: "linear-gradient(135deg,#fff,#94a3b8)",
               WebkitBackgroundClip: "text",
@@ -663,167 +691,179 @@ export default function Marketplace() {
           </h1>
         </div>
 
+        {isCompactLayout ? (
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "0.55rem" }}>
+            <button
+              onClick={() => setFiltersOpen((v) => !v)}
+              style={compactToggleBtn}
+              aria-label={filtersOpen ? "Скрий филтрите" : "Покажи филтрите"}
+            >
+              {filtersOpen ? "Скрий филтрите" : "Покажи филтрите"}
+            </button>
+          </div>
+        ) : null}
+
         {/* Filters */}
-        <div
-          style={{
-            ...filterBar,
-            gridTemplateColumns: isMobile
-              ? "1fr"
-              : isTablet
-              ? "repeat(2, minmax(180px, 1fr))"
-              : filterBar.gridTemplateColumns,
-          }}
-        >
-          <input
-            placeholder="Търси по заглавие"
-            value={qTitle}
-            onChange={(e) => setQTitle(e.target.value)}
-            style={filterInput}
-          />
-          <input
-            placeholder="Търси по локация"
-            value={qLocation}
-            onChange={(e) => setQLocation(e.target.value)}
-            style={filterInput}
-          />
-          <input
-            placeholder="Минимална цена"
-            type="number"
-            value={minPrice}
-            onChange={(e) => setMinPrice(e.target.value)}
-            style={filterInput}
-          />
-          <input
-            placeholder="Максимална цена"
-            type="number"
-            value={maxPrice}
-            onChange={(e) => setMaxPrice(e.target.value)}
-            style={filterInput}
-          />
-
-          <select
-            value={propertyType}
-            onChange={(e) => setPropertyType(e.target.value)}
-            style={selectStyle}
-          >
-            <option value="">Вид на имота (всички)</option>
-            {PROPERTY_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-
-          <select value={act16} onChange={(e) => setAct16(e.target.value)} style={selectStyle}>
-            <option value="all">Акт 16 (всички)</option>
-            <option value="yes">Само с Акт 16</option>
-            <option value="no">Само без Акт 16</option>
-          </select>
-
-          <select
-            value={buildingType}
-            onChange={(e) => setBuildingType(e.target.value)}
-            style={selectStyle}
-          >
-            <option value="">Вид на сградата (всички)</option>
-            {BUILDING_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-
-          <select value={floor} onChange={(e) => setFloor(e.target.value)} style={selectStyle}>
-            <option value="">Етаж (всички)</option>
-            {FLOORS.map((f) => (
-              <option key={f} value={f}>
-                {f}
-              </option>
-            ))}
-          </select>
-
-          <select value={sort} onChange={(e) => setSort(e.target.value)} style={selectStyle}>
-            <option value="newest">Най-нови</option>
-            <option value="low-high">Цена: ниска → висока</option>
-            <option value="high-low">Цена: висока → ниска</option>
-          </select>
-
-          {/* Only favorites toggle */}
+        {!isCompactLayout || filtersOpen ? (
           <div
             style={{
-              ...favToggleRow,
-              flexDirection: isMobile ? "column" : "row",
-              alignItems: isMobile ? "flex-start" : "center",
+              ...filterBar,
+              gridTemplateColumns: filterColumns,
             }}
           >
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <div style={{ fontWeight: 900, letterSpacing: 0.2 }}>⭐</div>
-              <div style={{ fontSize: 13, color: "rgba(226,232,240,0.8)" }}>
-                Показва само имотите, които си отбелязал като любими.
+            <input
+              placeholder="Търси по заглавие"
+              value={qTitle}
+              onChange={(e) => setQTitle(e.target.value)}
+              style={filterInput}
+            />
+            <input
+              placeholder="Търси по локация"
+              value={qLocation}
+              onChange={(e) => setQLocation(e.target.value)}
+              style={filterInput}
+            />
+            <input
+              placeholder="Минимална цена"
+              type="number"
+              value={minPrice}
+              onChange={(e) => setMinPrice(e.target.value)}
+              style={filterInput}
+            />
+            <input
+              placeholder="Максимална цена"
+              type="number"
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(e.target.value)}
+              style={filterInput}
+            />
+
+            <select
+              value={propertyType}
+              onChange={(e) => setPropertyType(e.target.value)}
+              style={selectStyle}
+            >
+              <option value="">Вид на имота (всички)</option>
+              {PROPERTY_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+
+            <select value={act16} onChange={(e) => setAct16(e.target.value)} style={selectStyle}>
+              <option value="all">Акт 16 (всички)</option>
+              <option value="yes">Само с Акт 16</option>
+              <option value="no">Само без Акт 16</option>
+            </select>
+
+            <select
+              value={buildingType}
+              onChange={(e) => setBuildingType(e.target.value)}
+              style={selectStyle}
+            >
+              <option value="">Вид на сградата (всички)</option>
+              {BUILDING_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+
+            <select value={floor} onChange={(e) => setFloor(e.target.value)} style={selectStyle}>
+              <option value="">Етаж (всички)</option>
+              {FLOORS.map((f) => (
+                <option key={f} value={f}>
+                  {f}
+                </option>
+              ))}
+            </select>
+
+            <select value={sort} onChange={(e) => setSort(e.target.value)} style={selectStyle}>
+              <option value="newest">Най-нови</option>
+              <option value="low-high">Цена: ниска → висока</option>
+              <option value="high-low">Цена: висока → ниска</option>
+            </select>
+
+            {/* Only favorites toggle */}
+            <div
+              style={{
+                ...favToggleRow,
+                flexDirection: isMobile ? "column" : "row",
+                alignItems: isMobile ? "flex-start" : "center",
+              }}
+            >
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <div style={{ fontWeight: 900, letterSpacing: 0.2 }}>⭐</div>
+                <div style={{ fontSize: 13, color: "rgba(226,232,240,0.8)" }}>
+                  {isCompactLayout
+                    ? "Показва само любими имоти."
+                    : "Показва само имотите, които си отбелязал като любими."}
+                </div>
+              </div>
+
+              <div
+                role="switch"
+                aria-checked={onlyFavorites}
+                tabIndex={0}
+                onClick={() => setOnlyFavorites((v) => !v)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") setOnlyFavorites((v) => !v);
+                }}
+                style={{
+                  ...toggleTrack(onlyFavorites),
+                  alignSelf: isMobile ? "flex-end" : "auto",
+                }}
+                title={onlyFavorites ? "Показва любими" : "Показва всички"}
+              >
+                <div style={toggleKnob(onlyFavorites)} />
               </div>
             </div>
 
-            <div
-              role="switch"
-              aria-checked={onlyFavorites}
-              tabIndex={0}
-              onClick={() => setOnlyFavorites((v) => !v)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") setOnlyFavorites((v) => !v);
-              }}
-              style={{
-                ...toggleTrack(onlyFavorites),
-                alignSelf: isMobile ? "flex-end" : "auto",
-              }}
-              title={onlyFavorites ? "Показва любими" : "Показва всички"}
-            >
-              <div style={toggleKnob(onlyFavorites)} />
+            <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button
+                onClick={() => {
+                  const cleared = {
+                    qTitleVal: "",
+                    qLocationVal: "",
+                    minPriceVal: "",
+                    maxPriceVal: "",
+                    sortVal: "newest",
+                    propertyTypeVal: "",
+                    buildingTypeVal: "",
+                    floorVal: "",
+                    act16Val: "all",
+                    onlyFavoritesVal: false,
+                  };
+
+                  setQTitle("");
+                  setQLocation("");
+                  setMinPrice("");
+                  setMaxPrice("");
+                  setSort("newest");
+                  setPropertyType("");
+                  setBuildingType("");
+                  setFloor("");
+                  setAct16("all");
+                  setOnlyFavorites(false);
+
+                  fetchListings(cleared);
+                }}
+                style={{
+                  padding: "0.62rem 0.9rem",
+                  borderRadius: 12,
+                  border: "1px solid rgba(255,255,255,0.25)",
+                  background: "transparent",
+                  color: "#fff",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                Нулирай
+              </button>
             </div>
           </div>
-
-          <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button
-              onClick={() => {
-                const cleared = {
-                  qTitleVal: "",
-                  qLocationVal: "",
-                  minPriceVal: "",
-                  maxPriceVal: "",
-                  sortVal: "newest",
-                  propertyTypeVal: "",
-                  buildingTypeVal: "",
-                  floorVal: "",
-                  act16Val: "all",
-                  onlyFavoritesVal: false,
-                };
-
-                setQTitle("");
-                setQLocation("");
-                setMinPrice("");
-                setMaxPrice("");
-                setSort("newest");
-                setPropertyType("");
-                setBuildingType("");
-                setFloor("");
-                setAct16("all");
-                setOnlyFavorites(false);
-
-                fetchListings(cleared);
-              }}
-              style={{
-                padding: "0.7rem 1rem",
-                borderRadius: 12,
-                border: "1px solid rgba(255,255,255,0.25)",
-                background: "transparent",
-                color: "#fff",
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-            >
-              Нулирай
-            </button>
-          </div>
-        </div>
+        ) : null}
 
         {/* Grid */}
         {loading ? (
@@ -835,7 +875,7 @@ export default function Marketplace() {
             style={{
               ...grid,
               gridTemplateColumns: isMobile ? "1fr" : grid.gridTemplateColumns,
-              gap: isMobile ? "1rem" : grid.gap,
+              gap: isMobile ? "1rem" : isCompactLayout ? "0.9rem" : grid.gap,
               animation: "fadeInUp 0.6s ease",
             }}
           >
@@ -847,6 +887,7 @@ export default function Marketplace() {
               const showAct16 = estate.has_act16 === true;
 
               const isFav = favoriteIds.has(estate.id);
+              const compactCard = isCompactLayout && !isMobile;
 
               return (
                 <div key={estate.id} style={card}>
@@ -854,25 +895,29 @@ export default function Marketplace() {
                   <button
                     onClick={() => toggleFavorite(estate.id)}
                     title={isFav ? "Премахни от любими" : "Добави в любими"}
-                    style={favStarBtn(isFav)}
+                    style={favStarBtn(isFav, compactCard)}
                     onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.96)")}
                     onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
                     onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
                     aria-label={isFav ? "Премахни от любими" : "Добави в любими"}
                   >
-                    <span style={favStarGlyph(isFav)}>{isFav ? "★" : "☆"}</span>
+                    <span style={favStarGlyph(isFav, compactCard)}>{isFav ? "★" : "☆"}</span>
                   </button>
 
                   {estate.image_url && (
                     <img
                       src={estate.image_url}
                       alt={estate.title}
-                      style={{ width: "100%", height: 200, objectFit: "cover" }}
+                      style={{
+                        width: "100%",
+                        height: isMobile ? 165 : compactCard ? 178 : 200,
+                        objectFit: "cover",
+                      }}
                       loading="lazy"
                     />
                   )}
 
-                  <div style={{ padding: "1rem 1.1rem", flex: 1 }}>
+                  <div style={{ padding: isMobile ? "0.85rem 0.9rem" : "0.9rem 1rem", flex: 1 }}>
                     <div
                       style={{
                         display: "flex",
@@ -885,18 +930,26 @@ export default function Marketplace() {
                       <h3
                         style={{
                           margin: 0,
-                          fontSize: isMobile ? "1.2rem" : "1.4rem",
+                          fontSize: isMobile ? "1.12rem" : compactCard ? "1.22rem" : "1.4rem",
                           fontWeight: "700",
                           color: "#0f172a",
-                          paddingRight: isMobile ? 0 : 52,
+                          paddingRight: isMobile ? 0 : compactCard ? 46 : 52,
                         }}
                       >
                         {estate.title}
                       </h3>
-                      <span style={priceBadge}>€{Number(estate.price || 0).toLocaleString()}</span>
+                      <span
+                        style={{
+                          ...priceBadge,
+                          fontSize: isMobile ? "0.92rem" : compactCard ? "0.97rem" : priceBadge.fontSize,
+                          padding: isMobile ? "0.34rem 0.74rem" : priceBadge.padding,
+                        }}
+                      >
+                        €{Number(estate.price || 0).toLocaleString()}
+                      </span>
                     </div>
 
-                    <p style={{ margin: "0.4rem 0 0.5rem", color: "#475569" }}>
+                    <p style={{ margin: "0.3rem 0 0.45rem", color: "#475569" }}>
                       📍 {estate.location}
                     </p>
 

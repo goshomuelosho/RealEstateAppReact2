@@ -130,20 +130,30 @@ const addButton = {
   transition: "transform 0.18s ease, box-shadow 0.18s ease",
 };
 
+const compactToggleBtn = {
+  padding: "0.55rem 0.85rem",
+  borderRadius: 10,
+  border: "1px solid rgba(255,255,255,0.25)",
+  background: "rgba(15,23,42,0.35)",
+  color: "#e2e8f0",
+  fontWeight: 700,
+  cursor: "pointer",
+};
+
 /* ✅ Marketplace-like filter layout (compact) */
 const filterBar = {
   display: "grid",
-  gridTemplateColumns: "repeat(6, minmax(180px, 1fr))",
-  gap: "0.75rem",
+  gridTemplateColumns: "repeat(6, minmax(160px, 1fr))",
+  gap: "0.65rem",
   background: "rgba(255,255,255,0.08)",
   border: "1px solid rgba(255,255,255,0.1)",
   borderRadius: 16,
-  padding: "1rem",
-  marginBottom: "2rem",
+  padding: "0.85rem",
+  marginBottom: "1.4rem",
 };
 
 const filterInput = {
-  padding: "0.8rem 1rem",
+  padding: "0.68rem 0.85rem",
   borderRadius: 12,
   border: "1px solid rgba(255,255,255,0.15)",
   background: "rgba(255,255,255,0.1)",
@@ -162,8 +172,8 @@ const filterSelect = {
 
 const grid = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-  gap: "2rem",
+  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+  gap: "1.25rem",
 };
 
 const cardStyle = {
@@ -177,12 +187,12 @@ const cardStyle = {
 
 const priceBadge = {
   display: "inline-block",
-  padding: "0.5rem 1.25rem",
+  padding: "0.45rem 1rem",
   background: "linear-gradient(135deg, #3b82f6, #2563eb)",
   borderRadius: "10px",
   color: "white",
   fontWeight: "700",
-  fontSize: "1.25rem",
+  fontSize: "1.1rem",
 };
 
 const visibilityPill = (isPublic) => ({
@@ -237,16 +247,16 @@ const pill = (variant = "neutral") => ({
 });
 
 const cardActions = {
-  padding: "0.95rem 1.1rem 1.1rem",
+  padding: "0.8rem 0.9rem 0.9rem",
   display: "flex",
   justifyContent: "flex-end",
   gap: "0.6rem",
   background: "rgba(241,245,249,0.55)",
 };
 
-const actionBtn = (type) => ({
-  width: 46,
-  height: 42,
+const actionBtn = (type, compact = false) => ({
+  width: compact ? 40 : 46,
+  height: compact ? 38 : 42,
   background:
     type === "green"
       ? "linear-gradient(135deg, #10b981, #059669)"
@@ -293,7 +303,9 @@ const emptyState = { color: "#94a3b8", textAlign: "center", marginTop: "2rem" };
 export default function MyEstates() {
   const viewportWidth = useViewportWidth();
   const isMobile = viewportWidth <= 768;
-  const isTablet = viewportWidth <= 1200;
+  const isCompactLayout = viewportWidth <= 1400;
+  const isNarrowTablet = viewportWidth <= 1024;
+  const [filtersOpen, setFiltersOpen] = useState(() => !isCompactLayout);
   const [hoveredCard, setHoveredCard] = useState(null);
   const [estates, setEstates] = useState([]);
   const [profile, setProfile] = useState(null);
@@ -311,6 +323,14 @@ export default function MyEstates() {
   const [act16, setAct16] = useState("all"); // all | yes | no
 
   const navigate = useNavigate();
+
+  const filterColumns = isMobile
+    ? "1fr"
+    : isNarrowTablet
+    ? "repeat(2, minmax(150px, 1fr))"
+    : isCompactLayout
+    ? "repeat(3, minmax(160px, 1fr))"
+    : filterBar.gridTemplateColumns;
 
   const fetchEstates = useCallback(
     async (userId, overrides = {}) => {
@@ -347,6 +367,10 @@ export default function MyEstates() {
     },
     [titleSearch, locationSearch, sortOrder, propertyType, buildingType, floor, act16]
   );
+
+  useEffect(() => {
+    if (!isCompactLayout) setFiltersOpen(true);
+  }, [isCompactLayout]);
 
   useEffect(() => {
     const init = async () => {
@@ -434,12 +458,21 @@ export default function MyEstates() {
       <main
         style={{
           ...mainStyle,
-          padding: isMobile ? "1rem 0.85rem 1.4rem" : isTablet ? "2rem 1.25rem" : mainStyle.padding,
+          padding: isMobile
+            ? "1rem 0.85rem 1.2rem"
+            : isCompactLayout
+            ? "1.5rem 1rem 1.4rem"
+            : mainStyle.padding,
         }}
       >
         <div style={contentWrapper}>
           <div style={{ ...titleBar, alignItems: isMobile ? "stretch" : titleBar.alignItems }}>
-            <h1 style={{ ...pageTitle, fontSize: isMobile ? "1.75rem" : pageTitle.fontSize }}>
+            <h1
+              style={{
+                ...pageTitle,
+                fontSize: isMobile ? "1.65rem" : isCompactLayout ? "1.95rem" : pageTitle.fontSize,
+              }}
+            >
               Моите имоти
             </h1>
             <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
@@ -463,118 +496,132 @@ export default function MyEstates() {
             </div>
           </div>
 
-          {/* Filters (Marketplace-like grid) */}
-          <div
-            style={{
-              ...filterBar,
-              gridTemplateColumns: isMobile
-                ? "1fr"
-                : isTablet
-                ? "repeat(2, minmax(180px, 1fr))"
-                : filterBar.gridTemplateColumns,
-            }}
-          >
-            <input
-              type="text"
-              placeholder="Търсене по заглавие..."
-              value={titleSearch}
-              onChange={(e) => setTitleSearch(e.target.value)}
-              style={filterInput}
-            />
-
-            <input
-              type="text"
-              placeholder="Търсене по локация..."
-              value={locationSearch}
-              onChange={(e) => setLocationSearch(e.target.value)}
-              style={filterInput}
-            />
-
-            <select
-              value={propertyType}
-              onChange={(e) => setPropertyType(e.target.value)}
-              style={filterSelect}
-            >
-              <option value="">Вид на имота (всички)</option>
-              {PROPERTY_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-
-            <select value={act16} onChange={(e) => setAct16(e.target.value)} style={filterSelect}>
-              <option value="all">Акт 16 (всички)</option>
-              <option value="yes">Само с Акт 16</option>
-              <option value="no">Само без Акт 16</option>
-            </select>
-
-            <select
-              value={buildingType}
-              onChange={(e) => setBuildingType(e.target.value)}
-              style={filterSelect}
-            >
-              <option value="">Вид на сградата (всички)</option>
-              {BUILDING_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-
-            <select value={floor} onChange={(e) => setFloor(e.target.value)} style={filterSelect}>
-              <option value="">Етаж (всички)</option>
-              {FLOORS.map((f) => (
-                <option key={f} value={f}>
-                  {f}
-                </option>
-              ))}
-            </select>
-
-            <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} style={filterSelect}>
-              <option value="newest">Най-нови първо</option>
-              <option value="low-high">Цена: ниска → висока</option>
-              <option value="high-low">Цена: висока → ниска</option>
-            </select>
-
-            {/* Reset row full width */}
-            <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {isCompactLayout ? (
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "0.55rem" }}>
               <button
-                onClick={() => {
-                  setTitleSearch("");
-                  setLocationSearch("");
-                  setPropertyType("");
-                  setBuildingType("");
-                  setFloor("");
-                  setAct16("all");
-                  setSortOrder("newest");
-
-                  if (profile?.id) {
-                    fetchEstates(profile.id, {
-                      title: "",
-                      location: "",
-                      sort: "newest",
-                      pType: "",
-                      bType: "",
-                      fl: "",
-                      a16: "all",
-                    });
-                  }
-                }}
-                style={{
-                  padding: "0.7rem 1rem",
-                  borderRadius: 12,
-                  border: "1px solid rgba(255,255,255,0.25)",
-                  background: "transparent",
-                  color: "#fff",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                }}
+                onClick={() => setFiltersOpen((v) => !v)}
+                style={compactToggleBtn}
+                aria-label={filtersOpen ? "Скрий филтрите" : "Покажи филтрите"}
               >
-                Нулирай
+                {filtersOpen ? "Скрий филтрите" : "Покажи филтрите"}
               </button>
             </div>
-          </div>
+          ) : null}
+
+          {/* Filters (Marketplace-like grid) */}
+          {!isCompactLayout || filtersOpen ? (
+            <div
+              style={{
+                ...filterBar,
+                gridTemplateColumns: filterColumns,
+              }}
+            >
+              <input
+                type="text"
+                placeholder="Търсене по заглавие..."
+                value={titleSearch}
+                onChange={(e) => setTitleSearch(e.target.value)}
+                style={filterInput}
+              />
+
+              <input
+                type="text"
+                placeholder="Търсене по локация..."
+                value={locationSearch}
+                onChange={(e) => setLocationSearch(e.target.value)}
+                style={filterInput}
+              />
+
+              <select
+                value={propertyType}
+                onChange={(e) => setPropertyType(e.target.value)}
+                style={filterSelect}
+              >
+                <option value="">Вид на имота (всички)</option>
+                {PROPERTY_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+
+              <select value={act16} onChange={(e) => setAct16(e.target.value)} style={filterSelect}>
+                <option value="all">Акт 16 (всички)</option>
+                <option value="yes">Само с Акт 16</option>
+                <option value="no">Само без Акт 16</option>
+              </select>
+
+              <select
+                value={buildingType}
+                onChange={(e) => setBuildingType(e.target.value)}
+                style={filterSelect}
+              >
+                <option value="">Вид на сградата (всички)</option>
+                {BUILDING_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+
+              <select value={floor} onChange={(e) => setFloor(e.target.value)} style={filterSelect}>
+                <option value="">Етаж (всички)</option>
+                {FLOORS.map((f) => (
+                  <option key={f} value={f}>
+                    {f}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+                style={filterSelect}
+              >
+                <option value="newest">Най-нови първо</option>
+                <option value="low-high">Цена: ниска → висока</option>
+                <option value="high-low">Цена: висока → ниска</option>
+              </select>
+
+              {/* Reset row full width */}
+              <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button
+                  onClick={() => {
+                    setTitleSearch("");
+                    setLocationSearch("");
+                    setPropertyType("");
+                    setBuildingType("");
+                    setFloor("");
+                    setAct16("all");
+                    setSortOrder("newest");
+
+                    if (profile?.id) {
+                      fetchEstates(profile.id, {
+                        title: "",
+                        location: "",
+                        sort: "newest",
+                        pType: "",
+                        bType: "",
+                        fl: "",
+                        a16: "all",
+                      });
+                    }
+                  }}
+                  style={{
+                    padding: "0.62rem 0.9rem",
+                    borderRadius: 12,
+                    border: "1px solid rgba(255,255,255,0.25)",
+                    background: "transparent",
+                    color: "#fff",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  Нулирай
+                </button>
+              </div>
+            </div>
+          ) : null}
 
           {/* Grid */}
           {loading ? (
@@ -586,13 +633,15 @@ export default function MyEstates() {
               style={{
                 ...grid,
                 gridTemplateColumns: isMobile ? "1fr" : grid.gridTemplateColumns,
-                gap: isMobile ? "1rem" : grid.gap,
+                gap: isMobile ? "1rem" : isCompactLayout ? "1rem" : grid.gap,
               }}
             >
               {estates.map((estate) => (
                 <EstateCard
                   key={estate.id}
                   estate={estate}
+                  isMobile={isMobile}
+                  isCompact={isCompactLayout}
                   hoveredCard={hoveredCard}
                   setHoveredCard={setHoveredCard}
                   handleDelete={handleDelete}
@@ -614,6 +663,8 @@ export default function MyEstates() {
 /* 🔹 Estate Card */
 function EstateCard({
   estate,
+  isMobile,
+  isCompact,
   hoveredCard,
   setHoveredCard,
   handleDelete,
@@ -625,6 +676,10 @@ function EstateCard({
   const showFloor =
     estate.floor && String(estate.floor).trim() !== "" && estate.floor !== "Не е приложимо";
   const showAct16 = estate.has_act16 === true;
+  const compactActionButtons = isCompact || isMobile;
+  const cardImageHeight = isMobile ? "170px" : isCompact ? "185px" : "220px";
+  const cardBodyPadding = isMobile ? "1rem" : isCompact ? "1.1rem" : "1.5rem";
+  const titleSize = isMobile ? "1.12rem" : isCompact ? "1.2rem" : "1.4rem";
 
   return (
     <div
@@ -645,7 +700,7 @@ function EstateCard({
           alt={estate.title}
           style={{
             width: "100%",
-            height: "220px",
+            height: cardImageHeight,
             objectFit: "cover",
             transition: "transform 0.5s ease",
             transform: hoveredCard === estate.id ? "scale(1.05)" : "scale(1)",
@@ -653,12 +708,12 @@ function EstateCard({
         />
       )}
 
-      <div style={{ padding: "1.5rem", flex: 1 }}>
-        <h3 style={{ fontSize: "1.4rem", fontWeight: "700", color: "#0f172a", margin: 0 }}>
+      <div style={{ padding: cardBodyPadding, flex: 1 }}>
+        <h3 style={{ fontSize: titleSize, fontWeight: "700", color: "#0f172a", margin: 0 }}>
           {estate.title}
         </h3>
 
-        <p style={{ color: "#64748b", margin: "0.5rem 0 0.75rem" }}>📍 {estate.location}</p>
+        <p style={{ color: "#64748b", margin: "0.45rem 0 0.62rem" }}>📍 {estate.location}</p>
 
         <div style={visibilityPill(isPublic)}>{isPublic ? "Публично в пазара" : "Частно"}</div>
 
@@ -671,13 +726,26 @@ function EstateCard({
         </div>
 
         <div style={{ marginTop: "0.9rem" }}>
-          <span style={priceBadge}>€{Number(estate.price || 0).toLocaleString()}</span>
+          <span
+            style={{
+              ...priceBadge,
+              fontSize: isMobile ? "1rem" : isCompact ? "1.04rem" : priceBadge.fontSize,
+              padding: isMobile ? "0.38rem 0.9rem" : isCompact ? "0.4rem 0.9rem" : priceBadge.padding,
+            }}
+          >
+            €{Number(estate.price || 0).toLocaleString()}
+          </span>
         </div>
       </div>
 
-      <div style={cardActions}>
+      <div
+        style={{
+          ...cardActions,
+          padding: isMobile ? "0.68rem 0.8rem 0.75rem" : cardActions.padding,
+        }}
+      >
         <button
-          style={actionBtn("blue")}
+          style={actionBtn("blue", compactActionButtons)}
           onClick={() => handleTogglePublic(estate)}
           title={isPublic ? "Премахни от пазара" : "Публикувай в пазара"}
           aria-label={isPublic ? "Премахни от пазара" : "Публикувай в пазара"}
@@ -689,13 +757,17 @@ function EstateCard({
           )}
         </button>
         <button
-          style={actionBtn("green")}
+          style={actionBtn("green", compactActionButtons)}
           onClick={() => navigate(`/edit-estate/${estate.id}`)}
           aria-label="Редактирай имот"
         >
           <Pencil size={17} aria-hidden="true" />
         </button>
-        <button style={actionBtn()} onClick={() => handleDelete(estate.id)} aria-label="Изтрий имот">
+        <button
+          style={actionBtn(undefined, compactActionButtons)}
+          onClick={() => handleDelete(estate.id)}
+          aria-label="Изтрий имот"
+        >
           <Trash2 size={17} aria-hidden="true" />
         </button>
       </div>
