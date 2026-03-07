@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate } from "react-router-dom";
+import { Mail, Search } from "lucide-react";
 import NavBar from "../components/NavBar";
 import useViewportWidth from "../hooks/useViewportWidth";
 
@@ -153,14 +154,20 @@ const sellerRow = {
 };
 
 const contactBtn = {
-  width: "100%",
-  padding: "0.9rem",
-  border: "none",
+  width: 46,
+  height: 42,
+  padding: 0,
+  border: "1px solid rgba(255,255,255,0.22)",
   background: "linear-gradient(135deg,#10b981,#059669)",
   color: "#fff",
   fontWeight: 700,
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
   cursor: "pointer",
   borderRadius: 12,
+  boxShadow: "0 8px 18px rgba(16,185,129,0.28)",
+  transition: "transform 0.15s ease, filter 0.2s ease",
 };
 
 /* ✅ meta pills */
@@ -913,23 +920,29 @@ export default function Marketplace() {
 
                     <div
                       style={{
-                        display: "grid",
-                        gridTemplateColumns: "1fr 1fr",
-                        gap: 10,
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        gap: "0.6rem",
                         marginTop: 12,
                       }}
                     >
-                      <button style={contactBtn} onClick={() => openContact(estate)}>
-                        ✉️
+                      <button
+                        style={contactBtn}
+                        onClick={() => openContact(estate)}
+                        aria-label="Изпрати съобщение"
+                      >
+                        <Mail size={17} aria-hidden="true" />
                       </button>
                       <button
                         style={{
                           ...contactBtn,
                           background: "linear-gradient(135deg,#3b82f6,#1d4ed8)",
+                          boxShadow: "0 8px 18px rgba(59,130,246,0.28)",
                         }}
                         onClick={() => navigate(`/estate/${estate.id}`)}
+                        aria-label="Виж детайли"
                       >
-                        🔎
+                        <Search size={17} aria-hidden="true" />
                       </button>
                     </div>
                   </div>

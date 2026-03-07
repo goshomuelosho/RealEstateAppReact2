@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  MapPin,
+  Pencil,
+  Trash2,
+  XCircle,
+} from "lucide-react";
 import { supabase } from "../supabaseClient";
 import NavBar from "../components/NavBar";
 import LocationPinMap from "../components/LocationPinMap";
@@ -100,7 +108,8 @@ export default function EstateDetail() {
       <main style={mainStyle}>
         <div style={estateCard}>
           <button type="button" style={backButton} onClick={handleBack}>
-            ⬅ Назад
+            <ArrowLeft size={16} aria-hidden="true" />
+            Назад
           </button>
 
           {estate.image_url && <img src={estate.image_url} alt={estate.title} style={estateImage} />}
@@ -108,7 +117,10 @@ export default function EstateDetail() {
           <h1 style={estateTitle}>{estate.title}</h1>
 
           <div style={metaRow}>
-            <p style={estateLocation}>📍 {estate.location}</p>
+            <p style={estateLocation}>
+              <MapPin size={16} aria-hidden="true" />
+              {estate.location}
+            </p>
             <p style={estatePrice}>€{Number(estate.price || 0).toLocaleString()}</p>
           </div>
 
@@ -137,7 +149,17 @@ export default function EstateDetail() {
               <div style={detailItem}>
                 <span style={detailLabel}>Акт 16</span>
                 <span style={actBadge(!!estate.has_act16)}>
-                  {estate.has_act16 ? "✅ Има" : "❌ Няма"}
+                  {estate.has_act16 ? (
+                    <>
+                      <CheckCircle2 size={14} aria-hidden="true" />
+                      Има
+                    </>
+                  ) : (
+                    <>
+                      <XCircle size={14} aria-hidden="true" />
+                      Няма
+                    </>
+                  )}
                 </span>
               </div>
             </div>
@@ -148,11 +170,15 @@ export default function EstateDetail() {
           {/* ✅ Owner OR Admin */}
           {canManage && (
             <div style={buttonGroup}>
-              <button onClick={() => navigate(`/edit-estate/${estate.id}`)} style={editButton}>
-                 ✏️  
+              <button
+                onClick={() => navigate(`/edit-estate/${estate.id}`)}
+                style={editButton}
+                aria-label="Редактирай имота"
+              >
+                <Pencil size={17} aria-hidden="true" />
               </button>
-              <button onClick={handleDelete} style={deleteButton}>
-                🗑️ 
+              <button onClick={handleDelete} style={deleteButton} aria-label="Изтрий имота">
+                <Trash2 size={17} aria-hidden="true" />
               </button>
             </div>
           )}
@@ -256,7 +282,14 @@ const metaRow = {
   marginBottom: "1.25rem",
 };
 
-const estateLocation = { fontSize: "1.1rem", color: "#475569", margin: 0 };
+const estateLocation = {
+  fontSize: "1.1rem",
+  color: "#475569",
+  margin: 0,
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "0.35rem",
+};
 
 const estatePrice = { fontSize: "1.6rem", fontWeight: 800, color: "#3b82f6", margin: 0 };
 
@@ -299,6 +332,7 @@ const actBadge = (has) => ({
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
+  gap: "0.35rem",
   width: "fit-content",
   padding: "0.25rem 0.6rem",
   borderRadius: 999,
@@ -321,6 +355,9 @@ const buttonGroup = { display: "flex", justifyContent: "flex-end", gap: "1rem" }
 const backButton = {
   marginBottom: "1rem",
   padding: "0.7rem 1rem",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "0.45rem",
   borderRadius: "10px",
   border: "1px solid rgba(15,23,42,0.14)",
   background: "rgba(15,23,42,0.04)",
@@ -331,14 +368,20 @@ const backButton = {
 };
 
 const editButton = {
-  padding: "0.9rem 1.5rem",
+  width: 46,
+  height: 42,
+  padding: 0,
   background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
-  border: "none",
+  border: "1px solid rgba(255,255,255,0.22)",
   borderRadius: "12px",
   color: "#fff",
   fontWeight: 700,
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
   cursor: "pointer",
-  boxShadow: "0 4px 15px rgba(59,130,246,0.3)",
+  boxShadow: "0 8px 18px rgba(59,130,246,0.28)",
+  transition: "transform 0.15s ease, filter 0.2s ease",
 };
 
 const deleteButton = {

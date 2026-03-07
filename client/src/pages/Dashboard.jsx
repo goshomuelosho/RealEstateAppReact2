@@ -281,7 +281,7 @@ export default function Dashboard() {
             <InsightCard
               icon="💰"
               iconBg="linear-gradient(135deg,#1f2937,#334155)"
-              label="Обща стойност на портфолиото"
+              label="Портфолио"
               valueRenderer={(v) => `${Number(v || 0).toLocaleString()} €`}
               loading={insightsLoading}
               valueKey="totalValue"
@@ -313,7 +313,7 @@ export default function Dashboard() {
             <InsightCard
               icon="🗓️"
               iconBg="linear-gradient(135deg,#5b21b6,#7c3aed)"
-              label="Добавени за последните 30 дни"
+              label="Последните 30 дни"
               valueRenderer={(v) => v}
               loading={insightsLoading}
               valueKey="added30d"

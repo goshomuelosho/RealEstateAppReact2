@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate, Link } from "react-router-dom";
+import { EyeOff, Globe, Pencil, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import NavBar from "../components/NavBar";
 import useViewportWidth from "../hooks/useViewportWidth";
 
@@ -113,14 +114,20 @@ const pageTitle = {
 };
 
 const addButton = {
-  padding: "0.9rem 1.5rem",
+  width: 50,
+  height: 50,
+  padding: 0,
   background: "linear-gradient(135deg, #10b981, #059669)",
   border: "none",
-  borderRadius: "12px",
+  borderRadius: "14px",
   color: "#fff",
   fontWeight: "700",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
   cursor: "pointer",
-  boxShadow: "0 4px 15px rgba(16,185,129,0.4)",
+  boxShadow: "0 10px 24px rgba(16,185,129,0.34)",
+  transition: "transform 0.18s ease, box-shadow 0.18s ease",
 };
 
 /* ✅ Marketplace-like filter layout (compact) */
@@ -230,27 +237,38 @@ const pill = (variant = "neutral") => ({
 });
 
 const cardActions = {
-  padding: "1rem 1.5rem",
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr 1fr",
-  gap: "0.75rem",
-  background: "rgba(241,245,249,0.5)",
+  padding: "0.95rem 1.1rem 1.1rem",
+  display: "flex",
+  justifyContent: "flex-end",
+  gap: "0.6rem",
+  background: "rgba(241,245,249,0.55)",
 };
 
 const actionBtn = (type) => ({
-  width: "100%",
+  width: 46,
+  height: 42,
   background:
     type === "green"
       ? "linear-gradient(135deg, #10b981, #059669)"
       : type === "blue"
-      ? "linear-gradient(135deg, #3b82f6, #1d4ed8)"
+      ? "linear-gradient(135deg, #3b82f6, #1e40af)"
       : "linear-gradient(135deg, #ef4444, #dc2626)",
-  border: "none",
-  borderRadius: "8px",
+  border: "1px solid rgba(255,255,255,0.22)",
+  borderRadius: "12px",
   color: "white",
   fontWeight: "600",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
   cursor: "pointer",
-  padding: "0.8rem",
+  padding: 0,
+  boxShadow:
+    type === "green"
+      ? "0 8px 18px rgba(16,185,129,0.28)"
+      : type === "blue"
+      ? "0 8px 18px rgba(59,130,246,0.28)"
+      : "0 8px 18px rgba(239,68,68,0.24)",
+  transition: "transform 0.15s ease, filter 0.2s ease",
 });
 
 const loaderContainer = {
@@ -430,13 +448,17 @@ export default function MyEstates() {
                   style={{
                     ...addButton,
                     background: "linear-gradient(135deg,#3b82f6,#1d4ed8)",
+                    boxShadow: "0 10px 24px rgba(59,130,246,0.34)",
                   }}
+                  aria-label="Към пазара"
                 >
-                  🛒
+                  <ShoppingBag size={18} aria-hidden="true" />
                 </button>
               </Link>
               <Link to="/add-estate">
-                <button style={addButton}>➕</button>
+                <button style={addButton} aria-label="Добави имот">
+                  <Plus size={18} aria-hidden="true" />
+                </button>
               </Link>
             </div>
           </div>
@@ -658,14 +680,23 @@ function EstateCard({
           style={actionBtn("blue")}
           onClick={() => handleTogglePublic(estate)}
           title={isPublic ? "Премахни от пазара" : "Публикувай в пазара"}
+          aria-label={isPublic ? "Премахни от пазара" : "Публикувай в пазара"}
         >
-          {isPublic ? "🙈" : "🌐"}
+          {isPublic ? (
+            <EyeOff size={17} aria-hidden="true" />
+          ) : (
+            <Globe size={17} aria-hidden="true" />
+          )}
         </button>
-        <button style={actionBtn("green")} onClick={() => navigate(`/edit-estate/${estate.id}`)}>
-          ✏️
+        <button
+          style={actionBtn("green")}
+          onClick={() => navigate(`/edit-estate/${estate.id}`)}
+          aria-label="Редактирай имот"
+        >
+          <Pencil size={17} aria-hidden="true" />
         </button>
-        <button style={actionBtn()} onClick={() => handleDelete(estate.id)}>
-          🗑️
+        <button style={actionBtn()} onClick={() => handleDelete(estate.id)} aria-label="Изтрий имот">
+          <Trash2 size={17} aria-hidden="true" />
         </button>
       </div>
     </div>

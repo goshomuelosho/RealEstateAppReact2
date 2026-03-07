@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate, Link } from "react-router-dom";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { LOGIN_REDIRECT_URL } from "../utils/authRedirects";
 
 export default function Register() {
@@ -176,7 +177,9 @@ export default function Register() {
           <div>
             <label style={labelStyle}>Имейл адрес</label>
             <div style={{ position: "relative" }}>
-              <span style={iconStyle}>📧</span>
+              <span style={iconStyle} aria-hidden="true">
+                <Mail size={18} />
+              </span>
               <input
                 type="email"
                 placeholder="you@example.com"
@@ -192,7 +195,9 @@ export default function Register() {
           <div>
             <label style={labelStyle}>Парола</label>
             <div style={{ position: "relative" }}>
-              <span style={iconStyle}>🔒</span>
+              <span style={iconStyle} aria-hidden="true">
+                <Lock size={18} />
+              </span>
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Минимум 6 символа"
@@ -207,7 +212,7 @@ export default function Register() {
                 style={eyeButtonStyle}
                 aria-label={showPassword ? "Скрий паролата" : "Покажи паролата"}
               >
-                {showPassword ? "🙈" : "👁️‍🗨️"}
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
             <p
@@ -263,7 +268,7 @@ export default function Register() {
                 Създаване...
               </span>
             ) : (
-              "🚀 Създай акаунт"
+              "Създай акаунт"
             )}
           </button>
         </form>
@@ -335,7 +340,9 @@ const iconStyle = {
   left: "1rem",
   top: "50%",
   transform: "translateY(-50%)",
-  fontSize: "1.2rem",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
   color: "#64748b",
 };
 
@@ -344,6 +351,9 @@ const eyeButtonStyle = {
   right: "1rem",
   top: "50%",
   transform: "translateY(-50%)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
   background: "none",
   border: "none",
   cursor: "pointer",
