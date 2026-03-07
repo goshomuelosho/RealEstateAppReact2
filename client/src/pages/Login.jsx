@@ -59,6 +59,7 @@ export default function Login() {
 
   return (
     <div
+      className="auth-page"
       style={{
         minHeight: "100vh",
         width: "100%",
@@ -68,18 +69,20 @@ export default function Login() {
         background:
           "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)",
         position: "relative",
-        overflow: "hidden",
-        padding: "2rem",
+        overflowX: "hidden",
+        overflowY: "auto",
+        padding: "clamp(0.85rem, 3vh, 2rem) clamp(0.85rem, 3vw, 2rem)",
       }}
     >
       {/* 🌌 Animated background */}
       <div
+        className="auth-orb"
         style={{
           position: "absolute",
           top: "15%",
           left: "10%",
-          width: "400px",
-          height: "400px",
+          width: "clamp(180px, 34vw, 400px)",
+          height: "clamp(180px, 34vw, 400px)",
           background:
             "radial-gradient(circle, rgba(59, 130, 246, 0.25), transparent)",
           borderRadius: "50%",
@@ -89,12 +92,13 @@ export default function Login() {
         }}
       />
       <div
+        className="auth-orb"
         style={{
           position: "absolute",
           bottom: "20%",
           right: "15%",
-          width: "350px",
-          height: "350px",
+          width: "clamp(160px, 30vw, 350px)",
+          height: "clamp(160px, 30vw, 350px)",
           background:
             "radial-gradient(circle, rgba(168, 85, 247, 0.25), transparent)",
           borderRadius: "50%",
@@ -119,14 +123,41 @@ export default function Login() {
           25% { transform: translateX(-10px); }
           75% { transform: translateX(10px); }
         }
+        .auth-page {
+          min-height: 100vh;
+          min-height: 100dvh;
+          scrollbar-gutter: stable;
+        }
+        .auth-card {
+          width: min(100%, 460px);
+        }
+        @media (max-height: 760px) {
+          .auth-page {
+            align-items: flex-start !important;
+          }
+        }
+        @media (max-width: 520px) {
+          .auth-card {
+            padding: 1.15rem 1rem !important;
+            border-radius: 18px !important;
+          }
+          .auth-copy {
+            margin-bottom: 1.5rem !important;
+          }
+          .auth-orb {
+            filter: blur(65px) !important;
+            opacity: 0.6;
+          }
+        }
       `}</style>
 
       {/* 🧊 Glassy Card */}
       <div
+        className="auth-card"
         style={{
           background: "rgba(30, 41, 59, 0.95)",
           backdropFilter: "blur(20px)",
-          padding: "3rem 2.5rem",
+          padding: "clamp(1.25rem, 3.2vw, 3rem) clamp(1rem, 3vw, 2.5rem)",
           borderRadius: "24px",
           boxShadow: "0 20px 60px rgba(0, 0, 0, 0.4)",
           width: "100%",
@@ -141,9 +172,9 @@ export default function Login() {
         {/* 🏠 Icon */}
         <div
           style={{
-            width: "80px",
-            height: "80px",
-            margin: "0 auto 1.5rem",
+            width: "clamp(56px, 11vw, 80px)",
+            height: "clamp(56px, 11vw, 80px)",
+            margin: "0 auto clamp(0.9rem, 2vh, 1.5rem)",
             background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
             borderRadius: "50%",
             display: "flex",
@@ -153,7 +184,7 @@ export default function Login() {
             animation: "float 3s ease-in-out infinite",
           }}
         >
-          <span style={{ fontSize: "2.5rem" }}>🔑</span>
+          <span style={{ fontSize: "clamp(1.7rem, 5vw, 2.5rem)" }}>🔑</span>
         </div>
 
         <h2
@@ -161,7 +192,7 @@ export default function Login() {
             marginBottom: "0.5rem",
             color: "#f1f5f9",
             fontWeight: "800",
-            fontSize: "2rem",
+            fontSize: "clamp(1.45rem, 5vw, 2rem)",
             background: "linear-gradient(135deg, #f1f5f9, #cbd5e1)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
@@ -170,10 +201,11 @@ export default function Login() {
           Добре дошъл отново
         </h2>
         <p
+          className="auth-copy"
           style={{
-            marginBottom: "2.5rem",
+            marginBottom: "clamp(1.25rem, 3vh, 2.5rem)",
             color: "#94a3b8",
-            fontSize: "0.95rem",
+            fontSize: "clamp(0.86rem, 2.5vw, 0.95rem)",
           }}
         >
           Влез, за да управляваш имотите си
@@ -185,7 +217,7 @@ export default function Login() {
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: "1.5rem",
+            gap: "clamp(0.9rem, 2.2vh, 1.5rem)",
             textAlign: "left",
           }}
         >
@@ -247,7 +279,7 @@ export default function Login() {
             disabled={loading}
             style={{
               marginTop: "0.5rem",
-              padding: "1.1rem",
+              padding: "clamp(0.85rem, 2vh, 1.1rem)",
               background: loading
                 ? "linear-gradient(135deg, #94a3b8, #64748b)"
                 : "linear-gradient(135deg, #3b82f6, #8b5cf6)",
@@ -304,8 +336,8 @@ export default function Login() {
         {/* 🔗 Register link */}
         <div
           style={{
-            marginTop: "2rem",
-            paddingTop: "1.5rem",
+            marginTop: "clamp(1.15rem, 2.5vh, 2rem)",
+            paddingTop: "clamp(0.9rem, 2vh, 1.5rem)",
             borderTop: "1px solid #334155",
           }}
         >
