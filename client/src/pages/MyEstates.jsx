@@ -6,7 +6,7 @@ import NavBar from "../components/NavBar";
 import useViewportWidth from "../hooks/useViewportWidth";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
 
-/* ✅ Dropdown options (same as AddEstate) */
+
 const PROPERTY_TYPES = [
   "1-СТАЕН",
   "2-СТАЕН",
@@ -56,7 +56,7 @@ const FLOORS = [
   "Не е приложимо",
 ];
 
-/* 🎨 Styles */
+
 const keyframes = `
   @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(30px); }
@@ -141,7 +141,7 @@ const compactToggleBtn = {
   cursor: "pointer",
 };
 
-/* ✅ Marketplace-like filter layout (compact) */
+
 const filterBar = {
   display: "grid",
   gridTemplateColumns: "repeat(6, minmax(160px, 1fr))",
@@ -212,7 +212,7 @@ const visibilityPill = (isPublic) => ({
   }`,
 });
 
-/* ✅ meta pills */
+
 const metaRow = {
   display: "flex",
   flexWrap: "wrap",
@@ -300,7 +300,7 @@ const loaderSpinner = {
 
 const emptyState = { color: "#94a3b8", textAlign: "center", marginTop: "2rem" };
 
-/* 🧭 Component */
+
 export default function MyEstates() {
   const viewportWidth = useViewportWidth();
   const isMobile = viewportWidth <= 768;
@@ -315,7 +315,6 @@ export default function MyEstates() {
   const [estateToDelete, setEstateToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // filters
   const [titleSearch, setTitleSearch] = useState("");
   const [locationSearch, setLocationSearch] = useState("");
   const [sortOrder, setSortOrder] = useState("newest");
@@ -323,7 +322,7 @@ export default function MyEstates() {
   const [propertyType, setPropertyType] = useState("");
   const [buildingType, setBuildingType] = useState("");
   const [floor, setFloor] = useState("");
-  const [act16, setAct16] = useState("all"); // all | yes | no
+  const [act16, setAct16] = useState("all"); 
 
   const navigate = useNavigate();
 
@@ -395,7 +394,7 @@ export default function MyEstates() {
     init();
   }, [navigate, fetchEstates]);
 
-  /* ✅ AUTO-REFRESH on filter change (like Marketplace) */
+  
   useEffect(() => {
     if (!profile?.id) return;
 
@@ -525,7 +524,7 @@ export default function MyEstates() {
             </div>
           ) : null}
 
-          {/* Filters (Marketplace-like grid) */}
+          
           {!isCompactLayout || filtersOpen ? (
             <div
               style={{
@@ -600,7 +599,7 @@ export default function MyEstates() {
                 <option value="high-low">Цена: висока → ниска</option>
               </select>
 
-              {/* Reset row full width */}
+              
               <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button
                   onClick={() => {
@@ -640,7 +639,7 @@ export default function MyEstates() {
             </div>
           ) : null}
 
-          {/* Grid */}
+          
           {loading ? (
             <div style={loaderContainer}>
               <div style={loaderSpinner} />
@@ -691,7 +690,7 @@ export default function MyEstates() {
   );
 }
 
-/* 🔹 Estate Card */
+
 function EstateCard({
   estate,
   isMobile,
@@ -748,7 +747,7 @@ function EstateCard({
 
         <div style={visibilityPill(isPublic)}>{isPublic ? "Публично в пазара" : "Частно"}</div>
 
-        {/* meta pills */}
+        
         <div style={metaRow}>
           {estate.property_type ? <span style={pill("type")}>🏠 {estate.property_type}</span> : null}
           {showAct16 ? <span style={pill("act16")}>✅ Акт 16</span> : null}
@@ -805,3 +804,4 @@ function EstateCard({
     </div>
   );
 }
+

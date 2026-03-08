@@ -1,6 +1,4 @@
-/* =============================
-   GLOBAL RESET & BASE
-============================= */
+
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
 
 html,
@@ -25,14 +23,14 @@ canvas {
   max-width: 100%;
 }
 
-/* 🎨 Theme Variables */
+
 :root {
-  --bg-gradient-start: #0f172a; /* dark navy */
-  --bg-gradient-end: #334155;   /* slate grey */
+  --bg-gradient-start: #0f172a; 
+  --bg-gradient-end: #334155;   
   --text-color: #e2e8f0;
   --text-light: #94a3b8;
 
-  --primary-color: #2563eb; /* blue */
+  --primary-color: #2563eb; 
   --primary-hover: #1e40af;
 
   --error-color: #ef4444;
@@ -46,9 +44,7 @@ canvas {
   background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
 }
 
-/* =============================
-   BODY
-============================= */
+
 body {
   display: flex;
   flex-direction: column;
@@ -60,9 +56,7 @@ body {
   overflow-x: hidden;
 }
 
-/* =============================
-   TEXT & LINKS
-============================= */
+
 a {
   font-weight: 500;
   color: var(--primary-color);
@@ -81,9 +75,7 @@ h1, h2, h3 {
   color: #f1f5f9;
 }
 
-/* =============================
-   BUTTONS (Modern)
-============================= */
+
 button {
   font-family: inherit;
   border: none;
@@ -111,9 +103,7 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
-/* =============================
-   INPUTS
-============================= */
+
 input, textarea, select {
   width: 100%;
   font-family: inherit;
@@ -134,9 +124,7 @@ select:focus {
   outline: none;
 }
 
-/* =============================
-   CONTAINERS
-============================= */
+
 .main-container {
   flex: 1;
   display: flex;
@@ -146,9 +134,7 @@ select:focus {
   overflow-y: auto;
 }
 
-/* =============================
-   UTILITIES
-============================= */
+
 .center-content {
   display: flex;
   justify-content: center;
@@ -163,9 +149,7 @@ select:focus {
   color: #0f172a;
 }
 
-/* =============================
-   ANIMATIONS
-============================= */
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -180,11 +164,10 @@ select:focus {
   animation: fadeInUp 0.6s ease;
 }
 
-/* =============================
-   MEDIA QUERIES
-============================= */
+
 @media (max-width: 768px) {
   .main-container {
     padding: 1rem;
   }
 }
+

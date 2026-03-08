@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import NavBar from "../components/NavBar";
 import LocationPicker from "../components/LocationPicker";
 
-/* 🎨 Styles (defined first) */
+
 const pageContainer = (isLoaded) => ({
   minHeight: "100vh",
   display: "flex",
@@ -37,7 +37,7 @@ const mainStyle = {
   animation: "fadeIn 0.8s ease",
 };
 
-/* Card + Form Styles */
+
 const formCard = {
   background: "rgba(255,255,255,0.08)",
   backdropFilter: "blur(20px)",
@@ -74,7 +74,7 @@ const inputStyle = {
   outline: "none",
 };
 
-/* ✅ Select styles: same feel as MyEstates filterSelect */
+
 const selectStyle = {
   padding: "1rem 1.25rem",
   borderRadius: "12px",
@@ -149,7 +149,7 @@ const spinner = {
   animation: "spin 0.8s linear infinite",
 };
 
-/* 🌟 Toggle styles for "List on Marketplace" */
+
 const toggleWrapper = {
   display: "flex",
   alignItems: "center",
@@ -183,7 +183,7 @@ const toggleThumb = (on) => ({
   transition: "left 0.2s ease",
 });
 
-/* ✅ Checkbox row style */
+
 const checkRow = {
   display: "flex",
   alignItems: "center",
@@ -198,7 +198,7 @@ const checkRow = {
 
 const hint = { color: "#cbd5e1", fontSize: "0.9rem", marginTop: 4 };
 
-/* Modal Styles */
+
 const modalOverlay = {
   position: "fixed",
   top: 0,
@@ -261,7 +261,7 @@ const keyframes = `
   @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: 200px 0; } }
 `;
 
-/* ✅ Dropdown options */
+
 const PROPERTY_TYPES = [
   "1-СТАЕН",
   "2-СТАЕН",
@@ -311,10 +311,10 @@ const FLOORS = [
   "Не е приложимо",
 ];
 
-/* 🚀 Component */
+
 export default function AddEstate() {
   const navigate = useNavigate();
-  const location = useLocation(); // pre-check from Marketplace
+  const location = useLocation(); 
   const [profile, setProfile] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -323,9 +323,8 @@ export default function AddEstate() {
     description: "",
     price: "",
     location: "",
-    is_public: false, // marketplace flag
+    is_public: false, 
 
-    // ✅ NEW FIELDS
     property_type: "",
     has_act16: false,
     building_type: "",
@@ -350,7 +349,6 @@ export default function AddEstate() {
 
       setProfile(profileData || { id: userData.user.id });
 
-      // pre-check when coming from Marketplace
       if (location.state?.listOnMarketplace) {
         setForm((f) => ({ ...f, is_public: true }));
       }
@@ -397,7 +395,7 @@ export default function AddEstate() {
       {
         user_id: profile.id,
         ...form,
-        image_url: imageUrl, // includes is_public + new fields
+        image_url: imageUrl, 
       },
     ]);
 
@@ -425,7 +423,7 @@ export default function AddEstate() {
             <p style={formSubtitle}>Попълни детайли, за да публикуваш имота</p>
           </div>
 
-          {/* ✅ Property type */}
+          
           <div>
             <label style={labelStyle}>Вид на имота</label>
             <select
@@ -446,7 +444,7 @@ export default function AddEstate() {
             </select>
           </div>
 
-          {/* Title */}
+          
           <div style={{ marginTop: "1rem" }}>
             <label style={labelStyle}>Заглавие на имота</label>
             <input
@@ -459,7 +457,7 @@ export default function AddEstate() {
             />
           </div>
 
-          {/* ✅ Building type + Floor (grid) */}
+          
           <div
             style={{
               display: "grid",
@@ -503,7 +501,7 @@ export default function AddEstate() {
             </div>
           </div>
 
-          {/* ✅ Act 16 checkbox */}
+          
           <div style={checkRow}>
             <div>
               <div style={{ fontWeight: 700 }}>Има Акт 16</div>
@@ -521,7 +519,7 @@ export default function AddEstate() {
             />
           </div>
 
-          {/* Description */}
+          
           <div style={{ marginTop: "1rem" }}>
             <label style={labelStyle}>Описание</label>
             <textarea
@@ -534,7 +532,7 @@ export default function AddEstate() {
             />
           </div>
 
-          {/* Price */}
+          
           <div style={{ marginTop: "1rem" }}>
             <label style={labelStyle}>Цена (€)</label>
             <input
@@ -548,7 +546,7 @@ export default function AddEstate() {
             />
           </div>
 
-          {/* Location with map picker */}
+          
           <div style={{ marginTop: "1rem" }}>
             <LocationPicker
               value={form.location}
@@ -561,7 +559,7 @@ export default function AddEstate() {
             />
           </div>
 
-          {/* Upload */}
+          
           <div style={{ marginTop: "1rem" }}>
             <label style={labelStyle}>Снимка на имота</label>
             <div style={uploadBoxStyle(imagePreview)}>
@@ -598,7 +596,7 @@ export default function AddEstate() {
             </div>
           </div>
 
-          {/* List on Marketplace (toggle) */}
+          
           <div
             style={toggleWrapper}
             onClick={() => setForm((f) => ({ ...f, is_public: !f.is_public }))}
@@ -618,7 +616,7 @@ export default function AddEstate() {
             />
           </div>
 
-          {/* Submit */}
+          
           <button type="submit" disabled={loading} style={submitButton(loading)}>
             {loading ? (
               <span
@@ -638,7 +636,7 @@ export default function AddEstate() {
         </form>
       </main>
 
-      {/* Success Modal */}
+      
       {showModal && (
         <div style={modalOverlay}>
           <div style={modalCard}>
@@ -654,3 +652,4 @@ export default function AddEstate() {
     </div>
   );
 }
+

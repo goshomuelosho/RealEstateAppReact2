@@ -18,7 +18,7 @@ export default function EstateDetail() {
   const navigate = useNavigate();
 
   const [estate, setEstate] = useState(null);
-  const [profile, setProfile] = useState(null); // current user profile for NavBar
+  const [profile, setProfile] = useState(null); 
   const [loading, setLoading] = useState(true);
 
   const [isOwner, setIsOwner] = useState(false);
@@ -36,7 +36,6 @@ export default function EstateDetail() {
 
       const currentUserId = userData.user.id;
 
-      // 👤 Fetch profile (for NavBar + admin check)
       const { data: profileData, error: profileErr } = await supabase
         .from("profiles")
         .select("id, name, avatar_url, is_admin")
@@ -49,7 +48,6 @@ export default function EstateDetail() {
       setProfile(currentProfile);
       setIsAdmin(!!currentProfile.is_admin);
 
-      // 🏡 Fetch estate
       const { data, error } = await supabase.from("estates").select("*").eq("id", id).single();
 
       if (error || !data) {
@@ -87,7 +85,6 @@ export default function EstateDetail() {
     }
 
     setShowDeleteModal(false);
-    // ✅ if admin deletes from marketplace / details, send back to marketplace
     if (isAdmin) navigate("/marketplace");
     else navigate("/my-estates");
   };
@@ -132,7 +129,7 @@ export default function EstateDetail() {
 
           <LocationPinMap location={estate.location} />
 
-          {/* ✅ Extra details */}
+          
           <div style={detailsWrap}>
             <h3 style={detailsTitle}>Детайли</h3>
 
@@ -173,7 +170,7 @@ export default function EstateDetail() {
 
           <p style={estateDescription}>{estate.description}</p>
 
-          {/* ✅ Owner OR Admin */}
+          
           {canManage && (
             <div style={buttonGroup}>
               <button
@@ -214,7 +211,7 @@ export default function EstateDetail() {
   );
 }
 
-/* 🎨 Styles */
+
 const keyframes = `
   @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(30px); }
@@ -414,4 +411,5 @@ const deleteButton = {
   background: "linear-gradient(135deg, #ef4444, #dc2626)",
   boxShadow: "0 4px 15px rgba(239,68,68,0.3)",
 };
+
 

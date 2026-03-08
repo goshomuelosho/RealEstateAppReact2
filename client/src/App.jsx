@@ -13,11 +13,11 @@ import EstateDetail from "./pages/EstateDetail";
 import Profile from "./pages/Profile";
 import Marketplace from "./pages/Marketplace";
 
-/* NEW PAGES */
+
 import Messages from "./pages/Messages";
 import Conversation from "./pages/Conversation";
 
-/* ✅ NEW: Admin dashboard page */
+
 import AdminDashboard from "./pages/AdminDashboard";
 import HelpCenter from "./pages/HelpCenter";
 import Contacts from "./pages/Contacts";
@@ -57,7 +57,7 @@ function RouteLoadingCover({ text }) {
   );
 }
 
-/** ✅ Guard: only logged users */
+
 function RequireAuth({ children }) {
   const [loading, setLoading] = useState(true);
   const [ok, setOk] = useState(false);
@@ -70,12 +70,12 @@ function RequireAuth({ children }) {
     })();
   }, []);
 
-  if (loading) return null; // can replace with spinner
+  if (loading) return null; 
   if (!ok) return <Navigate to="/login" replace />;
   return children;
 }
 
-/** ✅ Guard: only admins */
+
 function RequireAdmin({ children }) {
   const [loading, setLoading] = useState(true);
   const [ok, setOk] = useState(false);
@@ -115,7 +115,7 @@ function RequireAdmin({ children }) {
   return children;
 }
 
-/** ✅ Root redirect based on role */
+
 function RootRedirect() {
   const [loading, setLoading] = useState(true);
   const [to, setTo] = useState("/login");
@@ -137,7 +137,6 @@ function RootRedirect() {
         .eq("id", user.id)
         .single();
 
-      // ✅ admin -> /admin, user -> /my-estates
       if (!error && profileData?.is_admin) setTo("/admin");
       else setTo("/my-estates");
 
@@ -226,22 +225,22 @@ function App() {
   return (
     <Routes>
       <Route element={<AppShell />}>
-        {/* 🔓 Public routes */}
+        
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
-        {/* ✅ Info routes */}
+        
         <Route path="/help" element={<HelpCenter />} />
         <Route path="/contacts" element={<Contacts />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/sitemap" element={<SiteMapPage />} />
 
-        {/* ✅ Root redirect */}
+        
         <Route path="/" element={<RootRedirect />} />
 
-        {/* 🔐 Protected routes */}
+        
         <Route
           path="/my-estates"
           element={
@@ -291,7 +290,7 @@ function App() {
           }
         />
 
-        {/* 📩 Messaging system */}
+        
         <Route
           path="/messages"
           element={
@@ -309,7 +308,7 @@ function App() {
           }
         />
 
-        {/* ✅ Normal dashboard (for everyone logged in) */}
+        
         <Route
           path="/dashboard"
           element={
@@ -319,7 +318,7 @@ function App() {
           }
         />
 
-        {/* 🛡️ Admin-only Dashboard */}
+        
         <Route
           path="/admin"
           element={
@@ -329,7 +328,7 @@ function App() {
           }
         />
 
-        {/* fallback */}
+        
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
@@ -337,3 +336,4 @@ function App() {
 }
 
 export default App;
+

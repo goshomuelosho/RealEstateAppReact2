@@ -5,7 +5,7 @@ import { Mail, Search } from "lucide-react";
 import NavBar from "../components/NavBar";
 import useViewportWidth from "../hooks/useViewportWidth";
 
-/** ---------- Dropdown options (same as AddEstate) ---------- */
+
 const PROPERTY_TYPES = [
   "1-СТАЕН",
   "2-СТАЕН",
@@ -55,7 +55,7 @@ const FLOORS = [
   "Не е приложимо",
 ];
 
-/** ---------- Local styles ---------- */
+
 const bgLight = (color, top, left, size) => ({
   position: "absolute",
   top,
@@ -180,7 +180,7 @@ const contactBtn = {
   transition: "transform 0.15s ease, filter 0.2s ease",
 };
 
-/* ✅ meta pills */
+
 const metaRow = {
   display: "flex",
   flexWrap: "wrap",
@@ -232,7 +232,7 @@ const loaderSpinner = {
   animation: "spin 1s linear infinite",
 };
 
-/* 🌟 Message sent modal styles */
+
 const sentOverlay = {
   position: "fixed",
   top: 0,
@@ -295,7 +295,7 @@ const sentProgress = {
   margin: "0 auto",
 };
 
-/* ⭐ Big star button (top-right) */
+
 const favStarBtn = (active, compact = false) => ({
   position: "absolute",
   top: compact ? 8 : 10,
@@ -324,10 +324,10 @@ const favStarBtn = (active, compact = false) => ({
 const favStarGlyph = (active, compact = false) => ({
   fontSize: compact ? 24 : 28,
   lineHeight: 1,
-  color: active ? "#fbbf24" : "#94a3b8", // ✅ yellow vs grey
+  color: active ? "#fbbf24" : "#94a3b8", 
 });
 
-/* ⭐ nicer toggle pill (Only favorites) */
+
 const favToggleRow = {
   gridColumn: "1 / -1",
   display: "flex",
@@ -366,7 +366,7 @@ const toggleKnob = (on) => ({
   boxShadow: "0 8px 16px rgba(0,0,0,0.18)",
 });
 
-/** ---------- Component ---------- */
+
 export default function Marketplace() {
   const viewportWidth = useViewportWidth();
   const isMobile = viewportWidth <= 768;
@@ -380,7 +380,6 @@ export default function Marketplace() {
   const [loading, setLoading] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // filters
   const [qTitle, setQTitle] = useState("");
   const [qLocation, setQLocation] = useState("");
   const [minPrice, setMinPrice] = useState("");
@@ -392,18 +391,15 @@ export default function Marketplace() {
   const [floor, setFloor] = useState("");
   const [act16, setAct16] = useState("all");
 
-  // favorites
   const [onlyFavorites, setOnlyFavorites] = useState(false);
   const [favoriteIds, setFavoriteIds] = useState(new Set());
 
-  // contact modal
   const [contactOpen, setContactOpen] = useState(false);
   const [selectedListing, setSelectedListing] = useState(null);
   const [sellerProfile, setSellerProfile] = useState(null);
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
 
-  // sent modal
   const [showSentModal, setShowSentModal] = useState(false);
 
   const filterColumns = isMobile
@@ -474,7 +470,6 @@ export default function Marketplace() {
         return;
       }
 
-      // ✅ 3A.2: load is_admin too
       const { data: myProfile, error: profileError } = await supabase
         .from("profiles")
         .select("id, name, avatar_url, is_admin")
@@ -483,7 +478,6 @@ export default function Marketplace() {
 
       if (profileError) console.error("Error loading profile in Marketplace:", profileError);
 
-      // ✅ 3A.3: safe fallback
       const currentProfile = myProfile || {
         id: data.user.id,
         name: "",
@@ -491,12 +485,10 @@ export default function Marketplace() {
         is_admin: false,
       };
 
-      // if column missing or null
       currentProfile.is_admin = !!currentProfile.is_admin;
 
       setProfile(currentProfile);
 
-      // load favorites
       const { data: favs, error: favErr } = await supabase
         .from("favorites")
         .select("estate_id")
@@ -528,7 +520,6 @@ export default function Marketplace() {
     }, 400);
 
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     qTitle,
     qLocation,
@@ -549,7 +540,6 @@ export default function Marketplace() {
 
     const isFav = favoriteIds.has(estateId);
 
-    // optimistic update
     setFavoriteIds((prev) => {
       const next = new Set(prev);
       if (isFav) next.delete(estateId);
@@ -566,7 +556,6 @@ export default function Marketplace() {
 
       if (error) {
         console.error("Error removing favorite:", error);
-        // rollback
         setFavoriteIds((prev) => {
           const next = new Set(prev);
           next.add(estateId);
@@ -580,7 +569,6 @@ export default function Marketplace() {
 
       if (error) {
         console.error("Error adding favorite:", error);
-        // rollback
         setFavoriteIds((prev) => {
           const next = new Set(prev);
           next.delete(estateId);
@@ -703,7 +691,7 @@ export default function Marketplace() {
           </div>
         ) : null}
 
-        {/* Filters */}
+        
         {!isCompactLayout || filtersOpen ? (
           <div
             style={{
@@ -785,7 +773,7 @@ export default function Marketplace() {
               <option value="high-low">Цена: висока → ниска</option>
             </select>
 
-            {/* Only favorites toggle */}
+            
             <div
               style={{
                 ...favToggleRow,
@@ -865,7 +853,7 @@ export default function Marketplace() {
           </div>
         ) : null}
 
-        {/* Grid */}
+        
         {loading ? (
           <div style={loaderContainer}>
             <div style={loaderSpinner} />
@@ -891,7 +879,7 @@ export default function Marketplace() {
 
               return (
                 <div key={estate.id} style={card}>
-                  {/* ✅ single star button only */}
+                  
                   <button
                     onClick={() => toggleFavorite(estate.id)}
                     title={isFav ? "Премахни от любими" : "Добави в любими"}
@@ -1008,7 +996,7 @@ export default function Marketplace() {
         )}
       </main>
 
-      {/* Contact Modal */}
+      
       {contactOpen && selectedListing && (
         <div style={overlay}>
           <div style={modal}>
@@ -1088,7 +1076,7 @@ export default function Marketplace() {
         </div>
       )}
 
-      {/* 🎉 Message Sent Modal */}
+      
       {showSentModal && (
         <div style={sentOverlay}>
           <div style={sentCard}>
@@ -1106,7 +1094,7 @@ export default function Marketplace() {
   );
 }
 
-/** ---------- Small seller badge component ---------- */
+
 function SellerBadge({ userId }) {
   const [seller, setSeller] = useState(null);
 
@@ -1133,7 +1121,7 @@ function SellerBadge({ userId }) {
   ) : null;
 }
 
-/** ---------- Modal styles for contact ---------- */
+
 const overlay = {
   position: "fixed",
   inset: 0,
@@ -1157,3 +1145,4 @@ const modal = {
   padding: "1.25rem 1.25rem 1rem",
   boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
 };
+

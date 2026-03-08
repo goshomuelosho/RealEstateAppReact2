@@ -17,21 +17,18 @@ export default function Profile() {
   const [avatarFile, setAvatarFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false); // ✨ smooth fade-in
+  const [isLoaded, setIsLoaded] = useState(false); 
   const [nameError, setNameError] = useState("");
 
-  // ✅ Toast
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
 
-  // 🔐 Password Change
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
 
-  // ✅ Load user + profile
   useEffect(() => {
     const init = async () => {
       const { data } = await supabase.auth.getUser();
@@ -56,12 +53,11 @@ export default function Profile() {
         setProfile(fallbackProfile);
         setProfileDraft(fallbackProfile);
       }
-      setTimeout(() => setIsLoaded(true), 150); // ✨ delay for fade-in
+      setTimeout(() => setIsLoaded(true), 150); 
     };
     init();
   }, [navigate]);
 
-  // 🧠 Avatar Upload
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -72,7 +68,6 @@ export default function Profile() {
     }
   };
 
-  // 💾 Save Profile
   const handleSave = async (e) => {
     e.preventDefault();
     if (!user) return;
@@ -144,7 +139,6 @@ export default function Profile() {
     setSaving(false);
   };
 
-  // 🔐 Update Password
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     setPasswordMessage("");
@@ -167,13 +161,11 @@ export default function Profile() {
     setPasswordLoading(false);
   };
 
-  // 🚪 Logout
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/login");
   };
 
-  // ✅ Toast Helper
   const showToastMessage = (msg) => {
     setToastMessage(msg);
     setShowToast(true);
@@ -188,18 +180,18 @@ export default function Profile() {
         transition: "opacity 0.4s ease",
       }}
     >
-      {/* 🌌 Lights */}
+      
       <div style={bgLight("#3b82f6", "10%", "5%", 300)} />
       <div style={bgLight("#8b5cf6", "80%", "85%", 400)} />
 
-      {/* 🧭 Global NavBar with Marketplace button */}
+      
       <NavBar profile={profile} />
 
-      {/* Main */}
+      
       <main style={mainStyle}>
         <div style={cardContainer}>
           <form onSubmit={handleSave}>
-            {/* Avatar */}
+            
             <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
               <div style={avatarWrapper}>
                 <img
@@ -224,7 +216,7 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Name */}
+            
             <div style={fieldGroup}>
               <label style={labelStyle}>Потребителско име</label>
               <input
@@ -244,7 +236,7 @@ export default function Profile() {
               {nameError ? <p style={nameErrorStyle}>{nameError}</p> : null}
             </div>
 
-            {/* Email */}
+            
             <div style={fieldGroup}>
               <label style={labelStyle}>Имейл</label>
               <input
@@ -260,7 +252,7 @@ export default function Profile() {
             </button>
           </form>
 
-          {/* Password Change */}
+          
           {showPasswordForm ? (
             <form onSubmit={handlePasswordChange} style={{ marginTop: "2rem" }}>
               <div style={fieldGroup}>
@@ -319,14 +311,14 @@ export default function Profile() {
             </button>
           )}
 
-          {/* Logout */}
+          
           <button onClick={handleLogout} style={logoutButton}>
             Изход
           </button>
         </div>
       </main>
 
-      {/* ✅ Toast */}
+      
       {showToast && (
         <div style={toastContainer}>
           <div style={toastBox}>{toastMessage}</div>
@@ -336,7 +328,6 @@ export default function Profile() {
   );
 }
 
-/* 🎨 Styles */
 const pageWrapper = {
   minHeight: "100vh",
   background: "linear-gradient(135deg,#0f172a,#1e293b,#334155)",
@@ -485,3 +476,4 @@ const toastBox = {
   fontWeight: "600",
   boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
 };
+

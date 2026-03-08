@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import NavBar from "../components/NavBar";
 import LocationPicker from "../components/LocationPicker";
 
-/* ✅ Dropdown options */
+
 const PROPERTY_TYPES = [
   "1-СТАЕН",
   "2-СТАЕН",
@@ -54,7 +54,7 @@ const FLOORS = [
   "Не е приложимо",
 ];
 
-/* 🎨 Reusable styles */
+
 const pageContainer = (isLoaded) => ({
   minHeight: "100vh",
   display: "flex",
@@ -181,7 +181,7 @@ const spinner = {
   animation: "spin 0.8s linear infinite",
 };
 
-/* ✅ Modal Styles */
+
 const modalOverlay = {
   position: "fixed",
   inset: 0,
@@ -234,7 +234,7 @@ const keyframes = `
   @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: 200px 0; } }
 `;
 
-/* ✅ Access denied card style */
+
 const deniedCard = {
   ...cardStyle,
   maxWidth: "650px",
@@ -299,7 +299,6 @@ export default function EditEstate() {
 
       const currentUserId = userData.user.id;
 
-      // ✅ profile + is_admin
       const { data: profileData, error: profileErr } = await supabase
         .from("profiles")
         .select("id, name, avatar_url, is_admin")
@@ -312,7 +311,6 @@ export default function EditEstate() {
       setProfile(currentProfile);
       setIsAdmin(!!currentProfile.is_admin);
 
-      // ✅ load estate
       setLoadingEstate(true);
       const { data, error } = await supabase.from("estates").select("*").eq("id", id).single();
 
@@ -412,7 +410,6 @@ export default function EditEstate() {
 
     setShowModal(true);
 
-    // ✅ After save: admin -> marketplace (for now), user -> my-estates
     setTimeout(() => {
       if (isAdmin && !isOwner) navigate("/marketplace");
       else navigate("/my-estates");
@@ -475,7 +472,7 @@ export default function EditEstate() {
               ✏️ Редактирай имот
             </h2>
 
-            {/* Marketplace visibility badge */}
+            
             <div
               style={{
                 display: "inline-flex",
@@ -516,7 +513,7 @@ export default function EditEstate() {
             )}
 
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}>
-              {/* ✅ Вид на имота */}
+              
               <div>
                 <label style={labelStyle}>Вид на имота</label>
                 <select
@@ -537,7 +534,7 @@ export default function EditEstate() {
                 </select>
               </div>
 
-              {/* ✅ Вид на сградата + Етаж */}
+              
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                 <div>
                   <label style={labelStyle}>Вид на сградата</label>
@@ -564,7 +561,7 @@ export default function EditEstate() {
                 </div>
               </div>
 
-              {/* ✅ Акт 16 */}
+              
               <div style={checkRow}>
                 <div>
                   <div style={{ fontWeight: 700 }}>Има Акт 16</div>
@@ -580,7 +577,7 @@ export default function EditEstate() {
                 />
               </div>
 
-              {/* Existing fields */}
+              
               <input
                 name="title"
                 placeholder="Заглавие"
@@ -617,10 +614,10 @@ export default function EditEstate() {
                 labelStyle={labelStyle}
               />
 
-              {/* Image input */}
+              
               <input type="file" accept="image/*" onChange={handleImageChange} style={inputStyle} />
 
-              {/* is_public toggle */}
+              
               <div style={switchRow}>
                 <div>
                   <div style={{ fontWeight: 700 }}>Покажи в Пазара</div>
@@ -651,7 +648,7 @@ export default function EditEstate() {
         )}
       </main>
 
-      {/* ✅ Success Modal */}
+      
       {showModal && (
         <div style={modalOverlay}>
           <div style={modalCard}>
@@ -669,3 +666,4 @@ export default function EditEstate() {
     </div>
   );
 }
+

@@ -48,7 +48,7 @@ export default function Conversation() {
   const { estateId, otherUserId } = useParams();
   const navigate = useNavigate();
 
-  const [profile, setProfile] = useState(null); // current user profile
+  const [profile, setProfile] = useState(null); 
   const [otherUser, setOtherUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,7 +56,6 @@ export default function Conversation() {
   const [content, setContent] = useState("");
   const socketRef = useRef(null);
 
-  // 👇 same fade-in state as Dashboard
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -82,7 +81,6 @@ export default function Conversation() {
         .single();
       setOtherUser(other || { id: otherUserId });
 
-      // fetch existing messages in this conversation
       const { data: msgs, error } = await supabase
         .from("messages")
         .select("*")
@@ -100,7 +98,6 @@ export default function Conversation() {
 
       setLoading(false);
 
-      // 👇 identical fade trigger to Dashboard
       setTimeout(() => setIsLoaded(true), 150);
     })();
   }, [estateId, otherUserId, navigate]);
@@ -392,7 +389,7 @@ export default function Conversation() {
           )}
         </div>
 
-        {/* Messages list */}
+        
         <div
           style={{
             flex: 1,
@@ -437,7 +434,7 @@ export default function Conversation() {
           )}
         </div>
 
-        {/* Composer */}
+        
         <form
           onSubmit={handleSend}
           style={{
@@ -483,3 +480,4 @@ export default function Conversation() {
     </div>
   );
 }
+

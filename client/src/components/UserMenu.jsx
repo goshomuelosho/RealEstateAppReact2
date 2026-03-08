@@ -1,4 +1,3 @@
-// src/components/UserMenu.jsx
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate } from "react-router-dom";
@@ -68,3 +67,4 @@ export default function UserMenu() {
     </div>
   );
 }
+

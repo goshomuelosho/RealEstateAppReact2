@@ -3,7 +3,7 @@ import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
-export const DEFAULT_MAP_CENTER = [42.6977, 23.3219]; // Sofia
+export const DEFAULT_MAP_CENTER = [42.6977, 23.3219]; 
 export const DEFAULT_MAP_ZOOM = 12;
 export const SELECTED_MAP_ZOOM = 16;
 
@@ -106,4 +106,5 @@ export async function reverseGeocode(lat, lng, signal) {
   const result = await response.json();
   return result?.display_name || null;
 }
+
 

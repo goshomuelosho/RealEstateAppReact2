@@ -51,7 +51,6 @@ app.use(
 );
 app.use(express.json());
 
-// ✅ Supabase connection
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -194,3 +193,4 @@ server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Allowed client origins: ${allowedClientOrigins.join(", ")}`);
 });
+

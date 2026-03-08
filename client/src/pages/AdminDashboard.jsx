@@ -3,7 +3,7 @@ import { supabase } from "../supabaseClient";
 import { useNavigate, Link } from "react-router-dom";
 import NavBar from "../components/NavBar";
 
-/* 🎨 Simple styles (same vibe) */
+
 const bgLight = (color, top, left, size) => ({
   position: "absolute",
   top,
@@ -187,10 +187,7 @@ function shortId(id) {
   return String(id).slice(0, 8) + "…";
 }
 
-/**
- * ✅ Safe select helper:
- * Tries select strings in order until one succeeds (prevents 400 due to missing columns).
- */
+
 async function safeSelect(tableName, selectCandidates, builderFn) {
   let lastError = null;
 
@@ -225,13 +222,11 @@ export default function AdminDashboard() {
 
   const [loading, setLoading] = useState(true);
 
-  // USERS + ESTATES
   const [users, setUsers] = useState([]);
   const [estates, setEstates] = useState([]);
   const [expandedUser, setExpandedUser] = useState(null);
   const [userSearch, setUserSearch] = useState("");
 
-  // group estates by user_id
   const estatesByUser = useMemo(() => {
     const m = new Map();
     for (const e of estates) {
@@ -273,7 +268,6 @@ export default function AdminDashboard() {
         return;
       }
 
-      // load profile + admin flag (fallback ако липсват колони)
       const profRes = await safeSelect(
         "profiles",
         ["id, name, avatar_url, is_admin", "id, name, is_admin", "id, is_admin", "id"],
@@ -296,14 +290,12 @@ export default function AdminDashboard() {
 
       setProfile(p);
 
-      // ✅ Admin stats: total users (count)
       const { count: usersCount, error: usersCountErr } = await supabase
         .from("profiles")
         .select("id", { count: "exact", head: true });
 
       if (usersCountErr) console.error("Admin usersCount error:", usersCountErr);
 
-      // ✅ Estates list (fallback)
       const estatesRes = await safeSelect(
         "estates",
         [
@@ -338,7 +330,6 @@ export default function AdminDashboard() {
 
       setEstates(estatesData);
 
-      // ✅ Users list (fallback)
       const usersRes = await safeSelect(
         "profiles",
         [
@@ -376,7 +367,7 @@ export default function AdminDashboard() {
           <h1 style={title}>🛡️ Admin Dashboard</h1>
           <p style={subText}>Потребители и имоти.</p>
 
-          {/* Stats */}
+          
           <div style={grid}>
             <div style={statCard}>
               <div style={label}>Общо потребители</div>
@@ -399,7 +390,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* USERS */}
+          
           <div style={section}>
             <div
               style={{
@@ -474,7 +465,7 @@ export default function AdminDashboard() {
   );
 }
 
-/* small helper row component (keeps main clean) */
+
 function FragmentRow({ user, isOpen, onToggle }) {
   return (
     <>
@@ -597,3 +588,4 @@ function FragmentRow({ user, isOpen, onToggle }) {
     </>
   );
 }
+

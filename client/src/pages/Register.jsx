@@ -80,7 +80,7 @@ export default function Register() {
     setLoading(false);
 
     if (error) {
-      setError(error.message); // (auth error from Supabase - keep as is)
+      setError(error.message); 
     } else {
       setMessage("✅ Провери имейла си, за да потвърдиш акаунта!");
       setTimeout(() => navigate("/login"), 2500);
@@ -104,7 +104,7 @@ export default function Register() {
         padding: "clamp(0.85rem, 3vh, 2rem) clamp(0.85rem, 3vw, 2rem)",
       }}
     >
-      {/* 🌌 Animated background elements */}
+      
       <div
         className="auth-orb"
         style={{
@@ -186,7 +186,7 @@ export default function Register() {
         }
       `}</style>
 
-      {/* 🔹 Glassy Card */}
+      
       <div
         className="auth-card"
         style={{
@@ -204,7 +204,7 @@ export default function Register() {
           zIndex: 1,
         }}
       >
-        {/* 🏠 Icon */}
+        
         <div
           style={{
             width: "clamp(56px, 11vw, 80px)",
@@ -255,7 +255,7 @@ export default function Register() {
             textAlign: "left",
           }}
         >
-          {/* 👤 Username */}
+          
           <div>
             <label style={labelStyle}>Потребителско име</label>
             <div style={{ display: "flex", gap: "0.5rem" }}>
@@ -282,7 +282,7 @@ export default function Register() {
             </div>
           </div>
 
-          {/* ✉️ Email */}
+          
           <div>
             <label style={labelStyle}>Имейл адрес</label>
             <div style={{ position: "relative" }}>
@@ -300,7 +300,7 @@ export default function Register() {
             </div>
           </div>
 
-          {/* 🔒 Password */}
+          
           <div>
             <label style={labelStyle}>Парола</label>
             <div style={{ position: "relative" }}>
@@ -335,7 +335,7 @@ export default function Register() {
             </p>
           </div>
 
-          {/* 🚀 Register Button */}
+          
           <button
             type="submit"
             disabled={loading}
@@ -382,21 +382,21 @@ export default function Register() {
           </button>
         </form>
 
-        {/* Error */}
+        
         {error && (
           <div style={errorStyle}>
             <span>⚠️</span> {error}
           </div>
         )}
 
-        {/* Success */}
+        
         {message && (
           <div style={successStyle}>
             <span>✅</span> {message}
           </div>
         )}
 
-        {/* Login Link */}
+        
         <div
           style={{
             marginTop: "clamp(1.15rem, 2.5vh, 2rem)",
@@ -511,3 +511,4 @@ const successStyle = {
   justifyContent: "center",
   gap: "0.5rem",
 };
+

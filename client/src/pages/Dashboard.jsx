@@ -3,9 +3,7 @@ import { supabase } from "../supabaseClient";
 import { useNavigate, Link } from "react-router-dom";
 import NavBar from "../components/NavBar";
 
-/* =========================
-   🎨 Styles
-   ========================= */
+
 const bgLight = (color, top, left, size) => ({
   position: "absolute",
   top,
@@ -16,7 +14,7 @@ const bgLight = (color, top, left, size) => ({
   borderRadius: "50%",
   filter: "blur(60px)",
   opacity: 0.8,
-  pointerEvents: "none", // ✅ don't block clicks
+  pointerEvents: "none", 
 });
 
 const btnPrimary = {
@@ -45,7 +43,7 @@ const btnSecondary = {
   boxShadow: "0 4px 20px rgba(16,185,129,0.4)",
 };
 
-/* === Insights styles === */
+
 const insightsWrap = {
   width: "100%",
   maxWidth: "1100px",
@@ -108,15 +106,12 @@ const skeletonBar = {
 
 const skeletonBig = { ...skeletonBar, height: "22px", width: "50%" };
 
-/* =========================
-   🚀 Dashboard
-   ========================= */
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // 🔢 insights state
   const [stats, setStats] = useState({
     totalValue: 0,
     totalEstates: 0,
@@ -140,9 +135,8 @@ export default function Dashboard() {
         .single();
 
       setProfile(profileData || {});
-      setTimeout(() => setIsLoaded(true), 150); // smooth fade-in
+      setTimeout(() => setIsLoaded(true), 150); 
 
-      // Fetch estates for insights
       setInsightsLoading(true);
       const { data: estates } = await supabase
         .from("estates")
@@ -185,7 +179,7 @@ export default function Dashboard() {
         opacity: isLoaded ? 1 : 0,
       }}
     >
-      {/* 🌌 Floating Gradient Lights */}
+      
       <div style={bgLight("#3b82f6", "10%", "5%", 300)} />
       <div style={bgLight("#8b5cf6", "80%", "85%", 400)} />
 
@@ -204,10 +198,10 @@ export default function Dashboard() {
         }
       `}</style>
 
-      {/* 🧭 Global NavBar with Marketplace link */}
+      
       <NavBar profile={profile} />
 
-      {/* 🏡 Hero Section */}
+      
       <main
         style={{
           flex: 1,
@@ -251,7 +245,7 @@ export default function Dashboard() {
             портфолиото си от имоти — всичко на едно място.
           </p>
 
-          {/* Action Buttons */}
+          
           <div
             style={{
               display: "flex",
@@ -273,11 +267,11 @@ export default function Dashboard() {
         </div>
       </main>
 
-      {/* 🧮 Insights Strip (below hero) */}
+      
       <section style={{ paddingTop: "0.5rem", paddingBottom: "1.5rem" }}>
         <div style={insightsWrap}>
           <div style={{ ...insightsGrid, opacity: isLoaded ? 1 : 0.3 }}>
-            {/* Total Value */}
+            
             <InsightCard
               icon="💰"
               iconBg="linear-gradient(135deg,#1f2937,#334155)"
@@ -287,7 +281,7 @@ export default function Dashboard() {
               valueKey="totalValue"
             />
 
-            {/* Total Estates */}
+            
             <InsightCard
               icon="🏠"
               iconBg="linear-gradient(135deg,#0b3b62,#1e40af)"
@@ -297,7 +291,7 @@ export default function Dashboard() {
               valueKey="totalEstates"
             />
 
-            {/* Average Price */}
+            
             <InsightCard
               icon="📊"
               iconBg="linear-gradient(135deg,#14532d,#065f46)"
@@ -309,7 +303,7 @@ export default function Dashboard() {
               valueKey="avgPrice"
             />
 
-            {/* Added Last 30 Days */}
+            
             <InsightCard
               icon="🗓️"
               iconBg="linear-gradient(135deg,#5b21b6,#7c3aed)"
@@ -325,7 +319,6 @@ export default function Dashboard() {
     </div>
   );
 
-  // Nested so it can read styles above without re-declaring
   function InsightCard({ icon, iconBg, label, valueRenderer, loading, valueKey }) {
     const value =
       valueKey === "totalValue"
@@ -354,3 +347,4 @@ export default function Dashboard() {
     );
   }
 }
+

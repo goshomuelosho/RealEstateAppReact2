@@ -28,7 +28,7 @@ export default function Login() {
     setLoading(false);
 
     if (error) {
-      setError(error.message); // Supabase error (leave as-is)
+      setError(error.message); 
     } else {
       navigate("/dashboard");
     }
@@ -74,7 +74,7 @@ export default function Login() {
         padding: "clamp(0.85rem, 3vh, 2rem) clamp(0.85rem, 3vw, 2rem)",
       }}
     >
-      {/* 🌌 Animated background */}
+      
       <div
         className="auth-orb"
         style={{
@@ -151,7 +151,7 @@ export default function Login() {
         }
       `}</style>
 
-      {/* 🧊 Glassy Card */}
+      
       <div
         className="auth-card"
         style={{
@@ -169,7 +169,7 @@ export default function Login() {
           zIndex: 1,
         }}
       >
-        {/* 🏠 Icon */}
+        
         <div
           style={{
             width: "clamp(56px, 11vw, 80px)",
@@ -211,7 +211,7 @@ export default function Login() {
           Влез, за да управляваш имотите си
         </p>
 
-        {/* 🧾 Login Form */}
+        
         <form
           onSubmit={handleLogin}
           style={{
@@ -221,7 +221,7 @@ export default function Login() {
             textAlign: "left",
           }}
         >
-          {/* ✉️ Email */}
+          
           <div>
             <label style={labelStyle}>Имейл адрес</label>
             <div style={{ position: "relative" }}>
@@ -239,7 +239,7 @@ export default function Login() {
             </div>
           </div>
 
-          {/* 🔒 Password */}
+          
           <div>
             <label style={labelStyle}>Парола</label>
             <div style={{ position: "relative" }}>
@@ -273,7 +273,7 @@ export default function Login() {
             </button>
           </div>
 
-          {/* 🚀 Submit Button */}
+          
           <button
             type="submit"
             disabled={loading}
@@ -320,7 +320,7 @@ export default function Login() {
           </button>
         </form>
 
-        {/* Error */}
+        
         {error && (
           <div style={errorStyle}>
             <span>⚠️</span> {error}
@@ -333,7 +333,7 @@ export default function Login() {
           </div>
         )}
 
-        {/* Register link */}
+        
         <div
           style={{
             marginTop: "clamp(1.15rem, 2.5vh, 2rem)",
@@ -360,7 +360,6 @@ export default function Login() {
   );
 }
 
-// 🔹 Shared Styles
 const inputStyle = {
   width: "100%",
   padding: "1rem 1rem 1rem 3rem",
@@ -450,3 +449,4 @@ const forgotBtn = (disabled) => ({
   cursor: disabled ? "not-allowed" : "pointer",
   textDecoration: "underline",
 });
+

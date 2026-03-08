@@ -1,12 +1,6 @@
 import { useEffect } from "react";
 
-/**
- * ✅ SuccessModal Component
- * Props:
- * - message (string): text to display
- * - onClose (function): called when modal closes
- * - duration (number): auto-close after ms (default 2500)
- */
+
 export default function SuccessModal({
   message = "Action completed successfully!",
   onClose,
@@ -53,3 +47,4 @@ export default function SuccessModal({
     </div>
   );
 }
+

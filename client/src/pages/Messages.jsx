@@ -34,7 +34,7 @@ export default function Messages() {
   const [profile, setProfile] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isLoaded, setIsLoaded] = useState(false); // 👈 same as Dashboard
+  const [isLoaded, setIsLoaded] = useState(false); 
 
   useEffect(() => {
     let isCancelled = false;
@@ -45,7 +45,6 @@ export default function Messages() {
     const loadConversations = async (userId) => {
       const normalizedUserId = String(userId || "");
 
-      // 💬 Load all messages where I'm sender OR receiver
       const { data: msgs, error } = await supabase
         .from("messages")
         .select("id, estate_id, sender_id, receiver_id, content, created_at")
@@ -64,7 +63,6 @@ export default function Messages() {
         return;
       }
 
-      // 📌 Collect all unique userIds that appear in these messages
       const userIdSet = new Set();
       msgs.forEach((m) => {
         userIdSet.add(String(m.sender_id || ""));
@@ -73,7 +71,6 @@ export default function Messages() {
 
       const allUserIds = Array.from(userIdSet);
 
-      // 👥 Load profiles for those users (names + avatars)
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
         .select("id, name, avatar_url, is_admin")
@@ -112,7 +109,6 @@ export default function Messages() {
 
       const userId = String(userData.user.id);
 
-      // 👤 Load my profile for NavBar
       const { data: myProfile } = await supabase
         .from("profiles")
         .select("id, name, avatar_url, is_admin")
@@ -182,7 +178,6 @@ export default function Messages() {
         color: "#E2E8F0",
         position: "relative",
         overflow: "hidden",
-        // 🔁 same core fade-in behavior as Dashboard
         opacity: isLoaded ? 1 : 0,
         transition: "opacity 0.4s ease",
       }}
@@ -204,7 +199,6 @@ export default function Messages() {
             background: "linear-gradient(135deg,#fff,#94a3b8)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
-            // same “dim then brighten” pattern you used elsewhere
             opacity: isLoaded ? 1 : 0.3,
             transition: "opacity 0.4s ease",
           }}
@@ -280,3 +274,4 @@ export default function Messages() {
     </div>
   );
 }
+
