@@ -2,15 +2,23 @@ import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate } from "react-router-dom";
 import NavBar from "../components/NavBar";
+import {
+  createRandomUsername,
+  isUsernameTaken,
+  normalizeUsername,
+  validateUsername,
+} from "../utils/username";
 
 export default function Profile() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState({ name: "", avatar_url: "" });
+  const [profileDraft, setProfileDraft] = useState({ name: "", avatar_url: "" });
   const [avatarFile, setAvatarFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [saving, setSaving] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false); // ✨ smooth fade-in
+  const [nameError, setNameError] = useState("");
 
   // ✅ Toast
   const [toastMessage, setToastMessage] = useState("");
@@ -36,7 +44,18 @@ export default function Profile() {
         .eq("id", data.user.id)
         .single();
 
-      if (profileData) setProfile(profileData);
+      if (profileData) {
+        const loadedProfile = { ...profileData, name: profileData.name || "" };
+        setProfile(loadedProfile);
+        setProfileDraft(loadedProfile);
+      } else {
+        const fallbackProfile = {
+          name: normalizeUsername(data.user.user_metadata?.username || createRandomUsername()),
+          avatar_url: "",
+        };
+        setProfile(fallbackProfile);
+        setProfileDraft(fallbackProfile);
+      }
       setTimeout(() => setIsLoaded(true), 150); // ✨ delay for fade-in
     };
     init();
@@ -57,7 +76,31 @@ export default function Profile() {
   const handleSave = async (e) => {
     e.preventDefault();
     if (!user) return;
+    setNameError("");
     setSaving(true);
+
+    const normalizedName = normalizeUsername(profileDraft.name);
+    const validationError = validateUsername(normalizedName);
+    if (validationError) {
+      setNameError(validationError);
+      setSaving(false);
+      return;
+    }
+
+    try {
+      if (normalizedName !== normalizeUsername(profile.name || "")) {
+        const taken = await isUsernameTaken(supabase, normalizedName, user.id);
+        if (taken) {
+          setNameError("Това потребителско име вече е заето.");
+          setSaving(false);
+          return;
+        }
+      }
+    } catch {
+      setNameError("Не успяхме да проверим потребителското име. Опитай отново.");
+      setSaving(false);
+      return;
+    }
 
     let avatar_url = profile.avatar_url;
     if (avatarFile) {
@@ -79,13 +122,25 @@ export default function Profile() {
 
     const { error } = await supabase.from("profiles").upsert({
       id: user.id,
-      name: profile.name,
+      name: normalizedName,
       avatar_url,
-      updated_at: new Date(),
+      updated_at: new Date().toISOString(),
     });
 
-    if (error) alert(error.message);
-    else showToastMessage("Профилът е обновен успешно!");
+    if (error) {
+      if (error.code === "23505") {
+        setNameError("Това потребителско име вече е заето.");
+      } else {
+        alert(error.message);
+      }
+      setSaving(false);
+      return;
+    }
+
+    const updatedProfile = { ...profile, name: normalizedName, avatar_url };
+    setProfile(updatedProfile);
+    setProfileDraft(updatedProfile);
+    showToastMessage("Профилът е обновен успешно!");
     setSaving(false);
   };
 
@@ -174,12 +229,19 @@ export default function Profile() {
               <label style={labelStyle}>Потребителско име</label>
               <input
                 type="text"
-                value={profile.name || ""}
+                value={profileDraft.name || ""}
                 onChange={(e) =>
-                  setProfile({ ...profile, name: e.target.value })
+                  {
+                    setNameError("");
+                    setProfileDraft((prev) => ({
+                      ...prev,
+                      name: e.target.value,
+                    }));
+                  }
                 }
                 style={inputStyle}
               />
+              {nameError ? <p style={nameErrorStyle}>{nameError}</p> : null}
             </div>
 
             {/* Email */}
@@ -359,6 +421,14 @@ const inputStyle = {
   color: "#f1f5f9",
   fontSize: "1rem",
   outline: "none",
+};
+
+const nameErrorStyle = {
+  marginTop: "0.45rem",
+  marginBottom: 0,
+  fontSize: "0.78rem",
+  fontWeight: 700,
+  color: "#f87171",
 };
 
 const saveButton = (loading) => ({

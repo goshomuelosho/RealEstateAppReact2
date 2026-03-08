@@ -11,6 +11,7 @@ import {
 import { supabase } from "../supabaseClient";
 import NavBar from "../components/NavBar";
 import LocationPinMap from "../components/LocationPinMap";
+import DeleteConfirmModal from "../components/DeleteConfirmModal";
 
 export default function EstateDetail() {
   const { id } = useParams();
@@ -22,6 +23,8 @@ export default function EstateDetail() {
 
   const [isOwner, setIsOwner] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,15 +75,18 @@ export default function EstateDetail() {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("Сигурни ли сте, че искате да изтриете този имот?")) return;
+    if (isDeleting) return;
+    setIsDeleting(true);
 
     const { error } = await supabase.from("estates").delete().eq("id", id);
 
     if (error) {
+      setIsDeleting(false);
       alert(error.message);
       return;
     }
 
+    setShowDeleteModal(false);
     // ✅ if admin deletes from marketplace / details, send back to marketplace
     if (isAdmin) navigate("/marketplace");
     else navigate("/my-estates");
@@ -177,7 +183,16 @@ export default function EstateDetail() {
               >
                 <Pencil size={17} aria-hidden="true" />
               </button>
-              <button onClick={handleDelete} style={deleteButton} aria-label="Изтрий имота">
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                style={{
+                  ...deleteButton,
+                  opacity: isDeleting ? 0.75 : 1,
+                  cursor: isDeleting ? "not-allowed" : "pointer",
+                }}
+                aria-label="Изтрий имота"
+                disabled={isDeleting}
+              >
                 <Trash2 size={17} aria-hidden="true" />
               </button>
             </div>
@@ -185,6 +200,16 @@ export default function EstateDetail() {
         </div>
       </main>
 
+      <DeleteConfirmModal
+        open={showDeleteModal}
+        loading={isDeleting}
+        title="Изтриване на имот"
+        message={`Сигурни ли сте, че искате да изтриете "${estate.title}"? Това действие е необратимо.`}
+        onConfirm={handleDelete}
+        onCancel={() => {
+          if (!isDeleting) setShowDeleteModal(false);
+        }}
+      />
     </div>
   );
 }

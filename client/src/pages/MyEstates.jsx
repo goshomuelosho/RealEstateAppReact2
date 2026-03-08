@@ -4,6 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { EyeOff, Globe, Pencil, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import NavBar from "../components/NavBar";
 import useViewportWidth from "../hooks/useViewportWidth";
+import DeleteConfirmModal from "../components/DeleteConfirmModal";
 
 /* ✅ Dropdown options (same as AddEstate) */
 const PROPERTY_TYPES = [
@@ -311,6 +312,8 @@ export default function MyEstates() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [estateToDelete, setEstateToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // filters
   const [titleSearch, setTitleSearch] = useState("");
@@ -421,10 +424,24 @@ export default function MyEstates() {
     fetchEstates,
   ]);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Сигурни ли сте, че искате да изтриете този имот?")) return;
-    const { error } = await supabase.from("estates").delete().eq("id", id);
-    if (!error) setEstates((prev) => prev.filter((e) => e.id !== id));
+  const openDeleteModal = (estate) => {
+    setEstateToDelete(estate);
+  };
+
+  const handleDelete = async () => {
+    if (!estateToDelete?.id || isDeleting) return;
+
+    setIsDeleting(true);
+    const { error } = await supabase.from("estates").delete().eq("id", estateToDelete.id);
+    setIsDeleting(false);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setEstates((prev) => prev.filter((e) => e.id !== estateToDelete.id));
+    setEstateToDelete(null);
   };
 
   const handleTogglePublic = async (estate) => {
@@ -644,7 +661,7 @@ export default function MyEstates() {
                   isCompact={isCompactLayout}
                   hoveredCard={hoveredCard}
                   setHoveredCard={setHoveredCard}
-                  handleDelete={handleDelete}
+                  handleDelete={openDeleteModal}
                   handleTogglePublic={handleTogglePublic}
                   navigate={navigate}
                 />
@@ -656,6 +673,20 @@ export default function MyEstates() {
         </div>
       </main>
 
+      <DeleteConfirmModal
+        open={!!estateToDelete}
+        loading={isDeleting}
+        title="Изтриване на имот"
+        message={
+          estateToDelete
+            ? `Сигурни ли сте, че искате да изтриете "${estateToDelete.title}"? Това действие е необратимо.`
+            : undefined
+        }
+        onConfirm={handleDelete}
+        onCancel={() => {
+          if (!isDeleting) setEstateToDelete(null);
+        }}
+      />
     </div>
   );
 }
@@ -765,7 +796,7 @@ function EstateCard({
         </button>
         <button
           style={actionBtn(undefined, compactActionButtons)}
-          onClick={() => handleDelete(estate.id)}
+          onClick={() => handleDelete(estate)}
           aria-label="Изтрий имот"
         >
           <Trash2 size={17} aria-hidden="true" />

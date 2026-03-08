@@ -1,11 +1,18 @@
 import { useState } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate, Link } from "react-router-dom";
-import { Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import { LOGIN_REDIRECT_URL } from "../utils/authRedirects";
+import {
+  createRandomUsername,
+  isUsernameTaken,
+  normalizeUsername,
+  validateUsername,
+} from "../utils/username";
 
 export default function Register() {
   const navigate = useNavigate();
+  const [username, setUsername] = useState(() => createRandomUsername());
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -19,13 +26,56 @@ export default function Register() {
     setMessage("");
     setLoading(true);
 
-    const { error } = await supabase.auth.signUp({
+    const normalizedUsername = normalizeUsername(username);
+    const usernameValidationError = validateUsername(normalizedUsername);
+    if (usernameValidationError) {
+      setError(usernameValidationError);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const taken = await isUsernameTaken(supabase, normalizedUsername);
+      if (taken) {
+        setError("Това потребителско име вече е заето.");
+        setLoading(false);
+        return;
+      }
+    } catch {
+      setError("Не успяхме да проверим потребителското име. Опитай отново.");
+      setLoading(false);
+      return;
+    }
+
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: LOGIN_REDIRECT_URL,
+        data: {
+          name: normalizedUsername,
+          username: normalizedUsername,
+        },
       },
     });
+
+    if (!error && data?.session?.user?.id) {
+      const { error: profileError } = await supabase.from("profiles").upsert({
+        id: data.session.user.id,
+        name: normalizedUsername,
+        updated_at: new Date().toISOString(),
+      });
+
+      if (profileError) {
+        if (profileError.code === "23505") {
+          setError("Това потребителско име вече е заето.");
+        } else {
+          setError("Акаунтът е създаден, но името не можа да се запази. Опитай от профила.");
+        }
+        setLoading(false);
+        return;
+      }
+    }
 
     setLoading(false);
 
@@ -205,6 +255,33 @@ export default function Register() {
             textAlign: "left",
           }}
         >
+          {/* 👤 Username */}
+          <div>
+            <label style={labelStyle}>Потребителско име</label>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <div style={{ position: "relative", flex: 1 }}>
+                <span style={iconStyle} aria-hidden="true">
+                  <User size={18} />
+                </span>
+                <input
+                  type="text"
+                  placeholder="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  style={inputStyle}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setUsername(createRandomUsername())}
+                style={randomButtonStyle}
+              >
+                Рандъм
+              </button>
+            </div>
+          </div>
+
           {/* ✉️ Email */}
           <div>
             <label style={labelStyle}>Имейл адрес</label>
@@ -390,6 +467,17 @@ const eyeButtonStyle = {
   border: "none",
   cursor: "pointer",
   color: "#94a3b8",
+};
+
+const randomButtonStyle = {
+  border: "1px solid #334155",
+  borderRadius: "12px",
+  background: "rgba(148,163,184,0.12)",
+  color: "#e2e8f0",
+  padding: "0 0.85rem",
+  fontSize: "0.82rem",
+  fontWeight: 700,
+  cursor: "pointer",
 };
 
 const errorStyle = {
