@@ -50,7 +50,7 @@ export default function ResetPassword() {
       return;
     }
 
-    setMessage("✅ Паролата е обновена успешно. Пренасочваме те към вход...");
+    setMessage("Паролата е обновена успешно. Пренасочваме те към вход...");
     setTimeout(() => navigate("/login"), 1600);
   };
 

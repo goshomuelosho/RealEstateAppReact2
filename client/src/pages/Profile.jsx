@@ -85,7 +85,7 @@ export default function Profile() {
     });
 
     if (error) alert(error.message);
-    else showToastMessage("✅ Профилът е обновен успешно!");
+    else showToastMessage("Профилът е обновен успешно!");
     setSaving(false);
   };
 
@@ -95,16 +95,16 @@ export default function Profile() {
     setPasswordMessage("");
 
     if (!newPassword || newPassword.length < 6)
-      return setPasswordMessage("❌ Паролата трябва да е поне 6 символа");
+      return setPasswordMessage("Паролата трябва да е поне 6 символа");
     if (newPassword !== confirmPassword)
-      return setPasswordMessage("❌ Паролите не съвпадат");
+      return setPasswordMessage("Паролите не съвпадат");
 
     setPasswordLoading(true);
     const { error } = await supabase.auth.updateUser({ password: newPassword });
 
     if (error) setPasswordMessage(`⚠️ ${error.message}`);
     else {
-      showToastMessage("🔐 Паролата е обновена!");
+      showToastMessage("Паролата е обновена!");
       setNewPassword("");
       setConfirmPassword("");
       setShowPasswordForm(false);
@@ -171,7 +171,7 @@ export default function Profile() {
 
             {/* Name */}
             <div style={fieldGroup}>
-              <label style={labelStyle}>Име и фамилия</label>
+              <label style={labelStyle}>Потребителско име</label>
               <input
                 type="text"
                 value={profile.name || ""}

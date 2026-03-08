@@ -305,21 +305,21 @@ export default function Register() {
           </button>
         </form>
 
-        {/* ⚠️ Error */}
+        {/* Error */}
         {error && (
           <div style={errorStyle}>
             <span>⚠️</span> {error}
           </div>
         )}
 
-        {/* ✅ Success */}
+        {/* Success */}
         {message && (
           <div style={successStyle}>
             <span>✅</span> {message}
           </div>
         )}
 
-        {/* 🔗 Login Link */}
+        {/* Login Link */}
         <div
           style={{
             marginTop: "clamp(1.15rem, 2.5vh, 2rem)",

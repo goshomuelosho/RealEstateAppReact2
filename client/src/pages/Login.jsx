@@ -320,7 +320,7 @@ export default function Login() {
           </button>
         </form>
 
-        {/* ⚠️ Error */}
+        {/* Error */}
         {error && (
           <div style={errorStyle}>
             <span>⚠️</span> {error}
@@ -333,7 +333,7 @@ export default function Login() {
           </div>
         )}
 
-        {/* 🔗 Register link */}
+        {/* Register link */}
         <div
           style={{
             marginTop: "clamp(1.15rem, 2.5vh, 2rem)",
