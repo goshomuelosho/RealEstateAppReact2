@@ -873,6 +873,8 @@ export default function Marketplace() {
                 estate.floor !== "Не е приложимо" &&
                 String(estate.floor).trim() !== "";
               const showAct16 = estate.has_act16 === true;
+              const parsedArea = Number(estate.area);
+              const showArea = Number.isFinite(parsedArea) && parsedArea > 0;
 
               const isFav = favoriteIds.has(estate.id);
               const compactCard = isCompactLayout && !isMobile;
@@ -949,6 +951,9 @@ export default function Marketplace() {
                     <div style={metaRow}>
                       {estate.property_type ? (
                         <span style={pill("type")}>🏠 {estate.property_type}</span>
+                      ) : null}
+                      {showArea ? (
+                        <span style={pill("neutral")}>📐 {parsedArea.toLocaleString()} кв.м</span>
                       ) : null}
                       {showAct16 ? <span style={pill("act16")}>✅ Акт 16</span> : null}
                       {showFloor ? <span style={pill("floor")}>🧱 Етаж: {estate.floor}</span> : null}

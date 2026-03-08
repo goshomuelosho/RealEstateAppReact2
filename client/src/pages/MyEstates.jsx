@@ -706,6 +706,8 @@ function EstateCard({
   const showFloor =
     estate.floor && String(estate.floor).trim() !== "" && estate.floor !== "Не е приложимо";
   const showAct16 = estate.has_act16 === true;
+  const parsedArea = Number(estate.area);
+  const showArea = Number.isFinite(parsedArea) && parsedArea > 0;
   const compactActionButtons = isCompact || isMobile;
   const cardImageHeight = isMobile ? "170px" : isCompact ? "185px" : "220px";
   const cardBodyPadding = isMobile ? "1rem" : isCompact ? "1.1rem" : "1.5rem";
@@ -750,6 +752,9 @@ function EstateCard({
         
         <div style={metaRow}>
           {estate.property_type ? <span style={pill("type")}>🏠 {estate.property_type}</span> : null}
+          {showArea ? (
+            <span style={pill("neutral")}>📐 {parsedArea.toLocaleString()} кв.м</span>
+          ) : null}
           {showAct16 ? <span style={pill("act16")}>✅ Акт 16</span> : null}
           {showFloor ? <span style={pill("floor")}>🧱 Етаж: {estate.floor}</span> : null}
           {estate.building_type ? <span style={pill("neutral")}>🏢 {estate.building_type}</span> : null}

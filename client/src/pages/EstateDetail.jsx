@@ -140,6 +140,13 @@ export default function EstateDetail() {
               </div>
 
               <div style={detailItem}>
+                <span style={detailLabel}>Площ</span>
+                <span style={detailValue}>
+                  {Number(estate.area) > 0 ? `${Number(estate.area).toLocaleString()} кв.м` : "—"}
+                </span>
+              </div>
+
+              <div style={detailItem}>
                 <span style={detailLabel}>Вид на сградата</span>
                 <span style={detailValue}>{estate.building_type || "—"}</span>
               </div>

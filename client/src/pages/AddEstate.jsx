@@ -322,6 +322,7 @@ export default function AddEstate() {
     title: "",
     description: "",
     price: "",
+    area: "",
     location: "",
     is_public: false, 
 
@@ -391,13 +392,22 @@ export default function AddEstate() {
         .getPublicUrl(fileName).data.publicUrl;
     }
 
-    const { error } = await supabase.from("estates").insert([
-      {
-        user_id: profile.id,
-        ...form,
-        image_url: imageUrl, 
-      },
-    ]);
+    const payload = {
+      user_id: profile.id,
+      title: form.title,
+      description: form.description,
+      price: Number(form.price) || 0,
+      area: Number(form.area) || null,
+      location: form.location,
+      is_public: !!form.is_public,
+      property_type: form.property_type || null,
+      has_act16: !!form.has_act16,
+      building_type: form.building_type || null,
+      floor: form.floor || null,
+      image_url: imageUrl,
+    };
+
+    const { error } = await supabase.from("estates").insert([payload]);
 
     setLoading(false);
     if (error) alert(error.message);
@@ -533,17 +543,42 @@ export default function AddEstate() {
           </div>
 
           
-          <div style={{ marginTop: "1rem" }}>
-            <label style={labelStyle}>Цена (€)</label>
-            <input
-              type="number"
-              name="price"
-              value={form.price}
-              onChange={handleChange}
-              placeholder="500000"
-              style={inputStyle}
-              required
-            />
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "1rem",
+              marginTop: "1rem",
+            }}
+          >
+            <div>
+              <label style={labelStyle}>Цена (€)</label>
+              <input
+                type="number"
+                name="price"
+                value={form.price}
+                onChange={handleChange}
+                placeholder="500000"
+                style={inputStyle}
+                min="0"
+                step="1"
+                required
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>Площ (кв.м)</label>
+              <input
+                type="number"
+                name="area"
+                value={form.area}
+                onChange={handleChange}
+                placeholder="120"
+                style={inputStyle}
+                min="1"
+                step="0.01"
+                required
+              />
+            </div>
           </div>
 
           

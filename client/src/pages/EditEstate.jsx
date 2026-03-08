@@ -277,6 +277,7 @@ export default function EditEstate() {
     title: "",
     description: "",
     price: "",
+    area: "",
     location: "",
     image_url: "",
     is_public: false,
@@ -331,6 +332,7 @@ export default function EditEstate() {
           title: data.title || "",
           description: data.description || "",
           price: data.price ?? "",
+          area: data.area ?? "",
           location: data.location || "",
           image_url: data.image_url || "",
           is_public: !!data.is_public,
@@ -389,6 +391,7 @@ export default function EditEstate() {
       title: form.title,
       description: form.description,
       price: Number(form.price) || 0,
+      area: Number(form.area) || null,
       location: form.location,
       image_url: imageUrl,
       is_public: !!form.is_public,
@@ -594,15 +597,29 @@ export default function EditEstate() {
                 required
                 style={{ ...inputStyle, height: "120px", resize: "vertical" }}
               />
-              <input
-                name="price"
-                type="number"
-                placeholder="Цена (€)"
-                value={form.price}
-                onChange={handleChange}
-                required
-                style={inputStyle}
-              />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                <input
+                  name="price"
+                  type="number"
+                  placeholder="Цена (€)"
+                  value={form.price}
+                  onChange={handleChange}
+                  required
+                  min="0"
+                  step="1"
+                  style={inputStyle}
+                />
+                <input
+                  name="area"
+                  type="number"
+                  placeholder="Площ (кв.м)"
+                  value={form.area}
+                  onChange={handleChange}
+                  min="1"
+                  step="0.01"
+                  style={inputStyle}
+                />
+              </div>
               <LocationPicker
                 value={form.location}
                 onChange={(nextLocation) =>
