@@ -84,11 +84,14 @@ const mainWrap = (isLoaded) => ({
 
 const content = {
   flex: 1,
-  padding: "2rem",
-  maxWidth: 1400,
-  margin: "0 auto",
+  padding: "3rem 2rem",
   position: "relative",
   zIndex: 1,
+};
+
+const contentWrapper = {
+  maxWidth: "1400px",
+  margin: "0 auto",
 };
 
 const compactToggleBtn = {
@@ -109,7 +112,7 @@ const filterBar = {
   border: "1px solid rgba(255,255,255,0.1)",
   borderRadius: 16,
   padding: "0.85rem",
-  marginBottom: "1.25rem",
+  marginBottom: "1.4rem",
 };
 
 const filterInput = {
@@ -131,13 +134,13 @@ const selectStyle = {
 
 const grid = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(270px, 1fr))",
-  gap: "1rem",
+  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+  gap: "1.25rem",
 };
 
 const card = {
   background: "rgba(255,255,255,0.95)",
-  borderRadius: 18,
+  borderRadius: 20,
   overflow: "hidden",
   color: "#0f172a",
   display: "flex",
@@ -149,12 +152,12 @@ const card = {
 
 const priceBadge = {
   display: "inline-block",
-  padding: "0.4rem 0.9rem",
+  padding: "0.45rem 1rem",
   background: "linear-gradient(135deg, #3b82f6, #2563eb)",
   color: "#fff",
-  fontWeight: 800,
+  fontWeight: 700,
   borderRadius: 10,
-  fontSize: "1.02rem",
+  fontSize: "1.1rem",
 };
 
 const sellerRow = {
@@ -373,18 +376,6 @@ const favStarGlyph = (active, compact = false) => ({
 });
 
 
-const favToggleRow = {
-  gridColumn: "1 / -1",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  gap: 14,
-  padding: "0.72rem 0.85rem",
-  borderRadius: 14,
-  border: "1px solid rgba(255,255,255,0.14)",
-  background: "rgba(255,255,255,0.06)",
-};
-
 const toggleTrack = (on) => ({
   width: 52,
   height: 30,
@@ -399,16 +390,23 @@ const toggleTrack = (on) => ({
   transition: "background 0.2s ease, box-shadow 0.2s ease",
 });
 
-const toggleKnob = (on) => ({
-  width: 24,
+const compactToggleTrack = (on) => ({
+  ...toggleTrack(on),
+  width: 42,
   height: 24,
+  borderRadius: 999,
+});
+
+const compactToggleKnob = (on) => ({
+  width: 18,
+  height: 18,
   borderRadius: 999,
   background: "#fff",
   position: "absolute",
-  top: 2.5,
-  left: on ? 26 : 3,
+  top: 2,
+  left: on ? 22 : 2,
   transition: "left 0.2s ease",
-  boxShadow: "0 8px 16px rgba(0,0,0,0.18)",
+  boxShadow: "0 6px 12px rgba(0,0,0,0.2)",
 });
 
 
@@ -417,9 +415,11 @@ export default function Marketplace() {
   const isMobile = viewportWidth <= 768;
   const isCompactLayout = viewportWidth <= 1400;
   const isNarrowTablet = viewportWidth <= 1024;
+  const isWideDesktop = viewportWidth >= 1800;
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [filtersOpen, setFiltersOpen] = useState(() => !isCompactLayout);
+  const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
 
   const [estates, setEstates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -448,19 +448,43 @@ export default function Marketplace() {
   const [showSentModal, setShowSentModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const filterColumns = isMobile
-    ? "1fr"
-    : isNarrowTablet
-    ? "repeat(2, minmax(150px, 1fr))"
-    : isCompactLayout
-    ? "repeat(3, minmax(160px, 1fr))"
-    : filterBar.gridTemplateColumns;
+  const denseFilters = isCompactLayout || isMobile;
+  const compactFilterBar = {
+    ...filterBar,
+    gap: denseFilters ? "0.5rem" : filterBar.gap,
+    padding: denseFilters ? (isMobile ? "0.55rem" : "0.62rem") : filterBar.padding,
+    borderRadius: denseFilters ? 12 : filterBar.borderRadius,
+    marginBottom: denseFilters ? "0.9rem" : filterBar.marginBottom,
+  };
+  const compactFilterInput = {
+    ...filterInput,
+    padding: denseFilters ? (isMobile ? "0.5rem 0.65rem" : "0.56rem 0.72rem") : filterInput.padding,
+    borderRadius: denseFilters ? 10 : filterInput.borderRadius,
+    fontSize: denseFilters ? "0.9rem" : undefined,
+    minHeight: denseFilters ? 38 : undefined,
+  };
+  const compactFilterSelect = {
+    ...selectStyle,
+    ...compactFilterInput,
+    backgroundColor: selectStyle.backgroundColor,
+    color: selectStyle.color,
+    paddingRight: denseFilters ? "2rem" : undefined,
+  };
   const cardsPerPage = isMobile ? 4 : isCompactLayout ? 8 : 12;
   const totalPages = Math.max(1, Math.ceil(estates.length / cardsPerPage));
   const pagedEstates = estates.slice(
     (currentPage - 1) * cardsPerPage,
     currentPage * cardsPerPage
   );
+  const resultsMinHeight = isMobile || isCompactLayout ? "auto" : isWideDesktop ? "64vh" : "58vh";
+  const advancedFiltersCount = [
+    minPrice !== "",
+    maxPrice !== "",
+    !!propertyType,
+    !!buildingType,
+    !!floor,
+    act16 !== "all",
+  ].filter(Boolean).length;
 
   const fetchListings = useCallback(
     async ({
@@ -714,10 +738,11 @@ export default function Marketplace() {
           padding: isMobile
             ? "1rem 0.85rem 1.2rem"
             : isCompactLayout
-            ? "1.4rem 1rem 1.25rem"
+            ? "1.5rem 1rem 1.4rem"
             : content.padding,
         }}
       >
+        <div style={contentWrapper}>
         <div
           style={{
             display: "flex",
@@ -757,162 +782,211 @@ export default function Marketplace() {
         {!isCompactLayout || filtersOpen ? (
           <div
             style={{
-              ...filterBar,
-              gridTemplateColumns: filterColumns,
+              ...compactFilterBar,
+              display: "flex",
+              flexDirection: "column",
+              gap: denseFilters ? "0.45rem" : "0.6rem",
             }}
           >
-            <input
-              placeholder="Търси по заглавие"
-              value={qTitle}
-              onChange={(e) => setQTitle(e.target.value)}
-              style={filterInput}
-            />
-            <input
-              placeholder="Търси по локация"
-              value={qLocation}
-              onChange={(e) => setQLocation(e.target.value)}
-              style={filterInput}
-            />
-            <input
-              placeholder="Минимална цена"
-              type="number"
-              value={minPrice}
-              onChange={(e) => setMinPrice(e.target.value)}
-              style={filterInput}
-            />
-            <input
-              placeholder="Максимална цена"
-              type="number"
-              value={maxPrice}
-              onChange={(e) => setMaxPrice(e.target.value)}
-              style={filterInput}
-            />
-
-            <select
-              value={propertyType}
-              onChange={(e) => setPropertyType(e.target.value)}
-              style={selectStyle}
-            >
-              <option value="">Вид на имота (всички)</option>
-              {PROPERTY_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-
-            <select value={act16} onChange={(e) => setAct16(e.target.value)} style={selectStyle}>
-              <option value="all">Акт 16 (всички)</option>
-              <option value="yes">Само с Акт 16</option>
-              <option value="no">Само без Акт 16</option>
-            </select>
-
-            <select
-              value={buildingType}
-              onChange={(e) => setBuildingType(e.target.value)}
-              style={selectStyle}
-            >
-              <option value="">Вид на сградата (всички)</option>
-              {BUILDING_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-
-            <select value={floor} onChange={(e) => setFloor(e.target.value)} style={selectStyle}>
-              <option value="">Етаж (всички)</option>
-              {FLOORS.map((f) => (
-                <option key={f} value={f}>
-                  {f}
-                </option>
-              ))}
-            </select>
-
-            <select value={sort} onChange={(e) => setSort(e.target.value)} style={selectStyle}>
-              <option value="newest">Най-нови</option>
-              <option value="low-high">Цена: ниска → висока</option>
-              <option value="high-low">Цена: висока → ниска</option>
-            </select>
-
-            
             <div
               style={{
-                ...favToggleRow,
-                flexDirection: isMobile ? "column" : "row",
-                alignItems: isMobile ? "flex-start" : "center",
+                display: "grid",
+                gridTemplateColumns: isMobile
+                  ? "1fr"
+                  : isNarrowTablet
+                  ? "repeat(2, minmax(160px, 1fr))"
+                  : "minmax(170px,1.2fr) minmax(170px,1.2fr) minmax(150px,0.9fr) auto",
+                gap: denseFilters ? "0.45rem" : "0.6rem",
+                alignItems: "stretch",
               }}
             >
-              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <div style={{ fontWeight: 900, letterSpacing: 0.2 }}>⭐</div>
-                <div style={{ fontSize: 13, color: "rgba(226,232,240,0.8)" }}>
-                  {isCompactLayout
-                    ? "Показва само любими имоти."
-                    : "Показва само имотите, които си отбелязал като любими."}
-                </div>
-              </div>
+              <input
+                placeholder="Търси по заглавие"
+                value={qTitle}
+                onChange={(e) => setQTitle(e.target.value)}
+                style={compactFilterInput}
+              />
+
+              <input
+                placeholder="Търси по локация"
+                value={qLocation}
+                onChange={(e) => setQLocation(e.target.value)}
+                style={compactFilterInput}
+              />
+
+              <select value={sort} onChange={(e) => setSort(e.target.value)} style={compactFilterSelect}>
+                <option value="newest">Най-нови</option>
+                <option value="low-high">Цена: ниска → висока</option>
+                <option value="high-low">Цена: висока → ниска</option>
+              </select>
 
               <div
-                role="switch"
-                aria-checked={onlyFavorites}
-                tabIndex={0}
-                onClick={() => setOnlyFavorites((v) => !v)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") setOnlyFavorites((v) => !v);
-                }}
                 style={{
-                  ...toggleTrack(onlyFavorites),
-                  alignSelf: isMobile ? "flex-end" : "auto",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: isMobile ? "flex-start" : "flex-end",
+                  flexWrap: "wrap",
+                  gap: denseFilters ? 6 : 8,
                 }}
-                title={onlyFavorites ? "Показва любими" : "Показва всички"}
               >
-                <div style={toggleKnob(onlyFavorites)} />
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 7,
+                    padding: denseFilters ? "0.35rem 0.5rem" : "0.45rem 0.62rem",
+                    borderRadius: 10,
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    background: "rgba(255,255,255,0.05)",
+                  }}
+                >
+                  <span style={{ fontSize: denseFilters ? 12 : 13, fontWeight: 800 }}>⭐ Любими</span>
+                  <div
+                    role="switch"
+                    aria-checked={onlyFavorites}
+                    tabIndex={0}
+                    onClick={() => setOnlyFavorites((v) => !v)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") setOnlyFavorites((v) => !v);
+                    }}
+                    style={compactToggleTrack(onlyFavorites)}
+                    title={onlyFavorites ? "Показва любими" : "Показва всички"}
+                  >
+                    <div style={compactToggleKnob(onlyFavorites)} />
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setAdvancedFiltersOpen((v) => !v)}
+                  style={{
+                    padding: denseFilters ? "0.5rem 0.72rem" : "0.62rem 0.9rem",
+                    borderRadius: denseFilters ? 10 : 12,
+                    border: "1px solid rgba(255,255,255,0.25)",
+                    background: advancedFiltersOpen
+                      ? "rgba(59,130,246,0.28)"
+                      : "rgba(15,23,42,0.35)",
+                    color: "#fff",
+                    fontWeight: 700,
+                    fontSize: denseFilters ? "0.86rem" : undefined,
+                    cursor: "pointer",
+                  }}
+                >
+                  {advancedFiltersOpen
+                    ? "Скрий детайлни"
+                    : `Детайлни${advancedFiltersCount ? ` (${advancedFiltersCount})` : ""}`}
+                </button>
+
+                <button
+                  onClick={() => {
+                    const cleared = {
+                      qTitleVal: "",
+                      qLocationVal: "",
+                      minPriceVal: "",
+                      maxPriceVal: "",
+                      sortVal: "newest",
+                      propertyTypeVal: "",
+                      buildingTypeVal: "",
+                      floorVal: "",
+                      act16Val: "all",
+                      onlyFavoritesVal: false,
+                    };
+
+                    setQTitle("");
+                    setQLocation("");
+                    setMinPrice("");
+                    setMaxPrice("");
+                    setSort("newest");
+                    setPropertyType("");
+                    setBuildingType("");
+                    setFloor("");
+                    setAct16("all");
+                    setOnlyFavorites(false);
+                    setAdvancedFiltersOpen(false);
+                    setCurrentPage(1);
+
+                    fetchListings(cleared);
+                  }}
+                  style={{
+                    padding: denseFilters ? "0.5rem 0.72rem" : "0.62rem 0.9rem",
+                    borderRadius: denseFilters ? 10 : 12,
+                    border: "1px solid rgba(255,255,255,0.25)",
+                    background: "transparent",
+                    color: "#fff",
+                    fontWeight: 700,
+                    fontSize: denseFilters ? "0.88rem" : undefined,
+                    cursor: "pointer",
+                  }}
+                >
+                  Нулирай
+                </button>
               </div>
             </div>
 
-            <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button
-                onClick={() => {
-                  const cleared = {
-                    qTitleVal: "",
-                    qLocationVal: "",
-                    minPriceVal: "",
-                    maxPriceVal: "",
-                    sortVal: "newest",
-                    propertyTypeVal: "",
-                    buildingTypeVal: "",
-                    floorVal: "",
-                    act16Val: "all",
-                    onlyFavoritesVal: false,
-                  };
-
-                  setQTitle("");
-                  setQLocation("");
-                  setMinPrice("");
-                  setMaxPrice("");
-                  setSort("newest");
-                  setPropertyType("");
-                  setBuildingType("");
-                  setFloor("");
-                  setAct16("all");
-                  setOnlyFavorites(false);
-                  setCurrentPage(1);
-
-                  fetchListings(cleared);
-                }}
+            {advancedFiltersOpen ? (
+              <div
                 style={{
-                  padding: "0.62rem 0.9rem",
-                  borderRadius: 12,
-                  border: "1px solid rgba(255,255,255,0.25)",
-                  background: "transparent",
-                  color: "#fff",
-                  fontWeight: 700,
-                  cursor: "pointer",
+                  display: "grid",
+                  gridTemplateColumns: isMobile
+                    ? "1fr"
+                    : isNarrowTablet
+                    ? "repeat(2, minmax(150px, 1fr))"
+                    : "repeat(3, minmax(145px, 1fr))",
+                  gap: denseFilters ? "0.45rem" : "0.6rem",
                 }}
               >
-                Нулирай
-              </button>
-            </div>
+                <input
+                  placeholder="Минимална цена"
+                  type="number"
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
+                  style={compactFilterInput}
+                />
+                <input
+                  placeholder="Максимална цена"
+                  type="number"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                  style={compactFilterInput}
+                />
+                <select
+                  value={propertyType}
+                  onChange={(e) => setPropertyType(e.target.value)}
+                  style={compactFilterSelect}
+                >
+                  <option value="">Вид на имота (всички)</option>
+                  {PROPERTY_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={buildingType}
+                  onChange={(e) => setBuildingType(e.target.value)}
+                  style={compactFilterSelect}
+                >
+                  <option value="">Вид на сградата (всички)</option>
+                  {BUILDING_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+                <select value={floor} onChange={(e) => setFloor(e.target.value)} style={compactFilterSelect}>
+                  <option value="">Етаж (всички)</option>
+                  {FLOORS.map((f) => (
+                    <option key={f} value={f}>
+                      {f}
+                    </option>
+                  ))}
+                </select>
+                <select value={act16} onChange={(e) => setAct16(e.target.value)} style={compactFilterSelect}>
+                  <option value="all">Акт 16 (всички)</option>
+                  <option value="yes">Само с Акт 16</option>
+                  <option value="no">Само без Акт 16</option>
+                </select>
+              </div>
+            ) : null}
           </div>
         ) : null}
 
@@ -922,7 +996,13 @@ export default function Marketplace() {
             <div style={loaderSpinner} />
           </div>
         ) : estates.length ? (
-          <>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              minHeight: resultsMinHeight,
+            }}
+          >
             <div
               style={{
                 ...grid,
@@ -931,7 +1011,7 @@ export default function Marketplace() {
                   : isCompactLayout
                   ? "repeat(auto-fill, minmax(230px, 1fr))"
                   : grid.gridTemplateColumns,
-                gap: isMobile ? "0.85rem" : isCompactLayout ? "0.8rem" : grid.gap,
+                gap: isMobile ? "0.85rem" : isCompactLayout ? "0.8rem" : "1.1rem",
                 animation: "fadeInUp 0.6s ease",
               }}
             >
@@ -950,9 +1030,16 @@ export default function Marketplace() {
               const isFav = favoriteIds.has(estate.id);
               const compactCard = isCompactLayout && !isMobile;
               const compactHeader = isMobile || compactCard;
+              const desktopCardMinHeight = isWideDesktop ? 560 : 520;
 
               return (
-                <div key={estate.id} style={card}>
+                <div
+                  key={estate.id}
+                  style={{
+                    ...card,
+                    minHeight: isMobile || compactCard ? undefined : desktopCardMinHeight,
+                  }}
+                >
                   
                   <button
                     onClick={() => toggleFavorite(estate.id)}
@@ -972,7 +1059,7 @@ export default function Marketplace() {
                       alt={estate.title}
                       style={{
                         width: "100%",
-                        height: isMobile ? 156 : compactCard ? 164 : 200,
+                        height: isMobile ? 156 : compactCard ? 164 : isWideDesktop ? 280 : 250,
                         objectFit: "cover",
                       }}
                       loading="lazy"
@@ -981,7 +1068,11 @@ export default function Marketplace() {
 
                   <div
                     style={{
-                      padding: isMobile ? "0.72rem 0.8rem" : compactCard ? "0.82rem 0.86rem" : "0.9rem 1rem",
+                      padding: isMobile
+                        ? "0.72rem 0.8rem"
+                        : compactCard
+                        ? "0.82rem 0.86rem"
+                        : "1rem 1.08rem",
                       flex: 1,
                       display: "flex",
                       flexDirection: "column",
@@ -1002,7 +1093,11 @@ export default function Marketplace() {
                         title={titleText}
                         style={{
                           margin: 0,
-                          fontSize: isMobile ? "1.12rem" : compactCard ? "1.22rem" : "1.4rem",
+                          fontSize: isMobile
+                            ? "1.12rem"
+                            : compactCard
+                            ? "1.22rem"
+                            : "1.4rem",
                           fontWeight: "700",
                           color: "#0f172a",
                           lineHeight: 1.25,
@@ -1018,9 +1113,17 @@ export default function Marketplace() {
                         title={priceText}
                         style={{
                           ...priceBadge,
-                          fontSize: isMobile ? "0.92rem" : compactCard ? "0.97rem" : priceBadge.fontSize,
-                          padding: isMobile ? "0.34rem 0.74rem" : priceBadge.padding,
-                          maxWidth: isMobile ? 140 : compactCard ? 154 : 162,
+                          fontSize: isMobile
+                            ? "0.94rem"
+                            : compactCard
+                            ? "0.97rem"
+                            : "1rem",
+                          padding: isMobile
+                            ? "0.28rem 0.62rem"
+                            : compactCard
+                            ? "0.32rem 0.7rem"
+                            : "0.36rem 0.82rem",
+                          maxWidth: isMobile ? 136 : compactCard ? 150 : 170,
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
@@ -1108,7 +1211,14 @@ export default function Marketplace() {
               })}
             </div>
 
-            <div style={paginationRow}>
+            <div
+              style={{
+                ...paginationRow,
+                marginTop: "auto",
+                paddingTop: isMobile || isCompactLayout ? "0.95rem" : "1.45rem",
+                paddingBottom: isMobile || isCompactLayout ? "0.1rem" : "0.55rem",
+              }}
+            >
               <button
                 style={{
                   ...pageBtn(false),
@@ -1138,29 +1248,49 @@ export default function Marketplace() {
                 Напред
               </button>
             </div>
-          </>
+          </div>
         ) : (
           <p style={{ color: "#94a3b8" }}>Няма намерени обяви.</p>
         )}
+        </div>
       </main>
 
       
       {contactOpen && selectedListing && (
         <div style={overlay}>
           <div style={modal}>
-            <h3 style={{ marginTop: 0, marginBottom: 8 }}>Свържи се с продавача</h3>
+            <div style={modalHeader}>
+              <h3 style={modalTitle}>Свържи се с продавача</h3>
+              <p style={modalSubtitle}>
+                Изпрати лично съобщение за тази обява и ще го получи директно в чата.
+              </p>
+            </div>
             {sellerProfile ? (
               <>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                <div style={sellerInfoCard}>
                   <img
                     src={sellerProfile.avatar_url || "https://via.placeholder.com/40"}
                     alt="seller"
-                    style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover" }}
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                      border: "2px solid rgba(59,130,246,0.2)",
+                    }}
                   />
-                  <div>
-                    <div style={{ fontWeight: 700 }}>{sellerProfile.name || "Продавач"}</div>
-                    <div style={{ fontSize: 14, color: "#475569" }}>
-                      Изпрати лично съобщение в приложението:
+                  <div style={{ minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontWeight: 800,
+                        color: "#0f172a",
+                        ...oneLineClamp,
+                      }}
+                    >
+                      {sellerProfile.name || "Продавач"}
+                    </div>
+                    <div style={{ fontSize: 13, color: "#475569" }}>
+                      Отговорите ще пристигнат в секция „Съобщения“.
                     </div>
                   </div>
                 </div>
@@ -1174,8 +1304,13 @@ export default function Marketplace() {
                   style={{
                     width: "100%",
                     minHeight: 110,
+                    resize: "none",
                     borderRadius: 12,
                     border: "1px solid #e2e8f0",
+                    background: "#f8fafc",
+                    color: "#0f172a",
+                    fontFamily: "inherit",
+                    lineHeight: 1.45,
                     outline: "none",
                     padding: "0.8rem 1rem",
                   }}
@@ -1298,8 +1433,42 @@ const modal = {
   overflowY: "auto",
   background: "#fff",
   color: "#0f172a",
+  fontFamily: "inherit",
   borderRadius: 18,
   padding: "1.25rem 1.25rem 1rem",
   boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
+};
+
+const modalHeader = {
+  marginBottom: 12,
+};
+
+const modalTitle = {
+  marginTop: 0,
+  marginBottom: 6,
+  color: "#0f172a",
+  fontFamily: "inherit",
+  fontWeight: 800,
+  fontSize: "1.35rem",
+  letterSpacing: "-0.015em",
+  lineHeight: 1.2,
+};
+
+const modalSubtitle = {
+  margin: 0,
+  color: "#475569",
+  fontSize: 14,
+  lineHeight: 1.35,
+};
+
+const sellerInfoCard = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  marginBottom: 12,
+  padding: "0.65rem 0.72rem",
+  borderRadius: 12,
+  border: "1px solid #e2e8f0",
+  background: "rgba(248,250,252,0.85)",
 };
 

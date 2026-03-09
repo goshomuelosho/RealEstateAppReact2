@@ -341,7 +341,9 @@ export default function MyEstates() {
   const isMobile = viewportWidth <= 768;
   const isCompactLayout = viewportWidth <= 1400;
   const isNarrowTablet = viewportWidth <= 1024;
+  const isWideDesktop = viewportWidth >= 1800;
   const [filtersOpen, setFiltersOpen] = useState(() => !isCompactLayout);
+  const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
   const [hoveredCard, setHoveredCard] = useState(null);
   const [estates, setEstates] = useState([]);
   const [profile, setProfile] = useState(null);
@@ -362,19 +364,41 @@ export default function MyEstates() {
 
   const navigate = useNavigate();
 
-  const filterColumns = isMobile
-    ? "1fr"
-    : isNarrowTablet
-    ? "repeat(2, minmax(150px, 1fr))"
-    : isCompactLayout
-    ? "repeat(3, minmax(160px, 1fr))"
-    : filterBar.gridTemplateColumns;
+  const denseFilters = isCompactLayout || isMobile;
+  const compactFilterBar = {
+    ...filterBar,
+    gap: denseFilters ? "0.5rem" : filterBar.gap,
+    padding: denseFilters ? (isMobile ? "0.55rem" : "0.62rem") : filterBar.padding,
+    borderRadius: denseFilters ? 12 : filterBar.borderRadius,
+    marginBottom: denseFilters ? "0.9rem" : filterBar.marginBottom,
+  };
+  const compactFilterInput = {
+    ...filterInput,
+    padding: denseFilters ? (isMobile ? "0.5rem 0.65rem" : "0.56rem 0.72rem") : filterInput.padding,
+    borderRadius: denseFilters ? 10 : filterInput.borderRadius,
+    fontSize: denseFilters ? "0.9rem" : undefined,
+    minHeight: denseFilters ? 38 : undefined,
+  };
+  const compactFilterSelect = {
+    ...filterSelect,
+    ...compactFilterInput,
+    backgroundColor: filterSelect.backgroundColor,
+    color: filterSelect.color,
+    paddingRight: denseFilters ? "2rem" : undefined,
+  };
   const cardsPerPage = isMobile ? 4 : isCompactLayout ? 8 : 12;
   const totalPages = Math.max(1, Math.ceil(estates.length / cardsPerPage));
   const pagedEstates = estates.slice(
     (currentPage - 1) * cardsPerPage,
     currentPage * cardsPerPage
   );
+  const resultsMinHeight = isMobile || isCompactLayout ? "auto" : isWideDesktop ? "64vh" : "58vh";
+  const advancedFiltersCount = [
+    !!propertyType,
+    !!buildingType,
+    !!floor,
+    act16 !== "all",
+  ].filter(Boolean).length;
 
   const fetchEstates = useCallback(
     async (userId, overrides = {}) => {
@@ -578,115 +602,173 @@ export default function MyEstates() {
           {!isCompactLayout || filtersOpen ? (
             <div
               style={{
-                ...filterBar,
-                gridTemplateColumns: filterColumns,
+                ...compactFilterBar,
+                display: "flex",
+                flexDirection: "column",
+                gap: denseFilters ? "0.45rem" : "0.6rem",
               }}
             >
-              <input
-                type="text"
-                placeholder="Търсене по заглавие..."
-                value={titleSearch}
-                onChange={(e) => setTitleSearch(e.target.value)}
-                style={filterInput}
-              />
-
-              <input
-                type="text"
-                placeholder="Търсене по локация..."
-                value={locationSearch}
-                onChange={(e) => setLocationSearch(e.target.value)}
-                style={filterInput}
-              />
-
-              <select
-                value={propertyType}
-                onChange={(e) => setPropertyType(e.target.value)}
-                style={filterSelect}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: isMobile
+                    ? "1fr"
+                    : isNarrowTablet
+                    ? "repeat(2, minmax(160px, 1fr))"
+                    : "minmax(170px,1.2fr) minmax(170px,1.2fr) minmax(150px,0.9fr) auto",
+                  gap: denseFilters ? "0.45rem" : "0.6rem",
+                  alignItems: "stretch",
+                }}
               >
-                <option value="">Вид на имота (всички)</option>
-                {PROPERTY_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
+                <input
+                  type="text"
+                  placeholder="Търсене по заглавие..."
+                  value={titleSearch}
+                  onChange={(e) => setTitleSearch(e.target.value)}
+                  style={compactFilterInput}
+                />
 
-              <select value={act16} onChange={(e) => setAct16(e.target.value)} style={filterSelect}>
-                <option value="all">Акт 16 (всички)</option>
-                <option value="yes">Само с Акт 16</option>
-                <option value="no">Само без Акт 16</option>
-              </select>
+                <input
+                  type="text"
+                  placeholder="Търсене по локация..."
+                  value={locationSearch}
+                  onChange={(e) => setLocationSearch(e.target.value)}
+                  style={compactFilterInput}
+                />
 
-              <select
-                value={buildingType}
-                onChange={(e) => setBuildingType(e.target.value)}
-                style={filterSelect}
-              >
-                <option value="">Вид на сградата (всички)</option>
-                {BUILDING_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
+                <select
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                  style={compactFilterSelect}
+                >
+                  <option value="newest">Най-нови</option>
+                  <option value="low-high">Цена: ниска → висока</option>
+                  <option value="high-low">Цена: висока → ниска</option>
+                </select>
 
-              <select value={floor} onChange={(e) => setFloor(e.target.value)} style={filterSelect}>
-                <option value="">Етаж (всички)</option>
-                {FLOORS.map((f) => (
-                  <option key={f} value={f}>
-                    {f}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value)}
-                style={filterSelect}
-              >
-                <option value="newest">Най-нови първо</option>
-                <option value="low-high">Цена: ниска → висока</option>
-                <option value="high-low">Цена: висока → ниска</option>
-              </select>
-
-              
-              <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <button
-                  onClick={() => {
-                    setTitleSearch("");
-                    setLocationSearch("");
-                    setPropertyType("");
-                    setBuildingType("");
-                    setFloor("");
-                    setAct16("all");
-                    setSortOrder("newest");
-                    setCurrentPage(1);
-
-                    if (profile?.id) {
-                      fetchEstates(profile.id, {
-                        title: "",
-                        location: "",
-                        sort: "newest",
-                        pType: "",
-                        bType: "",
-                        fl: "",
-                        a16: "all",
-                      });
-                    }
-                  }}
+                <div
                   style={{
-                    padding: "0.62rem 0.9rem",
-                    borderRadius: 12,
-                    border: "1px solid rgba(255,255,255,0.25)",
-                    background: "transparent",
-                    color: "#fff",
-                    fontWeight: 700,
-                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: isMobile ? "flex-start" : "flex-end",
+                    flexWrap: "wrap",
+                    gap: denseFilters ? 6 : 8,
                   }}
                 >
-                  Нулирай
-                </button>
+                  <button
+                    onClick={() => setAdvancedFiltersOpen((v) => !v)}
+                    style={{
+                      padding: denseFilters ? "0.5rem 0.72rem" : "0.62rem 0.9rem",
+                      borderRadius: denseFilters ? 10 : 12,
+                      border: "1px solid rgba(255,255,255,0.25)",
+                      background: advancedFiltersOpen
+                        ? "rgba(59,130,246,0.28)"
+                        : "rgba(15,23,42,0.35)",
+                      color: "#fff",
+                      fontWeight: 700,
+                      fontSize: denseFilters ? "0.86rem" : undefined,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {advancedFiltersOpen
+                      ? "Скрий детайлни"
+                      : `Детайлни${advancedFiltersCount ? ` (${advancedFiltersCount})` : ""}`}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setTitleSearch("");
+                      setLocationSearch("");
+                      setPropertyType("");
+                      setBuildingType("");
+                      setFloor("");
+                      setAct16("all");
+                      setSortOrder("newest");
+                      setAdvancedFiltersOpen(false);
+                      setCurrentPage(1);
+
+                      if (profile?.id) {
+                        fetchEstates(profile.id, {
+                          title: "",
+                          location: "",
+                          sort: "newest",
+                          pType: "",
+                          bType: "",
+                          fl: "",
+                          a16: "all",
+                        });
+                      }
+                    }}
+                    style={{
+                      padding: denseFilters ? "0.5rem 0.72rem" : "0.62rem 0.9rem",
+                      borderRadius: denseFilters ? 10 : 12,
+                      border: "1px solid rgba(255,255,255,0.25)",
+                      background: "transparent",
+                      color: "#fff",
+                      fontWeight: 700,
+                      fontSize: denseFilters ? "0.88rem" : undefined,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Нулирай
+                  </button>
+                </div>
               </div>
+
+              {advancedFiltersOpen ? (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: isMobile
+                      ? "1fr"
+                      : isNarrowTablet
+                      ? "repeat(2, minmax(150px, 1fr))"
+                      : "repeat(4, minmax(145px, 1fr))",
+                    gap: denseFilters ? "0.45rem" : "0.6rem",
+                  }}
+                >
+                  <select
+                    value={propertyType}
+                    onChange={(e) => setPropertyType(e.target.value)}
+                    style={compactFilterSelect}
+                  >
+                    <option value="">Вид на имота (всички)</option>
+                    {PROPERTY_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={buildingType}
+                    onChange={(e) => setBuildingType(e.target.value)}
+                    style={compactFilterSelect}
+                  >
+                    <option value="">Вид на сградата (всички)</option>
+                    {BUILDING_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select value={floor} onChange={(e) => setFloor(e.target.value)} style={compactFilterSelect}>
+                    <option value="">Етаж (всички)</option>
+                    {FLOORS.map((f) => (
+                      <option key={f} value={f}>
+                        {f}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select value={act16} onChange={(e) => setAct16(e.target.value)} style={compactFilterSelect}>
+                    <option value="all">Акт 16 (всички)</option>
+                    <option value="yes">Само с Акт 16</option>
+                    <option value="no">Само без Акт 16</option>
+                  </select>
+                </div>
+              ) : null}
             </div>
           ) : null}
 
@@ -696,7 +778,13 @@ export default function MyEstates() {
               <div style={loaderSpinner} />
             </div>
           ) : estates.length > 0 ? (
-            <>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                minHeight: resultsMinHeight,
+              }}
+            >
               <div
                 style={{
                   ...grid,
@@ -705,7 +793,7 @@ export default function MyEstates() {
                     : isCompactLayout
                     ? "repeat(auto-fill, minmax(230px, 1fr))"
                     : grid.gridTemplateColumns,
-                  gap: isMobile ? "0.85rem" : isCompactLayout ? "0.8rem" : grid.gap,
+                  gap: isMobile ? "0.85rem" : isCompactLayout ? "0.8rem" : "1.1rem",
                 }}
               >
                 {pagedEstates.map((estate) => (
@@ -714,6 +802,7 @@ export default function MyEstates() {
                     estate={estate}
                     isMobile={isMobile}
                     isCompact={isCompactLayout}
+                    isWideDesktop={isWideDesktop}
                     hoveredCard={hoveredCard}
                     setHoveredCard={setHoveredCard}
                     handleDelete={openDeleteModal}
@@ -723,7 +812,14 @@ export default function MyEstates() {
                 ))}
               </div>
 
-              <div style={paginationRow}>
+              <div
+                style={{
+                  ...paginationRow,
+                  marginTop: "auto",
+                  paddingTop: isMobile || isCompactLayout ? "0.95rem" : "1.45rem",
+                  paddingBottom: isMobile || isCompactLayout ? "0.1rem" : "0.55rem",
+                }}
+              >
                 <button
                   style={{
                     ...pageBtn(false),
@@ -753,7 +849,7 @@ export default function MyEstates() {
                   Напред
                 </button>
               </div>
-            </>
+            </div>
           ) : (
             <p style={emptyState}>Няма намерени имоти.</p>
           )}
@@ -783,6 +879,7 @@ function EstateCard({
   estate,
   isMobile,
   isCompact,
+  isWideDesktop,
   hoveredCard,
   setHoveredCard,
   handleDelete,
@@ -797,19 +894,25 @@ function EstateCard({
   const parsedArea = Number(estate.area);
   const showArea = Number.isFinite(parsedArea) && parsedArea > 0;
   const compactActionButtons = isCompact || isMobile;
-  const cardImageHeight = isMobile ? "156px" : isCompact ? "164px" : "200px";
-  const cardBodyPadding = isMobile ? "0.72rem 0.8rem" : isCompact ? "0.82rem 0.86rem" : "0.9rem 1rem";
+  const cardImageHeight = isMobile ? "156px" : isCompact ? "164px" : isWideDesktop ? "280px" : "250px";
+  const cardBodyPadding = isMobile
+    ? "0.72rem 0.8rem"
+    : isCompact
+    ? "0.82rem 0.86rem"
+    : "1rem 1.08rem";
   const titleSize = isMobile ? "1.12rem" : isCompact ? "1.22rem" : "1.4rem";
   const titleText = estate.title || "Без заглавие";
   const locationText = estate.location || "Без локация";
   const priceText = `€${Number(estate.price || 0).toLocaleString()}`;
   const compactText = isMobile || isCompact;
   const hoverable = !compactText;
+  const desktopCardMinHeight = isWideDesktop ? 560 : 520;
 
   return (
     <div
       style={{
         ...cardStyle,
+        minHeight: compactText ? undefined : desktopCardMinHeight,
         boxShadow:
           hoverable && hoveredCard === estate.id
             ? "0 20px 60px rgba(59,130,246,0.4)"
@@ -890,7 +993,7 @@ function EstateCard({
             style={{
               ...priceBadge,
               fontSize: isMobile ? "0.94rem" : isCompact ? "0.97rem" : "1rem",
-              padding: isMobile ? "0.28rem 0.62rem" : isCompact ? "0.32rem 0.7rem" : "0.35rem 0.8rem",
+              padding: isMobile ? "0.28rem 0.62rem" : isCompact ? "0.32rem 0.7rem" : "0.36rem 0.82rem",
               maxWidth: isMobile ? 136 : isCompact ? 150 : 170,
               overflow: "hidden",
               textOverflow: "ellipsis",
