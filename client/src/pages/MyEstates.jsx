@@ -184,6 +184,7 @@ const cardStyle = {
   transition: "all 0.4s cubic-bezier(0.175,0.885,0.32,1.275)",
   display: "flex",
   flexDirection: "column",
+  height: "100%",
 };
 
 const priceBadge = {
@@ -196,14 +197,14 @@ const priceBadge = {
   fontSize: "1.1rem",
 };
 
-const visibilityPill = (isPublic) => ({
+const visibilityPill = (isPublic, compact = false) => ({
   display: "inline-flex",
   alignItems: "center",
-  gap: 8,
-  padding: "0.35rem 0.6rem",
+  gap: 6,
+  padding: compact ? "0.25rem 0.48rem" : "0.35rem 0.6rem",
   borderRadius: 999,
-  marginTop: 8,
-  fontSize: "0.8rem",
+  marginTop: 0,
+  fontSize: compact ? "0.74rem" : "0.8rem",
   fontWeight: 700,
   color: isPublic ? "#065f46" : "#991b1b",
   background: isPublic ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)",
@@ -217,7 +218,7 @@ const metaRow = {
   display: "flex",
   flexWrap: "wrap",
   gap: 8,
-  marginTop: 12,
+  marginTop: 8,
 };
 
 const pill = (variant = "neutral") => ({
@@ -228,6 +229,10 @@ const pill = (variant = "neutral") => ({
   borderRadius: 999,
   fontSize: 12,
   fontWeight: 800,
+  maxWidth: "100%",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
   border: "1px solid rgba(0,0,0,0.08)",
   background:
     variant === "type"
@@ -247,17 +252,47 @@ const pill = (variant = "neutral") => ({
       : "#334155",
 });
 
+const oneLineClamp = {
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  minWidth: 0,
+};
+
+const paginationRow = {
+  marginTop: "1rem",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "0.45rem",
+  flexWrap: "wrap",
+};
+
+const pageBtn = (active = false) => ({
+  minWidth: 36,
+  height: 34,
+  padding: "0 0.7rem",
+  borderRadius: 10,
+  border: active ? "1px solid rgba(59,130,246,0.85)" : "1px solid rgba(148,163,184,0.45)",
+  background: active
+    ? "linear-gradient(135deg, rgba(59,130,246,0.9), rgba(37,99,235,0.9))"
+    : "rgba(15,23,42,0.45)",
+  color: "#e2e8f0",
+  fontWeight: 700,
+  cursor: "pointer",
+});
+
 const cardActions = {
-  padding: "0.8rem 0.9rem 0.9rem",
+  padding: "0.62rem 0.8rem 0.72rem",
   display: "flex",
   justifyContent: "flex-end",
-  gap: "0.6rem",
+  gap: "0.5rem",
   background: "rgba(241,245,249,0.55)",
 };
 
 const actionBtn = (type, compact = false) => ({
-  width: compact ? 40 : 46,
-  height: compact ? 38 : 42,
+  width: compact ? 38 : 42,
+  height: compact ? 34 : 38,
   background:
     type === "green"
       ? "linear-gradient(135deg, #10b981, #059669)"
@@ -314,6 +349,7 @@ export default function MyEstates() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [estateToDelete, setEstateToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const [titleSearch, setTitleSearch] = useState("");
   const [locationSearch, setLocationSearch] = useState("");
@@ -333,6 +369,12 @@ export default function MyEstates() {
     : isCompactLayout
     ? "repeat(3, minmax(160px, 1fr))"
     : filterBar.gridTemplateColumns;
+  const cardsPerPage = isMobile ? 4 : isCompactLayout ? 8 : 12;
+  const totalPages = Math.max(1, Math.ceil(estates.length / cardsPerPage));
+  const pagedEstates = estates.slice(
+    (currentPage - 1) * cardsPerPage,
+    currentPage * cardsPerPage
+  );
 
   const fetchEstates = useCallback(
     async (userId, overrides = {}) => {
@@ -422,6 +464,14 @@ export default function MyEstates() {
     act16,
     fetchEstates,
   ]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [titleSearch, locationSearch, sortOrder, propertyType, buildingType, floor, act16]);
+
+  useEffect(() => {
+    setCurrentPage((prev) => (prev > totalPages ? totalPages : prev));
+  }, [totalPages]);
 
   const openDeleteModal = (estate) => {
     setEstateToDelete(estate);
@@ -610,6 +660,7 @@ export default function MyEstates() {
                     setFloor("");
                     setAct16("all");
                     setSortOrder("newest");
+                    setCurrentPage(1);
 
                     if (profile?.id) {
                       fetchEstates(profile.id, {
@@ -645,27 +696,64 @@ export default function MyEstates() {
               <div style={loaderSpinner} />
             </div>
           ) : estates.length > 0 ? (
-            <div
-              style={{
-                ...grid,
-                gridTemplateColumns: isMobile ? "1fr" : grid.gridTemplateColumns,
-                gap: isMobile ? "1rem" : isCompactLayout ? "1rem" : grid.gap,
-              }}
-            >
-              {estates.map((estate) => (
-                <EstateCard
-                  key={estate.id}
-                  estate={estate}
-                  isMobile={isMobile}
-                  isCompact={isCompactLayout}
-                  hoveredCard={hoveredCard}
-                  setHoveredCard={setHoveredCard}
-                  handleDelete={openDeleteModal}
-                  handleTogglePublic={handleTogglePublic}
-                  navigate={navigate}
-                />
-              ))}
-            </div>
+            <>
+              <div
+                style={{
+                  ...grid,
+                  gridTemplateColumns: isMobile
+                    ? "1fr"
+                    : isCompactLayout
+                    ? "repeat(auto-fill, minmax(230px, 1fr))"
+                    : grid.gridTemplateColumns,
+                  gap: isMobile ? "0.85rem" : isCompactLayout ? "0.8rem" : grid.gap,
+                }}
+              >
+                {pagedEstates.map((estate) => (
+                  <EstateCard
+                    key={estate.id}
+                    estate={estate}
+                    isMobile={isMobile}
+                    isCompact={isCompactLayout}
+                    hoveredCard={hoveredCard}
+                    setHoveredCard={setHoveredCard}
+                    handleDelete={openDeleteModal}
+                    handleTogglePublic={handleTogglePublic}
+                    navigate={navigate}
+                  />
+                ))}
+              </div>
+
+              <div style={paginationRow}>
+                <button
+                  style={{
+                    ...pageBtn(false),
+                    opacity: currentPage === 1 ? 0.55 : 1,
+                    cursor: currentPage === 1 ? "not-allowed" : pageBtn(false).cursor,
+                  }}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  aria-label="Предишна страница"
+                >
+                  Назад
+                </button>
+                <span style={{ color: "rgba(226,232,240,0.9)", fontWeight: 700 }}>
+                  {currentPage} / {totalPages}
+                </span>
+                <button
+                  style={{
+                    ...pageBtn(false),
+                    opacity: currentPage === totalPages ? 0.55 : 1,
+                    cursor:
+                      currentPage === totalPages ? "not-allowed" : pageBtn(false).cursor,
+                  }}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  aria-label="Следваща страница"
+                >
+                  Напред
+                </button>
+              </div>
+            </>
           ) : (
             <p style={emptyState}>Няма намерени имоти.</p>
           )}
@@ -709,19 +797,27 @@ function EstateCard({
   const parsedArea = Number(estate.area);
   const showArea = Number.isFinite(parsedArea) && parsedArea > 0;
   const compactActionButtons = isCompact || isMobile;
-  const cardImageHeight = isMobile ? "170px" : isCompact ? "185px" : "220px";
-  const cardBodyPadding = isMobile ? "1rem" : isCompact ? "1.1rem" : "1.5rem";
-  const titleSize = isMobile ? "1.12rem" : isCompact ? "1.2rem" : "1.4rem";
+  const cardImageHeight = isMobile ? "156px" : isCompact ? "164px" : "200px";
+  const cardBodyPadding = isMobile ? "0.72rem 0.8rem" : isCompact ? "0.82rem 0.86rem" : "0.9rem 1rem";
+  const titleSize = isMobile ? "1.12rem" : isCompact ? "1.22rem" : "1.4rem";
+  const titleText = estate.title || "Без заглавие";
+  const locationText = estate.location || "Без локация";
+  const priceText = `€${Number(estate.price || 0).toLocaleString()}`;
+  const compactText = isMobile || isCompact;
+  const hoverable = !compactText;
 
   return (
     <div
       style={{
         ...cardStyle,
         boxShadow:
-          hoveredCard === estate.id
+          hoverable && hoveredCard === estate.id
             ? "0 20px 60px rgba(59,130,246,0.4)"
             : "0 10px 40px rgba(0,0,0,0.3)",
-        transform: hoveredCard === estate.id ? "translateY(-8px) scale(1.02)" : "translateY(0)",
+        transform:
+          hoverable && hoveredCard === estate.id
+            ? "translateY(-8px) scale(1.02)"
+            : "translateY(0)",
       }}
       onMouseEnter={() => setHoveredCard(estate.id)}
       onMouseLeave={() => setHoveredCard(null)}
@@ -735,19 +831,75 @@ function EstateCard({
             height: cardImageHeight,
             objectFit: "cover",
             transition: "transform 0.5s ease",
-            transform: hoveredCard === estate.id ? "scale(1.05)" : "scale(1)",
+            transform: hoverable && hoveredCard === estate.id ? "scale(1.05)" : "scale(1)",
           }}
         />
       )}
 
-      <div style={{ padding: cardBodyPadding, flex: 1 }}>
-        <h3 style={{ fontSize: titleSize, fontWeight: "700", color: "#0f172a", margin: 0 }}>
-          {estate.title}
+      <div
+        style={{
+          padding: cardBodyPadding,
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          minWidth: 0,
+        }}
+      >
+        <h3
+          title={titleText}
+          style={{
+            fontSize: titleSize,
+            fontWeight: "700",
+            color: "#0f172a",
+            margin: 0,
+            lineHeight: 1.25,
+            minHeight: "1.25em",
+            ...oneLineClamp,
+          }}
+        >
+          {titleText}
         </h3>
 
-        <p style={{ color: "#64748b", margin: "0.45rem 0 0.62rem" }}>📍 {estate.location}</p>
+        <p
+          title={locationText}
+          style={{
+            color: "#64748b",
+            margin: "0.45rem 0 0.62rem",
+            lineHeight: 1.25,
+            minHeight: "1.25em",
+            ...oneLineClamp,
+          }}
+        >
+          📍 {locationText}
+        </p>
 
-        <div style={visibilityPill(isPublic)}>{isPublic ? "Публично в пазара" : "Частно"}</div>
+        <div
+          style={{
+            marginTop: "0.62rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 8,
+          }}
+        >
+          <div style={visibilityPill(isPublic, compactText)}>
+            {isPublic ? "Публично в пазара" : "Частно"}
+          </div>
+          <span
+            title={priceText}
+            style={{
+              ...priceBadge,
+              fontSize: isMobile ? "0.94rem" : isCompact ? "0.97rem" : "1rem",
+              padding: isMobile ? "0.28rem 0.62rem" : isCompact ? "0.32rem 0.7rem" : "0.35rem 0.8rem",
+              maxWidth: isMobile ? 136 : isCompact ? 150 : 170,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {priceText}
+          </span>
+        </div>
 
         
         <div style={metaRow}>
@@ -760,23 +912,12 @@ function EstateCard({
           {estate.building_type ? <span style={pill("neutral")}>🏢 {estate.building_type}</span> : null}
         </div>
 
-        <div style={{ marginTop: "0.9rem" }}>
-          <span
-            style={{
-              ...priceBadge,
-              fontSize: isMobile ? "1rem" : isCompact ? "1.04rem" : priceBadge.fontSize,
-              padding: isMobile ? "0.38rem 0.9rem" : isCompact ? "0.4rem 0.9rem" : priceBadge.padding,
-            }}
-          >
-            €{Number(estate.price || 0).toLocaleString()}
-          </span>
-        </div>
       </div>
 
       <div
         style={{
           ...cardActions,
-          padding: isMobile ? "0.68rem 0.8rem 0.75rem" : cardActions.padding,
+          padding: isMobile ? "0.56rem 0.7rem 0.62rem" : cardActions.padding,
         }}
       >
         <button

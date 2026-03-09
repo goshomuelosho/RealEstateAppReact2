@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate } from "react-router-dom";
 import { Mail, Search } from "lucide-react";
@@ -142,6 +142,7 @@ const card = {
   color: "#0f172a",
   display: "flex",
   flexDirection: "column",
+  height: "100%",
   boxShadow: "0 10px 35px rgba(0,0,0,0.25)",
   position: "relative",
 };
@@ -161,6 +162,7 @@ const sellerRow = {
   alignItems: "center",
   gap: "0.6rem",
   marginTop: "0.75rem",
+  minWidth: 0,
 };
 
 const contactBtn = {
@@ -196,6 +198,10 @@ const pill = (variant = "neutral") => ({
   borderRadius: 999,
   fontSize: 12,
   fontWeight: 800,
+  maxWidth: "100%",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
   letterSpacing: 0.2,
   border: "1px solid rgba(0,0,0,0.08)",
   background:
@@ -214,6 +220,45 @@ const pill = (variant = "neutral") => ({
       : variant === "floor"
       ? "#5b21b6"
       : "#334155",
+});
+
+const oneLineClamp = {
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  minWidth: 0,
+};
+
+const twoLineClamp = {
+  overflow: "hidden",
+  display: "-webkit-box",
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: "vertical",
+  wordBreak: "normal",
+  overflowWrap: "break-word",
+};
+
+const paginationRow = {
+  marginTop: "1rem",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "0.45rem",
+  flexWrap: "wrap",
+};
+
+const pageBtn = (active = false) => ({
+  minWidth: 36,
+  height: 34,
+  padding: "0 0.7rem",
+  borderRadius: 10,
+  border: active ? "1px solid rgba(59,130,246,0.85)" : "1px solid rgba(148,163,184,0.45)",
+  background: active
+    ? "linear-gradient(135deg, rgba(59,130,246,0.9), rgba(37,99,235,0.9))"
+    : "rgba(15,23,42,0.45)",
+  color: "#e2e8f0",
+  fontWeight: 700,
+  cursor: "pointer",
 });
 
 const loaderContainer = {
@@ -401,6 +446,7 @@ export default function Marketplace() {
   const [sending, setSending] = useState(false);
 
   const [showSentModal, setShowSentModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filterColumns = isMobile
     ? "1fr"
@@ -409,54 +455,75 @@ export default function Marketplace() {
     : isCompactLayout
     ? "repeat(3, minmax(160px, 1fr))"
     : filterBar.gridTemplateColumns;
+  const cardsPerPage = isMobile ? 4 : isCompactLayout ? 8 : 12;
+  const totalPages = Math.max(1, Math.ceil(estates.length / cardsPerPage));
+  const pagedEstates = estates.slice(
+    (currentPage - 1) * cardsPerPage,
+    currentPage * cardsPerPage
+  );
 
-  const fetchListings = async ({
-    qTitleVal = qTitle,
-    qLocationVal = qLocation,
-    minPriceVal = minPrice,
-    maxPriceVal = maxPrice,
-    sortVal = sort,
-    propertyTypeVal = propertyType,
-    buildingTypeVal = buildingType,
-    floorVal = floor,
-    act16Val = act16,
-    onlyFavoritesVal = onlyFavorites,
-  } = {}) => {
-    setLoading(true);
+  const fetchListings = useCallback(
+    async ({
+      qTitleVal = qTitle,
+      qLocationVal = qLocation,
+      minPriceVal = minPrice,
+      maxPriceVal = maxPrice,
+      sortVal = sort,
+      propertyTypeVal = propertyType,
+      buildingTypeVal = buildingType,
+      floorVal = floor,
+      act16Val = act16,
+      onlyFavoritesVal = onlyFavorites,
+    } = {}) => {
+      setLoading(true);
 
-    let query = supabase.from("estates").select("*").eq("is_public", true);
+      let query = supabase.from("estates").select("*").eq("is_public", true);
 
-    if (qTitleVal.trim()) query = query.ilike("title", `%${qTitleVal}%`);
-    if (qLocationVal.trim()) query = query.ilike("location", `%${qLocationVal}%`);
-    if (minPriceVal) query = query.gte("price", Number(minPriceVal));
-    if (maxPriceVal) query = query.lte("price", Number(maxPriceVal));
+      if (qTitleVal.trim()) query = query.ilike("title", `%${qTitleVal}%`);
+      if (qLocationVal.trim()) query = query.ilike("location", `%${qLocationVal}%`);
+      if (minPriceVal) query = query.gte("price", Number(minPriceVal));
+      if (maxPriceVal) query = query.lte("price", Number(maxPriceVal));
 
-    if (propertyTypeVal) query = query.eq("property_type", propertyTypeVal);
-    if (buildingTypeVal) query = query.eq("building_type", buildingTypeVal);
-    if (floorVal) query = query.eq("floor", floorVal);
+      if (propertyTypeVal) query = query.eq("property_type", propertyTypeVal);
+      if (buildingTypeVal) query = query.eq("building_type", buildingTypeVal);
+      if (floorVal) query = query.eq("floor", floorVal);
 
-    if (act16Val === "yes") query = query.eq("has_act16", true);
-    if (act16Val === "no") query = query.eq("has_act16", false);
+      if (act16Val === "yes") query = query.eq("has_act16", true);
+      if (act16Val === "no") query = query.eq("has_act16", false);
 
-    if (onlyFavoritesVal) {
-      const ids = Array.from(favoriteIds);
-      if (ids.length === 0) {
-        setEstates([]);
-        setLoading(false);
-        return;
+      if (onlyFavoritesVal) {
+        const ids = Array.from(favoriteIds);
+        if (ids.length === 0) {
+          setEstates([]);
+          setLoading(false);
+          return;
+        }
+        query = query.in("id", ids);
       }
-      query = query.in("id", ids);
-    }
 
-    if (sortVal === "low-high") query = query.order("price", { ascending: true });
-    else if (sortVal === "high-low")
-      query = query.order("price", { ascending: false });
-    else query = query.order("created_at", { ascending: false });
+      if (sortVal === "low-high") query = query.order("price", { ascending: true });
+      else if (sortVal === "high-low")
+        query = query.order("price", { ascending: false });
+      else query = query.order("created_at", { ascending: false });
 
-    const { data, error } = await query;
-    if (!error) setEstates(data || []);
-    setLoading(false);
-  };
+      const { data, error } = await query;
+      if (!error) setEstates(data || []);
+      setLoading(false);
+    },
+    [
+      qTitle,
+      qLocation,
+      minPrice,
+      maxPrice,
+      sort,
+      propertyType,
+      buildingType,
+      floor,
+      act16,
+      onlyFavorites,
+      favoriteIds,
+    ]
+  );
 
   useEffect(() => {
     if (!isCompactLayout) setFiltersOpen(true);
@@ -505,21 +572,14 @@ export default function Marketplace() {
     if (!profile) return;
 
     const t = setTimeout(() => {
-      fetchListings({
-        qTitleVal: qTitle,
-        qLocationVal: qLocation,
-        minPriceVal: minPrice,
-        maxPriceVal: maxPrice,
-        sortVal: sort,
-        propertyTypeVal: propertyType,
-        buildingTypeVal: buildingType,
-        floorVal: floor,
-        act16Val: act16,
-        onlyFavoritesVal: onlyFavorites,
-      });
+      fetchListings();
     }, 400);
 
     return () => clearTimeout(t);
+  }, [profile, fetchListings]);
+
+  useEffect(() => {
+    setCurrentPage(1);
   }, [
     qTitle,
     qLocation,
@@ -531,9 +591,11 @@ export default function Marketplace() {
     floor,
     act16,
     onlyFavorites,
-    favoriteIds,
-    profile,
   ]);
+
+  useEffect(() => {
+    setCurrentPage((prev) => (prev > totalPages ? totalPages : prev));
+  }, [totalPages]);
 
   const toggleFavorite = async (estateId) => {
     if (!profile?.id) return;
@@ -834,6 +896,7 @@ export default function Marketplace() {
                   setFloor("");
                   setAct16("all");
                   setOnlyFavorites(false);
+                  setCurrentPage(1);
 
                   fetchListings(cleared);
                 }}
@@ -859,15 +922,20 @@ export default function Marketplace() {
             <div style={loaderSpinner} />
           </div>
         ) : estates.length ? (
-          <div
-            style={{
-              ...grid,
-              gridTemplateColumns: isMobile ? "1fr" : grid.gridTemplateColumns,
-              gap: isMobile ? "1rem" : isCompactLayout ? "0.9rem" : grid.gap,
-              animation: "fadeInUp 0.6s ease",
-            }}
-          >
-            {estates.map((estate) => {
+          <>
+            <div
+              style={{
+                ...grid,
+                gridTemplateColumns: isMobile
+                  ? "1fr"
+                  : isCompactLayout
+                  ? "repeat(auto-fill, minmax(230px, 1fr))"
+                  : grid.gridTemplateColumns,
+                gap: isMobile ? "0.85rem" : isCompactLayout ? "0.8rem" : grid.gap,
+                animation: "fadeInUp 0.6s ease",
+              }}
+            >
+              {pagedEstates.map((estate) => {
               const showFloor =
                 estate.floor &&
                 estate.floor !== "Не е приложимо" &&
@@ -875,9 +943,13 @@ export default function Marketplace() {
               const showAct16 = estate.has_act16 === true;
               const parsedArea = Number(estate.area);
               const showArea = Number.isFinite(parsedArea) && parsedArea > 0;
+              const titleText = estate.title || "Без заглавие";
+              const locationText = estate.location || "Без локация";
+              const priceText = `€${Number(estate.price || 0).toLocaleString()}`;
 
               const isFav = favoriteIds.has(estate.id);
               const compactCard = isCompactLayout && !isMobile;
+              const compactHeader = isMobile || compactCard;
 
               return (
                 <div key={estate.id} style={card}>
@@ -900,50 +972,88 @@ export default function Marketplace() {
                       alt={estate.title}
                       style={{
                         width: "100%",
-                        height: isMobile ? 165 : compactCard ? 178 : 200,
+                        height: isMobile ? 156 : compactCard ? 164 : 200,
                         objectFit: "cover",
                       }}
                       loading="lazy"
                     />
                   )}
 
-                  <div style={{ padding: isMobile ? "0.85rem 0.9rem" : "0.9rem 1rem", flex: 1 }}>
+                  <div
+                    style={{
+                      padding: isMobile ? "0.72rem 0.8rem" : compactCard ? "0.82rem 0.86rem" : "0.9rem 1rem",
+                      flex: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                      minWidth: 0,
+                    }}
+                  >
                     <div
                       style={{
                         display: "flex",
+                        flexDirection: compactHeader ? "column" : "row",
                         justifyContent: "space-between",
-                        alignItems: isMobile ? "flex-start" : "center",
-                        gap: 10,
-                        flexWrap: isMobile ? "wrap" : "nowrap",
+                        alignItems: "flex-start",
+                        gap: compactHeader ? 6 : 10,
+                        flexWrap: "nowrap",
                       }}
                     >
                       <h3
+                        title={titleText}
                         style={{
                           margin: 0,
                           fontSize: isMobile ? "1.12rem" : compactCard ? "1.22rem" : "1.4rem",
                           fontWeight: "700",
                           color: "#0f172a",
-                          paddingRight: isMobile ? 0 : compactCard ? 46 : 52,
+                          lineHeight: 1.25,
+                          minHeight: "1.25em",
+                          flex: 1,
+                          paddingRight: compactHeader ? 0 : compactCard ? 46 : 52,
+                          ...oneLineClamp,
                         }}
                       >
-                        {estate.title}
+                        {titleText}
                       </h3>
                       <span
+                        title={priceText}
                         style={{
                           ...priceBadge,
                           fontSize: isMobile ? "0.92rem" : compactCard ? "0.97rem" : priceBadge.fontSize,
                           padding: isMobile ? "0.34rem 0.74rem" : priceBadge.padding,
+                          maxWidth: isMobile ? 140 : compactCard ? 154 : 162,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          flexShrink: 0,
+                          alignSelf: compactHeader ? "flex-start" : "auto",
                         }}
                       >
-                        €{Number(estate.price || 0).toLocaleString()}
+                        {priceText}
                       </span>
                     </div>
 
-                    <p style={{ margin: "0.3rem 0 0.45rem", color: "#475569" }}>
-                      📍 {estate.location}
+                    <p
+                      title={locationText}
+                      style={{
+                        margin: "0.3rem 0 0.45rem",
+                        color: "#475569",
+                        lineHeight: 1.25,
+                        minHeight: "1.25em",
+                        ...oneLineClamp,
+                      }}
+                    >
+                      📍 {locationText}
                     </p>
 
-                    <p style={{ margin: 0, color: "#6b7280" }}>
+                    <p
+                      style={{
+                        margin: 0,
+                        color: "#6b7280",
+                        lineHeight: 1.35,
+                        minHeight: "2.7em",
+                        ...twoLineClamp,
+                      }}
+                    >
                       {(estate.description || "").slice(0, 120)}
                       {(estate.description || "").length > 120 ? "…" : ""}
                     </p>
@@ -969,7 +1079,8 @@ export default function Marketplace() {
                         display: "flex",
                         justifyContent: "flex-end",
                         gap: "0.6rem",
-                        marginTop: 12,
+                        marginTop: "auto",
+                        paddingTop: 12,
                       }}
                     >
                       <button
@@ -994,8 +1105,40 @@ export default function Marketplace() {
                   </div>
                 </div>
               );
-            })}
-          </div>
+              })}
+            </div>
+
+            <div style={paginationRow}>
+              <button
+                style={{
+                  ...pageBtn(false),
+                  opacity: currentPage === 1 ? 0.55 : 1,
+                  cursor: currentPage === 1 ? "not-allowed" : pageBtn(false).cursor,
+                }}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                aria-label="Предишна страница"
+              >
+                Назад
+              </button>
+              <span style={{ color: "rgba(226,232,240,0.9)", fontWeight: 700 }}>
+                {currentPage} / {totalPages}
+              </span>
+              <button
+                style={{
+                  ...pageBtn(false),
+                  opacity: currentPage === totalPages ? 0.55 : 1,
+                  cursor:
+                    currentPage === totalPages ? "not-allowed" : pageBtn(false).cursor,
+                }}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                aria-label="Следваща страница"
+              >
+                Напред
+              </button>
+            </div>
+          </>
         ) : (
           <p style={{ color: "#94a3b8" }}>Няма намерени обяви.</p>
         )}
@@ -1121,7 +1264,16 @@ function SellerBadge({ userId }) {
         alt="seller"
         style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }}
       />
-      <span style={{ fontSize: 14, color: "#334155" }}>От {seller.name || "Продавач"}</span>
+      <span
+        title={seller.name || "Продавач"}
+        style={{
+          fontSize: 14,
+          color: "#334155",
+          ...oneLineClamp,
+        }}
+      >
+        От {seller.name || "Продавач"}
+      </span>
     </div>
   ) : null;
 }
