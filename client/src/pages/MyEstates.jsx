@@ -5,6 +5,7 @@ import { EyeOff, Globe, Pencil, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import NavBar from "../components/NavBar";
 import useViewportWidth from "../hooks/useViewportWidth";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
+import { toBgErrorMessage } from "../utils/errorMessages";
 
 
 const PROPERTY_TYPES = [
@@ -509,7 +510,7 @@ export default function MyEstates() {
     setIsDeleting(false);
 
     if (error) {
-      alert(error.message);
+      alert(toBgErrorMessage(error, "Неуспешно изтриване на имота. Опитайте отново."));
       return;
     }
 

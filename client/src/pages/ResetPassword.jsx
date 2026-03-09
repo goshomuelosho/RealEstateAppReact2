@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
+import { toBgErrorMessage } from "../utils/errorMessages";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ export default function ResetPassword() {
     setLoading(false);
 
     if (updateError) {
-      setError(updateError.message);
+      setError(toBgErrorMessage(updateError, "Неуспешно обновяване на паролата. Опитайте отново."));
       return;
     }
 

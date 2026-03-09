@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Mail, Search } from "lucide-react";
 import NavBar from "../components/NavBar";
 import useViewportWidth from "../hooks/useViewportWidth";
+import { toBgErrorMessage } from "../utils/errorMessages";
 
 
 const PROPERTY_TYPES = [
@@ -708,7 +709,7 @@ export default function Marketplace() {
       setTimeout(() => setShowSentModal(false), 2000);
     } catch (e) {
       console.error(e);
-      alert(`Неуспешно изпращане. Моля, опитайте отново. ${e?.message || ""}`);
+      alert(toBgErrorMessage(e, "Неуспешно изпращане. Моля, опитайте отново."));
     } finally {
       setSending(false);
     }

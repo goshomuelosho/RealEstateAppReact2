@@ -3,6 +3,7 @@ import { supabase } from "../supabaseClient";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { PASSWORD_RESET_REDIRECT_URL } from "../utils/authRedirects";
+import { toBgErrorMessage } from "../utils/errorMessages";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ export default function Login() {
     setLoading(false);
 
     if (error) {
-      setError(error.message); 
+      setError(toBgErrorMessage(error, "Неуспешен вход. Проверете данните и опитайте отново."));
     } else {
       navigate("/dashboard");
     }
@@ -50,11 +51,13 @@ export default function Login() {
     setResetLoading(false);
 
     if (resetError) {
-      setError(resetError.message);
+      setError(
+        toBgErrorMessage(resetError, "Неуспешно изпращане на линк за нова парола. Опитайте отново.")
+      );
       return;
     }
 
-    setInfoMessage("📩 Изпратихме линк за нова парола на имейла ти.");
+    setInfoMessage("Изпратихме линк за нова парола на имейла ти.");
   };
 
   return (
@@ -323,13 +326,13 @@ export default function Login() {
         
         {error && (
           <div style={errorStyle}>
-            <span>⚠️</span> {error}
+            <span></span> {error}
           </div>
         )}
 
         {infoMessage && (
           <div style={successStyle}>
-            <span>✅</span> {infoMessage}
+            <span></span> {infoMessage}
           </div>
         )}
 

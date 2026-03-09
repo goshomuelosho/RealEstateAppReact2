@@ -3,6 +3,7 @@ import { supabase } from "../supabaseClient";
 import { useNavigate, useParams } from "react-router-dom";
 import NavBar from "../components/NavBar";
 import LocationPicker from "../components/LocationPicker";
+import { toBgErrorMessage } from "../utils/errorMessages";
 
 
 const PROPERTY_TYPES = [
@@ -379,7 +380,7 @@ export default function EditEstate() {
         .upload(fileName, image, { upsert: true });
 
       if (imgError) {
-        alert(imgError.message);
+        alert(toBgErrorMessage(imgError, "Неуспешно качване на снимката. Опитайте отново."));
         setSaving(false);
         return;
       }
@@ -407,7 +408,7 @@ export default function EditEstate() {
     setSaving(false);
 
     if (error) {
-      alert(error.message);
+      alert(toBgErrorMessage(error, "Неуспешно обновяване на имота. Опитайте отново."));
       return;
     }
 

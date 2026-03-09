@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 
 export default function SuccessModal({
-  message = "Action completed successfully!",
+  message = "Действието е изпълнено успешно!",
   onClose,
   duration = 2500,
 }) {

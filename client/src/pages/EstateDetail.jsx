@@ -12,6 +12,7 @@ import { supabase } from "../supabaseClient";
 import NavBar from "../components/NavBar";
 import LocationPinMap from "../components/LocationPinMap";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
+import { toBgErrorMessage } from "../utils/errorMessages";
 
 export default function EstateDetail() {
   const { id } = useParams();
@@ -80,7 +81,7 @@ export default function EstateDetail() {
 
     if (error) {
       setIsDeleting(false);
-      alert(error.message);
+      alert(toBgErrorMessage(error, "Неуспешно изтриване на имота. Опитайте отново."));
       return;
     }
 

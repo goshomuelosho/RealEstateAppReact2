@@ -8,6 +8,7 @@ import {
   normalizeUsername,
   validateUsername,
 } from "../utils/username";
+import { toBgErrorMessage } from "../utils/errorMessages";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -105,7 +106,7 @@ export default function Profile() {
         .upload(fileName, avatarFile, { upsert: true });
 
       if (uploadError) {
-        alert(uploadError.message);
+        alert(toBgErrorMessage(uploadError, "Неуспешно качване на профилната снимка. Опитайте отново."));
         setSaving(false);
         return;
       }
@@ -126,7 +127,7 @@ export default function Profile() {
       if (error.code === "23505") {
         setNameError("Това потребителско име вече е заето.");
       } else {
-        alert(error.message);
+        alert(toBgErrorMessage(error, "Неуспешно запазване на профила. Опитайте отново."));
       }
       setSaving(false);
       return;
@@ -151,8 +152,9 @@ export default function Profile() {
     setPasswordLoading(true);
     const { error } = await supabase.auth.updateUser({ password: newPassword });
 
-    if (error) setPasswordMessage(`⚠️ ${error.message}`);
-    else {
+    if (error) {
+      setPasswordMessage(`⚠️ ${toBgErrorMessage(error, "Неуспешна смяна на паролата. Опитайте отново.")}`);
+    } else {
       showToastMessage("Паролата е обновена!");
       setNewPassword("");
       setConfirmPassword("");

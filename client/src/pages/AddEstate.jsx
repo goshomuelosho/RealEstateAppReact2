@@ -3,6 +3,7 @@ import { supabase } from "../supabaseClient";
 import { useNavigate, useLocation } from "react-router-dom";
 import NavBar from "../components/NavBar";
 import LocationPicker from "../components/LocationPicker";
+import { toBgErrorMessage } from "../utils/errorMessages";
 
 
 const pageContainer = (isLoaded) => ({
@@ -383,7 +384,7 @@ export default function AddEstate() {
         .from("estate-images")
         .upload(fileName, image);
       if (uploadError) {
-        alert(uploadError.message);
+        alert(toBgErrorMessage(uploadError, "Неуспешно качване на снимката. Опитайте отново."));
         setLoading(false);
         return;
       }
@@ -410,7 +411,7 @@ export default function AddEstate() {
     const { error } = await supabase.from("estates").insert([payload]);
 
     setLoading(false);
-    if (error) alert(error.message);
+    if (error) alert(toBgErrorMessage(error, "Неуспешно добавяне на имота. Опитайте отново."));
     else {
       setShowModal(true);
       setTimeout(() => navigate("/my-estates"), 2500);

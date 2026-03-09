@@ -9,6 +9,7 @@ import {
   normalizeUsername,
   validateUsername,
 } from "../utils/username";
+import { toBgErrorMessage } from "../utils/errorMessages";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -80,7 +81,7 @@ export default function Register() {
     setLoading(false);
 
     if (error) {
-      setError(error.message); 
+      setError(toBgErrorMessage(error, "Неуспешна регистрация. Опитайте отново."));
     } else {
       setMessage("✅ Провери имейла си, за да потвърдиш акаунта!");
       setTimeout(() => navigate("/login"), 2500);
@@ -385,14 +386,14 @@ export default function Register() {
         
         {error && (
           <div style={errorStyle}>
-            <span>⚠️</span> {error}
+            <span></span> {error}
           </div>
         )}
 
         
         {message && (
           <div style={successStyle}>
-            <span>✅</span> {message}
+            <span></span> {message}
           </div>
         )}
 
