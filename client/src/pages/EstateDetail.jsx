@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -12,11 +12,13 @@ import { supabase } from "../supabaseClient";
 import NavBar from "../components/NavBar";
 import LocationPinMap from "../components/LocationPinMap";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
+import InsetScrollbarOverlay from "../components/InsetScrollbarOverlay";
 import { toBgErrorMessage } from "../utils/errorMessages";
 
 export default function EstateDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const cardScrollRef = useRef(null);
 
   const [estate, setEstate] = useState(null);
   const [profile, setProfile] = useState(null); 
@@ -110,98 +112,107 @@ export default function EstateDetail() {
       <NavBar profile={profile} />
 
       <main style={mainStyle}>
-        <div style={estateCard}>
-          <button type="button" style={backButton} onClick={handleBack}>
-            <ArrowLeft size={16} aria-hidden="true" />
-            Назад
-          </button>
+        <div className="estate-detail-card" style={estateCard}>
+          <div ref={cardScrollRef} className="estate-detail-scroll" style={estateScrollViewport}>
+            <button type="button" style={backButton} onClick={handleBack}>
+              <ArrowLeft size={16} aria-hidden="true" />
+              Назад
+            </button>
 
-          {estate.image_url && <img src={estate.image_url} alt={estate.title} style={estateImage} />}
+            {estate.image_url && <img src={estate.image_url} alt={estate.title} style={estateImage} />}
 
-          <h1 style={estateTitle}>{estate.title}</h1>
+            <h1 style={estateTitle}>{estate.title}</h1>
 
-          <div style={metaRow}>
-            <p style={estateLocation}>
-              <MapPin size={16} aria-hidden="true" />
-              {estate.location}
-            </p>
-            <p style={estatePrice}>€{Number(estate.price || 0).toLocaleString()}</p>
-          </div>
+            <div style={metaRow}>
+              <p style={estateLocation}>
+                <MapPin size={16} aria-hidden="true" />
+                {estate.location}
+              </p>
+              <p style={estatePrice}>€{Number(estate.price || 0).toLocaleString()}</p>
+            </div>
 
-          <LocationPinMap location={estate.location} />
+            <LocationPinMap location={estate.location} />
 
-          
-          <div style={detailsWrap}>
-            <h3 style={detailsTitle}>Детайли</h3>
+            
+            <div style={detailsWrap}>
+              <h3 style={detailsTitle}>Детайли</h3>
 
-            <div style={detailsGrid}>
-              <div style={detailItem}>
-                <span style={detailLabel}>Вид на имота</span>
-                <span style={detailValue}>{estate.property_type || "—"}</span>
-              </div>
+              <div style={detailsGrid}>
+                <div style={detailItem}>
+                  <span style={detailLabel}>Вид на имота</span>
+                  <span style={detailValue}>{estate.property_type || "—"}</span>
+                </div>
 
-              <div style={detailItem}>
-                <span style={detailLabel}>Площ</span>
-                <span style={detailValue}>
-                  {Number(estate.area) > 0 ? `${Number(estate.area).toLocaleString()} кв.м` : "—"}
-                </span>
-              </div>
+                <div style={detailItem}>
+                  <span style={detailLabel}>Площ</span>
+                  <span style={detailValue}>
+                    {Number(estate.area) > 0 ? `${Number(estate.area).toLocaleString()} кв.м` : "—"}
+                  </span>
+                </div>
 
-              <div style={detailItem}>
-                <span style={detailLabel}>Вид на сградата</span>
-                <span style={detailValue}>{estate.building_type || "—"}</span>
-              </div>
+                <div style={detailItem}>
+                  <span style={detailLabel}>Вид на сградата</span>
+                  <span style={detailValue}>{estate.building_type || "—"}</span>
+                </div>
 
-              <div style={detailItem}>
-                <span style={detailLabel}>Етаж</span>
-                <span style={detailValue}>{estate.floor || "—"}</span>
-              </div>
+                <div style={detailItem}>
+                  <span style={detailLabel}>Етаж</span>
+                  <span style={detailValue}>{estate.floor || "—"}</span>
+                </div>
 
-              <div style={detailItem}>
-                <span style={detailLabel}>Акт 16</span>
-                <span style={actBadge(!!estate.has_act16)}>
-                  {estate.has_act16 ? (
-                    <>
-                      <CheckCircle2 size={14} aria-hidden="true" />
-                      Има
-                    </>
-                  ) : (
-                    <>
-                      <XCircle size={14} aria-hidden="true" />
-                      Няма
-                    </>
-                  )}
-                </span>
+                <div style={detailItem}>
+                  <span style={detailLabel}>Акт 16</span>
+                  <span style={actBadge(!!estate.has_act16)}>
+                    {estate.has_act16 ? (
+                      <>
+                        <CheckCircle2 size={14} aria-hidden="true" />
+                        Има
+                      </>
+                    ) : (
+                      <>
+                        <XCircle size={14} aria-hidden="true" />
+                        Няма
+                      </>
+                    )}
+                  </span>
+                </div>
               </div>
             </div>
+
+            <p style={estateDescription}>{estate.description}</p>
+
+            
+            {canManage && (
+              <div style={buttonGroup}>
+                <button
+                  onClick={() => navigate(`/edit-estate/${estate.id}`)}
+                  style={editButton}
+                  aria-label="Редактирай имота"
+                >
+                  <Pencil size={17} aria-hidden="true" />
+                </button>
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  style={{
+                    ...deleteButton,
+                    opacity: isDeleting ? 0.75 : 1,
+                    cursor: isDeleting ? "not-allowed" : "pointer",
+                  }}
+                  aria-label="Изтрий имота"
+                  disabled={isDeleting}
+                >
+                  <Trash2 size={17} aria-hidden="true" />
+                </button>
+              </div>
+            )}
           </div>
-
-          <p style={estateDescription}>{estate.description}</p>
-
-          
-          {canManage && (
-            <div style={buttonGroup}>
-              <button
-                onClick={() => navigate(`/edit-estate/${estate.id}`)}
-                style={editButton}
-                aria-label="Редактирай имота"
-              >
-                <Pencil size={17} aria-hidden="true" />
-              </button>
-              <button
-                onClick={() => setShowDeleteModal(true)}
-                style={{
-                  ...deleteButton,
-                  opacity: isDeleting ? 0.75 : 1,
-                  cursor: isDeleting ? "not-allowed" : "pointer",
-                }}
-                aria-label="Изтрий имота"
-                disabled={isDeleting}
-              >
-                <Trash2 size={17} aria-hidden="true" />
-              </button>
-            </div>
-          )}
+          <InsetScrollbarOverlay
+            scrollRef={cardScrollRef}
+            topInset={30}
+            bottomInset={30}
+            rightInset={8}
+            width={6}
+          />
         </div>
       </main>
 
@@ -226,10 +237,35 @@ const keyframes = `
     to { opacity: 1; transform: translateY(0); }
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  .estate-detail-card {
+    position: relative;
+  }
+
+  .estate-detail-scroll {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .estate-detail-scroll::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  @media (max-width: 768px) {
+    .estate-detail-card {
+      max-height: calc(100dvh - 7.6rem);
+      border-radius: 18px;
+    }
+
+    .estate-detail-scroll {
+      padding: 1.35rem 1.45rem 1.5rem 1rem !important;
+    }
+  }
 `;
 
 const loaderContainer = {
-  height: "100vh",
+  height: "100dvh",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
@@ -247,6 +283,7 @@ const loaderSpinner = {
 
 const pageContainer = {
   minHeight: "100vh",
+  height: "100dvh",
   display: "flex",
   flexDirection: "column",
   background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)",
@@ -270,37 +307,62 @@ const bgLight = (color, top, left, size) => ({
 
 const mainStyle = {
   flex: 1,
+  minHeight: 0,
   display: "flex",
   justifyContent: "center",
-  alignItems: "flex-start",
-  padding: "3rem 1.5rem",
+  alignItems: "center",
+  padding: "clamp(0.9rem, 2vh, 1.6rem) 1.5rem",
+  overflow: "hidden",
   zIndex: 1,
   animation: "fadeInUp 0.8s ease",
 };
 
 const estateCard = {
-  background: "rgba(255,255,255,0.95)",
-  color: "#0f172a",
+  background:
+    "linear-gradient(155deg, rgba(30,41,59,0.62), rgba(51,65,85,0.56) 55%, rgba(100,116,139,0.5) 100%)",
+  backdropFilter: "blur(24px) saturate(130%)",
+  border: "1px solid rgba(191,219,254,0.24)",
+  color: "#f8fafc",
   borderRadius: "24px",
-  padding: "2.5rem",
   width: "100%",
-  maxWidth: "900px",
-  boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+  maxWidth: "960px",
+  maxHeight: "calc(100dvh - 8.4rem)",
+  display: "flex",
+  flexDirection: "column",
+  minHeight: 0,
+  overflow: "hidden",
+  position: "relative",
+  boxShadow:
+    "0 20px 50px rgba(15,23,42,0.38), inset 0 1px 0 rgba(255,255,255,0.22)",
+};
+
+const estateScrollViewport = {
+  flex: 1,
+  minHeight: 0,
+  overflowY: "auto",
+  overflowX: "hidden",
+  overscrollBehavior: "contain",
+  padding: "2.4rem clamp(1.2rem, 2.8vw, 2.8rem)",
+  scrollbarWidth: "none",
+  msOverflowStyle: "none",
 };
 
 const estateImage = {
   width: "100%",
-  height: "350px",
+  height: "clamp(220px, 36vh, 350px)",
   objectFit: "cover",
   borderRadius: "16px",
   marginBottom: "2rem",
 };
 
 const estateTitle = {
-  fontSize: "2rem",
+  fontSize: "clamp(1.7rem, 3.6vw, 2.2rem)",
   fontWeight: 800,
   marginBottom: "0.75rem",
-  color: "#0f172a",
+  lineHeight: 1.2,
+  background: "linear-gradient(135deg, #f8fafc 0%, #bfdbfe 55%, #a5b4fc 100%)",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
 };
 
 const metaRow = {
@@ -314,19 +376,25 @@ const metaRow = {
 
 const estateLocation = {
   fontSize: "1.1rem",
-  color: "#475569",
+  color: "#cbd5e1",
   margin: 0,
   display: "inline-flex",
   alignItems: "center",
   gap: "0.35rem",
 };
 
-const estatePrice = { fontSize: "1.6rem", fontWeight: 800, color: "#3b82f6", margin: 0 };
+const estatePrice = {
+  fontSize: "1.6rem",
+  fontWeight: 800,
+  color: "#f8fafc",
+  lineHeight: 1.1,
+  margin: "-0.15rem 0 0",
+};
 
 const detailsWrap = {
   borderRadius: "16px",
-  border: "1px solid rgba(15,23,42,0.08)",
-  background: "rgba(241,245,249,0.6)",
+  border: "1px solid rgba(255,255,255,0.32)",
+  background: "rgba(15,23,42,0.4)",
   padding: "1.25rem",
   marginBottom: "1.5rem",
 };
@@ -335,7 +403,7 @@ const detailsTitle = {
   margin: "0 0 0.9rem",
   fontSize: "1.1rem",
   fontWeight: 800,
-  color: "#0f172a",
+  color: "#f8fafc",
 };
 
 const detailsGrid = {
@@ -345,8 +413,8 @@ const detailsGrid = {
 };
 
 const detailItem = {
-  background: "rgba(255,255,255,0.7)",
-  border: "1px solid rgba(15,23,42,0.08)",
+  background: "rgba(255,255,255,0.18)",
+  border: "1px solid rgba(255,255,255,0.34)",
   borderRadius: "12px",
   padding: "0.85rem 0.95rem",
   display: "flex",
@@ -354,9 +422,9 @@ const detailItem = {
   gap: "0.35rem",
 };
 
-const detailLabel = { fontSize: "0.8rem", color: "#64748b", fontWeight: 700 };
+const detailLabel = { fontSize: "0.8rem", color: "#ffffff", fontWeight: 700 };
 
-const detailValue = { fontSize: "1rem", color: "#0f172a", fontWeight: 800 };
+const detailValue = { fontSize: "1rem", color: "#f8fafc", fontWeight: 800 };
 
 const actBadge = (has) => ({
   display: "inline-flex",
@@ -368,15 +436,15 @@ const actBadge = (has) => ({
   borderRadius: 999,
   fontSize: "0.85rem",
   fontWeight: 800,
-  color: has ? "#065f46" : "#991b1b",
-  background: has ? "rgba(16,185,129,0.18)" : "rgba(239,68,68,0.18)",
-  border: `1px solid ${has ? "rgba(16,185,129,0.35)" : "rgba(239,68,68,0.35)"}`,
+  color: has ? "#ecfdf5" : "#fee2e2",
+  background: has ? "rgba(22,163,74,0.58)" : "rgba(239,68,68,0.32)",
+  border: `1px solid ${has ? "rgba(134,239,172,0.9)" : "rgba(248,113,113,0.62)"}`,
 });
 
 const estateDescription = {
   fontSize: "1rem",
   lineHeight: 1.7,
-  color: "#334155",
+  color: "#f8fafc",
   marginBottom: "2rem",
 };
 
@@ -389,9 +457,9 @@ const backButton = {
   alignItems: "center",
   gap: "0.45rem",
   borderRadius: "10px",
-  border: "1px solid rgba(15,23,42,0.14)",
-  background: "rgba(15,23,42,0.04)",
-  color: "#0f172a",
+  border: "1px solid rgba(191,219,254,0.28)",
+  background: "rgba(248,250,252,0.12)",
+  color: "#f8fafc",
   fontWeight: 700,
   cursor: "pointer",
   boxShadow: "none",

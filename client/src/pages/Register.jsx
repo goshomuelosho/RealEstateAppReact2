@@ -10,6 +10,7 @@ import {
   validateUsername,
 } from "../utils/username";
 import { toBgErrorMessage } from "../utils/errorMessages";
+import { getSocketConfig } from "../utils/socket";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -21,6 +22,26 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const checkEmailExists = async (value) => {
+    const normalizedEmail = String(value || "").trim().toLowerCase();
+    if (!normalizedEmail) return false;
+
+    const { url } = getSocketConfig();
+    const baseUrl = String(url || "").replace(/\/+$/, "");
+    const response = await fetch(`${baseUrl}/auth/check-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: normalizedEmail }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Email pre-check request failed.");
+    }
+
+    const payload = await response.json();
+    return Boolean(payload?.exists);
+  };
+
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
@@ -28,6 +49,7 @@ export default function Register() {
     setLoading(true);
 
     const normalizedUsername = normalizeUsername(username);
+    const normalizedEmail = String(email || "").trim().toLowerCase();
     const usernameValidationError = validateUsername(normalizedUsername);
     if (usernameValidationError) {
       setError(usernameValidationError);
@@ -48,8 +70,19 @@ export default function Register() {
       return;
     }
 
+    try {
+      const emailExists = await checkEmailExists(normalizedEmail);
+      if (emailExists) {
+        setError("Потребител с този имейл вече съществува.");
+        setLoading(false);
+        return;
+      }
+    } catch (checkError) {
+      console.warn("Email pre-check unavailable, continuing with sign up:", checkError);
+    }
+
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: normalizedEmail,
       password,
       options: {
         emailRedirectTo: LOGIN_REDIRECT_URL,
@@ -59,6 +92,17 @@ export default function Register() {
         },
       },
     });
+
+    const looksLikeExistingEmailResponse =
+      !error &&
+      Array.isArray(data?.user?.identities) &&
+      data.user.identities.length === 0;
+
+    if (looksLikeExistingEmailResponse) {
+      setError("Потребител с този имейл вече съществува.");
+      setLoading(false);
+      return;
+    }
 
     if (!error && data?.session?.user?.id) {
       const { error: profileError } = await supabase.from("profiles").upsert({
@@ -83,7 +127,7 @@ export default function Register() {
     if (error) {
       setError(toBgErrorMessage(error, "Неуспешна регистрация. Опитайте отново."));
     } else {
-      setMessage("✅ Провери имейла си, за да потвърдиш акаунта!");
+      setMessage("Провери имейла си, за да потвърдиш акаунта!");
       setTimeout(() => navigate("/login"), 2500);
     }
   };

@@ -147,7 +147,7 @@ const card = {
   display: "flex",
   flexDirection: "column",
   height: "100%",
-  boxShadow: "0 10px 35px rgba(0,0,0,0.25)",
+  transition: "all 0.4s cubic-bezier(0.175,0.885,0.32,1.275)",
   position: "relative",
 };
 
@@ -448,6 +448,7 @@ export default function Marketplace() {
 
   const [showSentModal, setShowSentModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [hoveredCard, setHoveredCard] = useState(null);
 
   const denseFilters = isCompactLayout || isMobile;
   const compactFilterBar = {
@@ -1030,6 +1031,8 @@ export default function Marketplace() {
 
               const isFav = favoriteIds.has(estate.id);
               const compactCard = isCompactLayout && !isMobile;
+              const compactText = isMobile || compactCard;
+              const hoverable = !compactText;
               const compactHeader = isMobile || compactCard;
               const desktopCardMinHeight = isWideDesktop ? 560 : 520;
 
@@ -1039,7 +1042,17 @@ export default function Marketplace() {
                   style={{
                     ...card,
                     minHeight: isMobile || compactCard ? undefined : desktopCardMinHeight,
+                    boxShadow:
+                      hoverable && hoveredCard === estate.id
+                        ? "0 20px 60px rgba(59,130,246,0.4)"
+                        : "0 10px 40px rgba(0,0,0,0.3)",
+                    transform:
+                      hoverable && hoveredCard === estate.id
+                        ? "translateY(-8px) scale(1.02)"
+                        : "translateY(0)",
                   }}
+                  onMouseEnter={() => setHoveredCard(estate.id)}
+                  onMouseLeave={() => setHoveredCard(null)}
                 >
                   
                   <button
@@ -1062,6 +1075,9 @@ export default function Marketplace() {
                         width: "100%",
                         height: isMobile ? 156 : compactCard ? 164 : isWideDesktop ? 280 : 250,
                         objectFit: "cover",
+                        transition: "transform 0.5s ease",
+                        transform:
+                          hoverable && hoveredCard === estate.id ? "scale(1.05)" : "scale(1)",
                       }}
                       loading="lazy"
                     />

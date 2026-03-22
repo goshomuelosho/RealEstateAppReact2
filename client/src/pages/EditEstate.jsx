@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate, useParams } from "react-router-dom";
 import NavBar from "../components/NavBar";
 import LocationPicker from "../components/LocationPicker";
+import InsetScrollbarOverlay from "../components/InsetScrollbarOverlay";
 import { toBgErrorMessage } from "../utils/errorMessages";
 
 
@@ -58,6 +59,7 @@ const FLOORS = [
 
 const pageContainer = (isLoaded) => ({
   minHeight: "100vh",
+  height: "100dvh",
   display: "flex",
   flexDirection: "column",
   background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)",
@@ -81,25 +83,45 @@ const bgLight = (color, top, left, size) => ({
 
 const mainStyle = {
   flex: 1,
+  minHeight: 0,
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  padding: "3rem 1.5rem",
+  padding: "clamp(0.9rem, 2vh, 1.6rem) 1.5rem",
+  overflow: "hidden",
   zIndex: 1,
   animation: "fadeIn 0.8s ease",
 };
 
 const cardStyle = {
-  background: "rgba(255,255,255,0.08)",
-  backdropFilter: "blur(20px)",
-  border: "1px solid rgba(255,255,255,0.15)",
+  background:
+    "linear-gradient(155deg, rgba(30,41,59,0.62), rgba(51,65,85,0.56) 55%, rgba(100,116,139,0.5) 100%)",
+  backdropFilter: "blur(24px) saturate(130%)",
+  border: "1px solid rgba(191,219,254,0.24)",
   borderRadius: "24px",
-  padding: "3rem 2.5rem",
   width: "100%",
-  maxWidth: "700px",
-  boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+  maxWidth: "960px",
+  maxHeight: "calc(100dvh - 8.4rem)",
+  display: "flex",
+  flexDirection: "column",
+  minHeight: 0,
+  overflow: "hidden",
+  position: "relative",
+  boxShadow:
+    "0 20px 50px rgba(15,23,42,0.38), inset 0 1px 0 rgba(255,255,255,0.22)",
   color: "#f8fafc",
   animation: "fadeIn 0.8s ease",
+};
+
+const cardScrollViewport = {
+  flex: 1,
+  minHeight: 0,
+  overflowY: "auto",
+  overflowX: "hidden",
+  overscrollBehavior: "contain",
+  padding: "2.4rem clamp(1.2rem, 2.8vw, 2.8rem)",
+  scrollbarWidth: "none",
+  msOverflowStyle: "none",
 };
 
 const labelStyle = {
@@ -114,18 +136,19 @@ const inputStyle = {
   width: "100%",
   padding: "1rem 1.25rem",
   borderRadius: "12px",
-  border: "1px solid rgba(255,255,255,0.15)",
-  background: "rgba(255,255,255,0.1)",
+  border: "1px solid rgba(191,219,254,0.35)",
+  background: "rgba(248,250,252,0.14)",
   color: "#f8fafc",
   fontSize: "1rem",
   outline: "none",
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.2)",
 };
 
 const selectStyle = {
-  padding: "0.7rem 1rem",
+  padding: "1rem 1.25rem",
   borderRadius: "12px",
-  border: "1px solid rgba(255,255,255,0.15)",
-  backgroundColor: "#1e293b",
+  border: "1px solid rgba(191,219,254,0.35)",
+  backgroundColor: "rgba(248,250,252,0.12)",
   color: "#f1f5f9",
   fontSize: "1rem",
   outline: "none",
@@ -144,14 +167,14 @@ const switchRow = {
   background: "rgba(255,255,255,0.06)",
 };
 
-const hint = { color: "#cbd5e1", fontSize: "0.9rem" };
+const hint = { color: "#cbd5e1", fontSize: "0.9rem", marginTop: 4 };
 
 const checkRow = {
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
   gap: "1rem",
-  marginTop: "0.25rem",
+  marginTop: "1rem",
   padding: "0.9rem 1rem",
   borderRadius: "12px",
   border: "1px solid rgba(255,255,255,0.12)",
@@ -233,6 +256,31 @@ const keyframes = `
   @keyframes fadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes spin { to { transform: rotate(360deg); } }
   @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: 200px 0; } }
+
+  .edit-estate-card {
+    position: relative;
+  }
+
+  .edit-estate-scroll {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .edit-estate-scroll::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  @media (max-width: 768px) {
+    .edit-estate-card {
+      max-height: calc(100dvh - 7.6rem);
+      border-radius: 18px;
+    }
+
+    .edit-estate-scroll {
+      padding: 1.35rem 1.45rem 1.5rem 1rem !important;
+    }
+  }
 `;
 
 
@@ -240,7 +288,6 @@ const deniedCard = {
   ...cardStyle,
   maxWidth: "650px",
   textAlign: "center",
-  padding: "2.5rem 2rem",
 };
 
 const deniedTitle = {
@@ -265,6 +312,7 @@ const backBtn = {
 export default function EditEstate() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const cardScrollRef = useRef(null);
 
   const [profile, setProfile] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -438,26 +486,45 @@ export default function EditEstate() {
 
       <main style={mainStyle}>
         {loadingEstate ? (
-          <div style={cardStyle}>
-            <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center" }}>
-              <div style={spinner} />
-              <div style={{ fontWeight: 800 }}>Зареждане…</div>
+          <div className="edit-estate-card" style={cardStyle}>
+            <div ref={cardScrollRef} className="edit-estate-scroll" style={cardScrollViewport}>
+              <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center" }}>
+                <div style={spinner} />
+                <div style={{ fontWeight: 800 }}>Зареждане…</div>
+              </div>
             </div>
+            <InsetScrollbarOverlay
+              scrollRef={cardScrollRef}
+              topInset={30}
+              bottomInset={30}
+              rightInset={8}
+              width={6}
+            />
           </div>
         ) : !canEdit ? (
-          <div style={deniedCard}>
-            <div style={deniedTitle}>⛔ Нямаш достъп</div>
-            <p style={deniedText}>
-              Нямаш права да редактираш този имот.
-              <br />
-              Само собственикът или администратор може да прави промени.
-            </p>
-            <button style={backBtn} onClick={() => navigate("/marketplace")}>
-              ⬅ Назад към Пазара
-            </button>
+          <div className="edit-estate-card" style={deniedCard}>
+            <div ref={cardScrollRef} className="edit-estate-scroll" style={cardScrollViewport}>
+              <div style={deniedTitle}>⛔ Нямаш достъп</div>
+              <p style={deniedText}>
+                Нямаш права да редактираш този имот.
+                <br />
+                Само собственикът или администратор може да прави промени.
+              </p>
+              <button style={backBtn} onClick={() => navigate("/marketplace")}>
+                ⬅ Назад към Пазара
+              </button>
+            </div>
+            <InsetScrollbarOverlay
+              scrollRef={cardScrollRef}
+              topInset={30}
+              bottomInset={30}
+              rightInset={8}
+              width={6}
+            />
           </div>
         ) : (
-          <div style={cardStyle}>
+          <div className="edit-estate-card" style={cardStyle}>
+            <div ref={cardScrollRef} className="edit-estate-scroll" style={cardScrollViewport}>
             <button type="button" style={{ ...backBtn, marginTop: 0, marginBottom: "1rem" }} onClick={handleBack}>
               ⬅ Назад
             </button>
@@ -569,7 +636,7 @@ export default function EditEstate() {
               <div style={checkRow}>
                 <div>
                   <div style={{ fontWeight: 700 }}>Има Акт 16</div>
-                  <div style={{ ...hint, marginTop: 4 }}>
+                  <div style={hint}>
                     Маркирай, ако сградата е с въведена в експлоатация.
                   </div>
                 </div>
@@ -662,6 +729,14 @@ export default function EditEstate() {
                 )}
               </button>
             </form>
+            </div>
+            <InsetScrollbarOverlay
+              scrollRef={cardScrollRef}
+              topInset={30}
+              bottomInset={30}
+              rightInset={8}
+              width={6}
+            />
           </div>
         )}
       </main>

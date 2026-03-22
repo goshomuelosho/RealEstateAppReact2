@@ -67,6 +67,50 @@ app.get("/", (req, res) => {
   res.send("Backend is running and connected to Supabase!");
 });
 
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+async function isAuthEmailRegistered(email) {
+  const normalizedEmail = normalizeEmail(email);
+  if (!normalizedEmail) return false;
+
+  const perPage = 200;
+  let page = 1;
+
+  while (true) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({
+      page,
+      perPage,
+    });
+
+    if (error) throw error;
+
+    const users = data?.users || [];
+    const exists = users.some((user) => normalizeEmail(user.email) === normalizedEmail);
+    if (exists) return true;
+
+    if (!data?.nextPage || users.length === 0) return false;
+    page = data.nextPage;
+  }
+}
+
+app.post("/auth/check-email", async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body?.email);
+    if (!email) {
+      res.status(400).json({ exists: false, error: "Email is required." });
+      return;
+    }
+
+    const exists = await isAuthEmailRegistered(email);
+    res.status(200).json({ exists });
+  } catch (error) {
+    console.error("Auth email check error:", error);
+    res.status(500).json({ exists: false, error: "Could not check email." });
+  }
+});
+
 function getConversationRoom({ estateId, userA, userB }) {
   if (!estateId || !userA || !userB) return null;
 

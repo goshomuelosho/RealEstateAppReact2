@@ -21,7 +21,8 @@ const mapStyle = {
 const statusStyle = {
   margin: "0.5rem 0 0",
   fontSize: "0.88rem",
-  color: "#475569",
+  color: "rgba(248,250,252,0.9)",
+  fontWeight: 500,
 };
 
 export default function LocationPinMap({ location }) {
@@ -113,4 +114,3 @@ export default function LocationPinMap({ location }) {
     </div>
   );
 }
-

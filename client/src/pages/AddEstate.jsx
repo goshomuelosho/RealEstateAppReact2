@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate, useLocation } from "react-router-dom";
 import NavBar from "../components/NavBar";
 import LocationPicker from "../components/LocationPicker";
+import InsetScrollbarOverlay from "../components/InsetScrollbarOverlay";
 import { toBgErrorMessage } from "../utils/errorMessages";
 
 
 const pageContainer = (isLoaded) => ({
   minHeight: "100vh",
+  height: "100dvh",
   display: "flex",
   flexDirection: "column",
   background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)",
@@ -30,31 +32,58 @@ const bgLight = (color, top, left, size) => ({
 
 const mainStyle = {
   flex: 1,
+  minHeight: 0,
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  padding: "3rem 1.5rem",
+  padding: "clamp(0.9rem, 2vh, 1.6rem) 1.5rem",
+  overflow: "hidden",
   zIndex: 1,
   animation: "fadeIn 0.8s ease",
 };
 
 
 const formCard = {
-  background: "rgba(255,255,255,0.08)",
-  backdropFilter: "blur(20px)",
-  border: "1px solid rgba(255,255,255,0.15)",
+  background:
+    "linear-gradient(155deg, rgba(30,41,59,0.62), rgba(51,65,85,0.56) 55%, rgba(100,116,139,0.5) 100%)",
+  backdropFilter: "blur(24px) saturate(130%)",
+  border: "1px solid rgba(191,219,254,0.24)",
   borderRadius: "24px",
-  padding: "3rem 2.5rem",
   width: "100%",
-  maxWidth: "600px",
-  boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+  maxWidth: "960px",
+  maxHeight: "calc(100dvh - 8.4rem)",
+  display: "flex",
+  flexDirection: "column",
+  minHeight: 0,
+  overflow: "hidden",
+  position: "relative",
+  boxShadow:
+    "0 20px 50px rgba(15,23,42,0.38), inset 0 1px 0 rgba(255,255,255,0.22)",
   color: "#f8fafc",
 };
 
-const formHeader = { textAlign: "center", marginBottom: "2.5rem" };
+const formScrollViewport = {
+  flex: 1,
+  minHeight: 0,
+  overflowY: "auto",
+  overflowX: "hidden",
+  overscrollBehavior: "contain",
+  padding: "2.4rem clamp(1.2rem, 2.8vw, 2.8rem)",
+  scrollbarWidth: "none",
+  msOverflowStyle: "none",
+};
+
+const formHeader = { textAlign: "center", marginBottom: "2.2rem" };
 const formIcon = { fontSize: "3.5rem", marginBottom: "1rem" };
-const formTitle = { fontSize: "2rem", fontWeight: "800" };
-const formSubtitle = { color: "#cbd5e1", fontSize: "0.95rem" };
+const formTitle = {
+  fontSize: "clamp(1.7rem, 3.6vw, 2.2rem)",
+  fontWeight: "800",
+  lineHeight: 1.2,
+  background: "linear-gradient(135deg, #f8fafc 0%, #bfdbfe 55%, #a5b4fc 100%)",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+};
+const formSubtitle = { color: "#cbd5e1", fontSize: "0.95rem", marginTop: "0.5rem" };
 
 const labelStyle = {
   display: "block",
@@ -68,19 +97,20 @@ const inputStyle = {
   width: "100%",
   padding: "1rem 1.25rem",
   borderRadius: "12px",
-  border: "1px solid rgba(255,255,255,0.15)",
-  background: "rgba(255,255,255,0.1)",
+  border: "1px solid rgba(191,219,254,0.35)",
+  background: "rgba(248,250,252,0.14)",
   color: "#f8fafc",
   fontSize: "1rem",
   outline: "none",
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.2)",
 };
 
 
 const selectStyle = {
   padding: "1rem 1.25rem",
   borderRadius: "12px",
-  border: "1px solid rgba(255,255,255,0.15)",
-  backgroundColor: "#1e293b",
+  border: "1px solid rgba(191,219,254,0.35)",
+  backgroundColor: "rgba(248,250,252,0.12)",
   color: "#f1f5f9",
   fontSize: "1rem",
   outline: "none",
@@ -260,6 +290,31 @@ const keyframes = `
   @keyframes fadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes spin { to { transform: rotate(360deg); } }
   @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: 200px 0; } }
+
+  .add-estate-form-card {
+    position: relative;
+  }
+
+  .add-estate-form-scroll {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .add-estate-form-scroll::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  @media (max-width: 768px) {
+    .add-estate-form-card {
+      max-height: calc(100dvh - 7.6rem);
+      border-radius: 18px;
+    }
+
+    .add-estate-form-scroll {
+      padding: 1.35rem 1.45rem 1.5rem 1rem !important;
+    }
+  }
 `;
 
 
@@ -318,6 +373,7 @@ export default function AddEstate() {
   const location = useLocation(); 
   const [profile, setProfile] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const formScrollRef = useRef(null);
 
   const [form, setForm] = useState({
     title: "",
@@ -427,66 +483,28 @@ export default function AddEstate() {
       <NavBar profile={profile} />
 
       <main style={mainStyle}>
-        <form onSubmit={handleSubmit} style={formCard}>
-          <div style={formHeader}>
-            <div style={formIcon}>🏡</div>
-            <h2 style={formTitle}>Добави нов имот</h2>
-            <p style={formSubtitle}>Попълни детайли, за да публикуваш имота</p>
-          </div>
+        <form onSubmit={handleSubmit} className="add-estate-form-card" style={formCard}>
+          <div ref={formScrollRef} className="add-estate-form-scroll" style={formScrollViewport}>
+            <div style={formHeader}>
+              <div style={formIcon}>🏡</div>
+              <h2 style={formTitle}>Добави нов имот</h2>
+              <p style={formSubtitle}>Попълни детайли, за да публикуваш имота</p>
+            </div>
 
-          
-          <div>
-            <label style={labelStyle}>Вид на имота</label>
-            <select
-              name="property_type"
-              value={form.property_type}
-              onChange={handleChange}
-              style={selectStyle}
-              required
-            >
-              <option value="" disabled>
-                Избери…
-              </option>
-              {PROPERTY_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          
-          <div style={{ marginTop: "1rem" }}>
-            <label style={labelStyle}>Заглавие на имота</label>
-            <input
-              name="title"
-              value={form.title}
-              onChange={handleChange}
-              placeholder="Луксозна вила"
-              style={inputStyle}
-              required
-            />
-          </div>
-
-          
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "1rem",
-              marginTop: "1rem",
-            }}
-          >
+            
             <div>
-              <label style={labelStyle}>Вид на сградата</label>
+              <label style={labelStyle}>Вид на имота</label>
               <select
-                name="building_type"
-                value={form.building_type}
+                name="property_type"
+                value={form.property_type}
                 onChange={handleChange}
                 style={selectStyle}
+                required
               >
-                <option value="">Избери…</option>
-                {BUILDING_TYPES.map((t) => (
+                <option value="" disabled>
+                  Избери…
+                </option>
+                {PROPERTY_TYPES.map((t) => (
                   <option key={t} value={t}>
                     {t}
                   </option>
@@ -494,181 +512,228 @@ export default function AddEstate() {
               </select>
             </div>
 
-            <div>
-              <label style={labelStyle}>Етаж</label>
-              <select
-                name="floor"
-                value={form.floor}
+            
+            <div style={{ marginTop: "1rem" }}>
+              <label style={labelStyle}>Заглавие на имота</label>
+              <input
+                name="title"
+                value={form.title}
                 onChange={handleChange}
-                style={selectStyle}
-              >
-                <option value="">Избери…</option>
-                {FLOORS.map((f) => (
-                  <option key={f} value={f}>
-                    {f}
-                  </option>
-                ))}
-              </select>
+                placeholder="Луксозна вила"
+                style={inputStyle}
+                required
+              />
             </div>
-          </div>
 
-          
-          <div style={checkRow}>
-            <div>
-              <div style={{ fontWeight: 700 }}>Има Акт 16</div>
-              <div style={hint}>
-                Маркирай, ако сградата е с въведена в експлоатация.
+            
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "1rem",
+                marginTop: "1rem",
+              }}
+            >
+              <div>
+                <label style={labelStyle}>Вид на сградата</label>
+                <select
+                  name="building_type"
+                  value={form.building_type}
+                  onChange={handleChange}
+                  style={selectStyle}
+                >
+                  <option value="">Избери…</option>
+                  {BUILDING_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Етаж</label>
+                <select
+                  name="floor"
+                  value={form.floor}
+                  onChange={handleChange}
+                  style={selectStyle}
+                >
+                  <option value="">Избери…</option>
+                  {FLOORS.map((f) => (
+                    <option key={f} value={f}>
+                      {f}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
-            <input
-              type="checkbox"
-              checked={!!form.has_act16}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, has_act16: e.target.checked }))
-              }
-              style={{ width: 18, height: 18, accentColor: "#10b981" }}
-            />
-          </div>
 
-          
-          <div style={{ marginTop: "1rem" }}>
-            <label style={labelStyle}>Описание</label>
-            <textarea
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              placeholder="Опиши имота..."
-              style={{ ...inputStyle, height: "120px" }}
-              required
-            />
-          </div>
-
-          
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "1rem",
-              marginTop: "1rem",
-            }}
-          >
-            <div>
-              <label style={labelStyle}>Цена (€)</label>
-              <input
-                type="number"
-                name="price"
-                value={form.price}
-                onChange={handleChange}
-                placeholder="500000"
-                style={inputStyle}
-                min="0"
-                step="1"
-                required
-              />
-            </div>
-            <div>
-              <label style={labelStyle}>Площ (кв.м)</label>
-              <input
-                type="number"
-                name="area"
-                value={form.area}
-                onChange={handleChange}
-                placeholder="120"
-                style={inputStyle}
-                min="1"
-                step="0.01"
-                required
-              />
-            </div>
-          </div>
-
-          
-          <div style={{ marginTop: "1rem" }}>
-            <LocationPicker
-              value={form.location}
-              onChange={(nextLocation) =>
-                setForm((prev) => ({ ...prev, location: nextLocation }))
-              }
-              required
-              inputStyle={inputStyle}
-              labelStyle={labelStyle}
-            />
-          </div>
-
-          
-          <div style={{ marginTop: "1rem" }}>
-            <label style={labelStyle}>Снимка на имота</label>
-            <div style={uploadBoxStyle(imagePreview)}>
-              {imagePreview ? (
-                <div style={{ position: "relative" }}>
-                  <img
-                    src={imagePreview}
-                    alt="Преглед"
-                    style={previewImageStyle}
-                  />
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setImage(null);
-                      setImagePreview(null);
-                    }}
-                    style={removeBtnStyle}
-                  >
-                    ✕
-                  </button>
+            
+            <div style={checkRow}>
+              <div>
+                <div style={{ fontWeight: 700 }}>Има Акт 16</div>
+                <div style={hint}>
+                  Маркирай, ако сградата е с въведена в експлоатация.
                 </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={!!form.has_act16}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, has_act16: e.target.checked }))
+                }
+                style={{ width: 18, height: 18, accentColor: "#10b981" }}
+              />
+            </div>
+
+            
+            <div style={{ marginTop: "1rem" }}>
+              <label style={labelStyle}>Описание</label>
+              <textarea
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                placeholder="Опиши имота..."
+                style={{ ...inputStyle, height: "120px" }}
+                required
+              />
+            </div>
+
+            
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "1rem",
+                marginTop: "1rem",
+              }}
+            >
+              <div>
+                <label style={labelStyle}>Цена (€)</label>
+                <input
+                  type="number"
+                  name="price"
+                  value={form.price}
+                  onChange={handleChange}
+                  placeholder="500000"
+                  style={inputStyle}
+                  min="0"
+                  step="1"
+                  required
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Площ (кв.м)</label>
+                <input
+                  type="number"
+                  name="area"
+                  value={form.area}
+                  onChange={handleChange}
+                  placeholder="120"
+                  style={inputStyle}
+                  min="1"
+                  step="0.01"
+                  required
+                />
+              </div>
+            </div>
+
+            
+            <div style={{ marginTop: "1rem" }}>
+              <LocationPicker
+                value={form.location}
+                onChange={(nextLocation) =>
+                  setForm((prev) => ({ ...prev, location: nextLocation }))
+                }
+                required
+                inputStyle={inputStyle}
+                labelStyle={labelStyle}
+              />
+            </div>
+
+            
+            <div style={{ marginTop: "1rem" }}>
+              <label style={labelStyle}>Снимка на имота</label>
+              <div style={uploadBoxStyle(imagePreview)}>
+                {imagePreview ? (
+                  <div style={{ position: "relative" }}>
+                    <img
+                      src={imagePreview}
+                      alt="Преглед"
+                      style={previewImageStyle}
+                    />
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setImage(null);
+                        setImagePreview(null);
+                      }}
+                      style={removeBtnStyle}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: "3rem" }}>📸</div>
+                    <p style={{ color: "#94a3b8" }}>Кликни, за да качиш снимка</p>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  style={fileInputStyle}
+                />
+              </div>
+            </div>
+
+            
+            <div
+              style={toggleWrapper}
+              onClick={() => setForm((f) => ({ ...f, is_public: !f.is_public }))}
+            >
+              <div style={toggleTrack(!!form.is_public)}>
+                <div style={toggleThumb(!!form.is_public)} />
+              </div>
+              <span>Публикувай в Пазара</span>
+
+              <input
+                type="checkbox"
+                checked={!!form.is_public}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, is_public: e.target.checked }))
+                }
+                style={{ display: "none" }}
+              />
+            </div>
+
+            
+            <button type="submit" disabled={loading} style={submitButton(loading)}>
+              {loading ? (
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "0.5rem",
+                  }}
+                >
+                  <div style={spinner} /> Добавяне...
+                </span>
               ) : (
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: "3rem" }}>📸</div>
-                  <p style={{ color: "#94a3b8" }}>Кликни, за да качиш снимка</p>
-                </div>
+                "Добави имот"
               )}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                style={fileInputStyle}
-              />
-            </div>
+            </button>
           </div>
-
-          
-          <div
-            style={toggleWrapper}
-            onClick={() => setForm((f) => ({ ...f, is_public: !f.is_public }))}
-          >
-            <div style={toggleTrack(!!form.is_public)}>
-              <div style={toggleThumb(!!form.is_public)} />
-            </div>
-            <span>Публикувай в Пазара</span>
-
-            <input
-              type="checkbox"
-              checked={!!form.is_public}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, is_public: e.target.checked }))
-              }
-              style={{ display: "none" }}
-            />
-          </div>
-
-          
-          <button type="submit" disabled={loading} style={submitButton(loading)}>
-            {loading ? (
-              <span
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "0.5rem",
-                }}
-              >
-                <div style={spinner} /> Добавяне...
-              </span>
-            ) : (
-              "Добави имот"
-            )}
-          </button>
+          <InsetScrollbarOverlay
+            scrollRef={formScrollRef}
+            topInset={30}
+            bottomInset={30}
+            rightInset={8}
+            width={6}
+          />
         </form>
       </main>
 
