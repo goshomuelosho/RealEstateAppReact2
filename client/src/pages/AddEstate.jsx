@@ -112,6 +112,7 @@ const selectStyle = {
   border: "1px solid rgba(191,219,254,0.35)",
   backgroundColor: "rgba(248,250,252,0.12)",
   color: "#f1f5f9",
+  colorScheme: "dark",
   fontSize: "1rem",
   outline: "none",
   cursor: "pointer",
@@ -498,6 +499,7 @@ export default function AddEstate() {
                 name="property_type"
                 value={form.property_type}
                 onChange={handleChange}
+                className="estate-form-select"
                 style={selectStyle}
                 required
               >
@@ -540,6 +542,7 @@ export default function AddEstate() {
                   name="building_type"
                   value={form.building_type}
                   onChange={handleChange}
+                  className="estate-form-select"
                   style={selectStyle}
                 >
                   <option value="">Избери…</option>
@@ -557,6 +560,7 @@ export default function AddEstate() {
                   name="floor"
                   value={form.floor}
                   onChange={handleChange}
+                  className="estate-form-select"
                   style={selectStyle}
                 >
                   <option value="">Избери…</option>
@@ -753,4 +757,3 @@ export default function AddEstate() {
     </div>
   );
 }
-

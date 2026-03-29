@@ -150,6 +150,7 @@ const selectStyle = {
   border: "1px solid rgba(191,219,254,0.35)",
   backgroundColor: "rgba(248,250,252,0.12)",
   color: "#f1f5f9",
+  colorScheme: "dark",
   fontSize: "1rem",
   outline: "none",
   cursor: "pointer",
@@ -591,6 +592,7 @@ export default function EditEstate() {
                   name="property_type"
                   value={form.property_type}
                   onChange={handleChange}
+                  className="estate-form-select"
                   style={selectStyle}
                   required
                 >
@@ -609,7 +611,13 @@ export default function EditEstate() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                 <div>
                   <label style={labelStyle}>Вид на сградата</label>
-                  <select name="building_type" value={form.building_type} onChange={handleChange} style={selectStyle}>
+                  <select
+                    name="building_type"
+                    value={form.building_type}
+                    onChange={handleChange}
+                    className="estate-form-select"
+                    style={selectStyle}
+                  >
                     <option value="">Избери…</option>
                     {BUILDING_TYPES.map((t) => (
                       <option key={t} value={t}>
@@ -621,7 +629,13 @@ export default function EditEstate() {
 
                 <div>
                   <label style={labelStyle}>Етаж</label>
-                  <select name="floor" value={form.floor} onChange={handleChange} style={selectStyle}>
+                  <select
+                    name="floor"
+                    value={form.floor}
+                    onChange={handleChange}
+                    className="estate-form-select"
+                    style={selectStyle}
+                  >
                     <option value="">Избери…</option>
                     {FLOORS.map((f) => (
                       <option key={f} value={f}>

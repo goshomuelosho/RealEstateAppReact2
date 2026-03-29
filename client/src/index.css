@@ -124,6 +124,19 @@ select:focus {
   outline: none;
 }
 
+select.estate-form-select {
+  color-scheme: dark;
+}
+
+select.estate-form-select option {
+  background: #0f172a;
+  color: #f1f5f9;
+}
+
+select.estate-form-select option:disabled {
+  color: #94a3b8;
+}
+
 
 .main-container {
   flex: 1;
