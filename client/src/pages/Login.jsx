@@ -5,6 +5,7 @@ import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { PASSWORD_RESET_REDIRECT_URL } from "../utils/authRedirects";
 import { toBgErrorMessage } from "../utils/errorMessages";
 
+// Реализира страницата за вход и възстановяване на парола.
 export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -15,12 +16,14 @@ export default function Login() {
   const [resetLoading, setResetLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Обработва входа в системата с имейл и парола.
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
     setInfoMessage("");
     setLoading(true);
 
+    // Изпраща заявка за автентикация към Supabase.
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -35,17 +38,21 @@ export default function Login() {
     }
   };
 
+  // Стартира процеса по изпращане на линк за нова парола.
   const handleResetPassword = async () => {
     setError("");
     setInfoMessage("");
 
+    // Изисква въведен имейл преди изпращане на заявката.
     if (!email.trim()) {
       setError("Въведи имейл адрес, за да изпратим линк за нова парола.");
       return;
     }
 
     setResetLoading(true);
+    // Изпраща имейл за възстановяване на паролата.
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      // Определя адреса за пренасочване при смяна на паролата.
       redirectTo: PASSWORD_RESET_REDIRECT_URL,
     });
     setResetLoading(false);
@@ -77,7 +84,7 @@ export default function Login() {
         padding: "clamp(0.85rem, 3vh, 2rem) clamp(0.85rem, 3vw, 2rem)",
       }}
     >
-      
+      {/* Декоративни фонови елементи за страницата. */}
       <div
         className="auth-orb"
         style={{
@@ -154,7 +161,7 @@ export default function Login() {
         }
       `}</style>
 
-      
+      {/* Основна карта с формата за вход. */}
       <div
         className="auth-card"
         style={{
@@ -172,7 +179,7 @@ export default function Login() {
           zIndex: 1,
         }}
       >
-        
+        {/* Визуален акцент в горната част на формата. */}
         <div
           style={{
             width: "clamp(56px, 11vw, 80px)",
@@ -214,7 +221,7 @@ export default function Login() {
           Влез, за да управляваш имотите си
         </p>
 
-        
+        {/* Форма за вход в системата. */}
         <form
           onSubmit={handleLogin}
           style={{
@@ -224,7 +231,7 @@ export default function Login() {
             textAlign: "left",
           }}
         >
-          
+          {/* Поле за имейл адрес на потребителя. */}
           <div>
             <label style={labelStyle}>Имейл адрес</label>
             <div style={{ position: "relative" }}>
@@ -242,7 +249,7 @@ export default function Login() {
             </div>
           </div>
 
-          
+          {/* Поле за парола с бутон за показване и действие за възстановяване. */}
           <div>
             <label style={labelStyle}>Парола</label>
             <div style={{ position: "relative" }}>
@@ -276,7 +283,7 @@ export default function Login() {
             </button>
           </div>
 
-          
+          {/* Бутон за изпращане на данните за вход. */}
           <button
             type="submit"
             disabled={loading}
@@ -323,20 +330,21 @@ export default function Login() {
           </button>
         </form>
 
-        
+        {/* Показва съобщение при грешка във входа или reset процеса. */}
         {error && (
           <div style={errorStyle}>
             <span></span> {error}
           </div>
         )}
 
+        {/* Показва информационно съобщение при успешно изпращане на reset линк. */}
         {infoMessage && (
           <div style={successStyle}>
             <span></span> {infoMessage}
           </div>
         )}
 
-        
+        {/* Връзка към страницата за регистрация на нови потребители. */}
         <div
           style={{
             marginTop: "clamp(1.15rem, 2.5vh, 2rem)",
@@ -363,6 +371,7 @@ export default function Login() {
   );
 }
 
+// Общи стилове за визуалните елементи на страницата.
 const inputStyle = {
   width: "100%",
   padding: "1rem 1rem 1rem 3rem",

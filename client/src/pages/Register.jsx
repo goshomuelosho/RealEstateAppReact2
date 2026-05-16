@@ -12,6 +12,7 @@ import {
 import { toBgErrorMessage } from "../utils/errorMessages";
 import { getSocketConfig } from "../utils/socket";
 
+// Реализира страницата за регистрация на нов потребител.
 export default function Register() {
   const navigate = useNavigate();
   const [username, setUsername] = useState(() => createRandomUsername());
@@ -22,10 +23,12 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Проверява дали вече съществува профил с подадения имейл адрес.
   const checkEmailExists = async (value) => {
     const normalizedEmail = String(value || "").trim().toLowerCase();
     if (!normalizedEmail) return false;
 
+    // Използва backend endpoint за предварителна проверка на имейла.
     const { url } = getSocketConfig();
     const baseUrl = String(url || "").replace(/\/+$/, "");
     const response = await fetch(`${baseUrl}/auth/check-email`, {
@@ -42,12 +45,14 @@ export default function Register() {
     return Boolean(payload?.exists);
   };
 
+  // Обработва регистрацията и създаването на профил в системата.
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
     setMessage("");
     setLoading(true);
 
+    // Нормализира и валидира потребителското име и имейла.
     const normalizedUsername = normalizeUsername(username);
     const normalizedEmail = String(email || "").trim().toLowerCase();
     const usernameValidationError = validateUsername(normalizedUsername);
@@ -58,6 +63,7 @@ export default function Register() {
     }
 
     try {
+      // Проверява дали избраното потребителско име вече е заето.
       const taken = await isUsernameTaken(supabase, normalizedUsername);
       if (taken) {
         setError("Това потребителско име вече е заето.");
@@ -71,6 +77,7 @@ export default function Register() {
     }
 
     try {
+      // Прави предварителна проверка за вече регистриран имейл.
       const emailExists = await checkEmailExists(normalizedEmail);
       if (emailExists) {
         setError("Потребител с този имейл вече съществува.");
@@ -81,10 +88,12 @@ export default function Register() {
       console.warn("Email pre-check unavailable, continuing with sign up:", checkError);
     }
 
+    // Създава акаунт в Supabase Auth.
     const { data, error } = await supabase.auth.signUp({
       email: normalizedEmail,
       password,
       options: {
+        // Определя адреса за връщане след имейл потвърждение.
         emailRedirectTo: LOGIN_REDIRECT_URL,
         data: {
           name: normalizedUsername,
@@ -93,6 +102,7 @@ export default function Register() {
       },
     });
 
+    // Обработва случай, в който Supabase връща съществуващ имейл без явна грешка.
     const looksLikeExistingEmailResponse =
       !error &&
       Array.isArray(data?.user?.identities) &&
@@ -105,6 +115,7 @@ export default function Register() {
     }
 
     if (!error && data?.session?.user?.id) {
+      // Записва основните данни за профила в таблицата "profiles".
       const { error: profileError } = await supabase.from("profiles").upsert({
         id: data.session.user.id,
         name: normalizedUsername,
@@ -125,8 +136,10 @@ export default function Register() {
     setLoading(false);
 
     if (error) {
+      // Показва подходящо съобщение при неуспешна регистрация.
       setError(toBgErrorMessage(error, "Неуспешна регистрация. Опитайте отново."));
     } else {
+      // Уведомява потребителя да потвърди регистрацията по имейл.
       setMessage("Провери имейла си, за да потвърдиш акаунта!");
       setTimeout(() => navigate("/login"), 2500);
     }
@@ -149,7 +162,7 @@ export default function Register() {
         padding: "clamp(0.85rem, 3vh, 2rem) clamp(0.85rem, 3vw, 2rem)",
       }}
     >
-      
+      {/* Декоративни фонови елементи за страницата. */}
       <div
         className="auth-orb"
         style={{
@@ -231,7 +244,7 @@ export default function Register() {
         }
       `}</style>
 
-      
+      {/* Основна карта с формата за регистрация. */}
       <div
         className="auth-card"
         style={{
@@ -249,7 +262,7 @@ export default function Register() {
           zIndex: 1,
         }}
       >
-        
+        {/* Визуален акцент в горната част на формата. */}
         <div
           style={{
             width: "clamp(56px, 11vw, 80px)",
@@ -291,6 +304,7 @@ export default function Register() {
           Присъедини се, за да публикуваш имотите си
         </p>
 
+        {/* Форма за въвеждане на данните при регистрация. */}
         <form
           onSubmit={handleRegister}
           style={{
@@ -300,7 +314,7 @@ export default function Register() {
             textAlign: "left",
           }}
         >
-          
+          {/* Поле за потребителско име с бутон за автоматично генериране. */}
           <div>
             <label style={labelStyle}>Потребителско име</label>
             <div style={{ display: "flex", gap: "0.5rem" }}>
@@ -322,12 +336,12 @@ export default function Register() {
                 onClick={() => setUsername(createRandomUsername())}
                 style={randomButtonStyle}
               >
-                Рандъм
+                Смени
               </button>
             </div>
           </div>
 
-          
+          {/* Поле за имейл адрес на потребителя. */}
           <div>
             <label style={labelStyle}>Имейл адрес</label>
             <div style={{ position: "relative" }}>
@@ -345,7 +359,7 @@ export default function Register() {
             </div>
           </div>
 
-          
+          {/* Поле за парола с възможност за показване и скриване. */}
           <div>
             <label style={labelStyle}>Парола</label>
             <div style={{ position: "relative" }}>
@@ -380,7 +394,7 @@ export default function Register() {
             </p>
           </div>
 
-          
+          {/* Бутон за изпращане на формата за регистрация. */}
           <button
             type="submit"
             disabled={loading}
@@ -427,21 +441,21 @@ export default function Register() {
           </button>
         </form>
 
-        
+        {/* Показва съобщение при възникнала грешка. */}
         {error && (
           <div style={errorStyle}>
             <span></span> {error}
           </div>
         )}
 
-        
+        {/* Показва успешно съобщение след регистрация. */}
         {message && (
           <div style={successStyle}>
             <span></span> {message}
           </div>
         )}
 
-        
+        {/* Връзка към страницата за вход за вече регистрирани потребители. */}
         <div
           style={{
             marginTop: "clamp(1.15rem, 2.5vh, 2rem)",
@@ -468,6 +482,7 @@ export default function Register() {
   );
 }
 
+// Общи стилове за визуалните елементи на страницата.
 const inputStyle = {
   width: "100%",
   padding: "1rem 1rem 1rem 3rem",

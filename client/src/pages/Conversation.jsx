@@ -5,6 +5,7 @@ import { supabase } from "../supabaseClient";
 import NavBar from "../components/NavBar";
 import { getSocketConfig } from "../utils/socket";
 
+// Проверява дали съобщението принадлежи на текущия разговор.
 function isConversationMessage(message, estateId, firstUserId, secondUserId) {
   if (!message) return false;
 
@@ -23,6 +24,7 @@ function isConversationMessage(message, estateId, firstUserId, secondUserId) {
   );
 }
 
+// Добавя или обновява съобщение в локалния списък.
 function mergeMessage(prevMessages, incomingMessage) {
   if (!incomingMessage?.id) return prevMessages;
 
@@ -44,11 +46,13 @@ function mergeMessage(prevMessages, incomingMessage) {
   return next;
 }
 
+// Реализира страницата за конкретен разговор между двама потребители.
 export default function Conversation() {
   const { estateId, otherUserId } = useParams();
   const navigate = useNavigate();
 
-  const [profile, setProfile] = useState(null); 
+  // Пази данни за текущия потребител, събеседника и съобщенията.
+  const [profile, setProfile] = useState(null);
   const [otherUser, setOtherUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -60,6 +64,7 @@ export default function Conversation() {
 
   useEffect(() => {
     (async () => {
+      // Зарежда текущия потребител и събеседника.
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) {
         navigate("/login");
@@ -81,6 +86,7 @@ export default function Conversation() {
         .single();
       setOtherUser(other || { id: otherUserId });
 
+      // Извлича всички съобщения за избрания разговор.
       const { data: msgs, error } = await supabase
         .from("messages")
         .select("*")
@@ -98,6 +104,7 @@ export default function Conversation() {
 
       setLoading(false);
 
+      // Показва съдържанието след кратък fade-in преход.
       setTimeout(() => setIsLoaded(true), 150);
     })();
   }, [estateId, otherUserId, navigate]);
@@ -105,6 +112,7 @@ export default function Conversation() {
   useEffect(() => {
     if (!profile?.id || !otherUser?.id || !estateId || loading) return;
 
+    // Подготвя идентификаторите на участниците за conversation room.
     const roomPayload = {
       estateId: String(estateId),
       userA: profile.id,
@@ -119,6 +127,7 @@ export default function Conversation() {
 
     const connectSocket = async () => {
       try {
+        // Извлича активната сесия за socket автентикация.
         const { data, error } = await supabase.auth.getSession();
         if (error) {
           console.error("Socket auth session error:", error);
@@ -145,10 +154,12 @@ export default function Conversation() {
 
         socketRef.current = socket;
 
+        // Присъединява socket връзката към room за текущия разговор.
         handleConnect = () => {
           socket.emit("join_conversation", roomPayload);
         };
 
+        // Добавя входящите realtime съобщения към локалния списък.
         handleConversationMessage = (incomingMessage) => {
           if (
             !isConversationMessage(
@@ -171,6 +182,7 @@ export default function Conversation() {
           handleConnect();
         }
 
+        // Обработва грешки при свързване към socket сървъра.
         handleConnectError = (socketError) => {
           console.error(
             "Socket connection error:",
@@ -186,6 +198,7 @@ export default function Conversation() {
     connectSocket();
 
     return () => {
+      // Напуска room и освобождава socket обработчиците.
       isCancelled = true;
       if (!socket) return;
 
@@ -210,6 +223,7 @@ export default function Conversation() {
   useEffect(() => {
     if (!profile?.id || !otherUser?.id || !estateId) return;
 
+    // Създава realtime канал за синхронизация с базата данни.
     const firstUserId = String(profile.id);
     const secondUserId = String(otherUser.id);
     const channelName = `conversation:db:${String(estateId)}:${[
@@ -276,10 +290,12 @@ export default function Conversation() {
       });
 
     return () => {
+      // Премахва realtime канала при напускане на разговора.
       supabase.removeChannel(channel);
     };
   }, [estateId, otherUser?.id, profile?.id]);
 
+  // Записва новото съобщение и го публикува към realtime слоя.
   const handleSend = async (e) => {
     e.preventDefault();
     if (!content.trim() || !profile || !otherUser) return;
@@ -303,6 +319,7 @@ export default function Conversation() {
 
       setMessages((prev) => mergeMessage(prev, data));
 
+      // Изпраща съобщението и през socket канала към участниците.
       socketRef.current?.emit("conversation_message", {
         estateId: String(estateId),
         senderId: profile.id,
@@ -329,8 +346,10 @@ export default function Conversation() {
         opacity: isLoaded ? 1 : 0,
       }}
     >
+      {/* Горна навигация с данни за текущия профил. */}
       <NavBar profile={profile} />
 
+      {/* Основна секция с хедър, история на съобщенията и форма за изпращане. */}
       <main
         style={{
           maxWidth: 900,
@@ -341,6 +360,7 @@ export default function Conversation() {
           height: "calc(100vh - 120px)",
         }}
       >
+        {/* Горен ред с бутон назад и информация за събеседника. */}
         <div
           style={{
             marginBottom: "1rem",
@@ -389,7 +409,7 @@ export default function Conversation() {
           )}
         </div>
 
-        
+        {/* Панел с историята на съобщенията в разговора. */}
         <div
           style={{
             flex: 1,
@@ -403,6 +423,7 @@ export default function Conversation() {
             gap: "0.6rem",
           }}
         >
+          {/* Показва зареждане, празно състояние или наличните съобщения. */}
           {loading ? (
             <p style={{ color: "#94a3b8" }}>Зареждане на съобщения…</p>
           ) : messages.length === 0 ? (
@@ -411,6 +432,7 @@ export default function Conversation() {
             </p>
           ) : (
             messages.map((m) => {
+              // Разграничава собствените от входящите съобщения.
               const isMine = m.sender_id === profile?.id;
               return (
                 <div
@@ -434,7 +456,7 @@ export default function Conversation() {
           )}
         </div>
 
-        
+        {/* Форма за изпращане на ново съобщение. */}
         <form
           onSubmit={handleSend}
           style={{

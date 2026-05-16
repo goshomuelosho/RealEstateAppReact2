@@ -10,6 +10,7 @@ import {
 } from "../utils/username";
 import { toBgErrorMessage } from "../utils/errorMessages";
 
+// Реализира страницата за преглед и редакция на потребителския профил.
 export default function Profile() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -31,11 +32,13 @@ export default function Profile() {
   const [passwordLoading, setPasswordLoading] = useState(false);
 
   useEffect(() => {
+    // Зарежда текущия потребител и неговия профил от базата.
     const init = async () => {
       const { data } = await supabase.auth.getUser();
       if (!data.user) return navigate("/login");
       setUser(data.user);
 
+      // Извлича профилните данни по идентификатора на потребителя.
       const { data: profileData } = await supabase
         .from("profiles")
         .select("*")
@@ -47,6 +50,7 @@ export default function Profile() {
         setProfile(loadedProfile);
         setProfileDraft(loadedProfile);
       } else {
+        // Създава временни начални стойности, ако липсва запис в профила.
         const fallbackProfile = {
           name: normalizeUsername(data.user.user_metadata?.username || createRandomUsername()),
           avatar_url: "",
@@ -59,6 +63,7 @@ export default function Profile() {
     init();
   }, [navigate]);
 
+  // Обработва избор на нова снимка и създава локален preview.
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -69,12 +74,14 @@ export default function Profile() {
     }
   };
 
+  // Записва промените по профила и качва нов аватар при нужда.
   const handleSave = async (e) => {
     e.preventDefault();
     if (!user) return;
     setNameError("");
     setSaving(true);
 
+    // Нормализира и валидира потребителското име.
     const normalizedName = normalizeUsername(profileDraft.name);
     const validationError = validateUsername(normalizedName);
     if (validationError) {
@@ -84,6 +91,7 @@ export default function Profile() {
     }
 
     try {
+      // Проверява дали новото потребителско име вече не е заето.
       if (normalizedName !== normalizeUsername(profile.name || "")) {
         const taken = await isUsernameTaken(supabase, normalizedName, user.id);
         if (taken) {
@@ -100,6 +108,7 @@ export default function Profile() {
 
     let avatar_url = profile.avatar_url;
     if (avatarFile) {
+      // Качва новата профилна снимка в storage.
       const fileName = `${user.id}-${Date.now()}-${avatarFile.name}`;
       const { error: uploadError } = await supabase.storage
         .from("estate-images")
@@ -111,11 +120,13 @@ export default function Profile() {
         return;
       }
 
+      // Генерира публичен адрес за каченото изображение.
       avatar_url = supabase.storage
         .from("estate-images")
         .getPublicUrl(fileName).data.publicUrl;
     }
 
+    // Записва или обновява профилните данни в таблицата "profiles".
     const { error } = await supabase.from("profiles").upsert({
       id: user.id,
       name: normalizedName,
@@ -140,16 +151,19 @@ export default function Profile() {
     setSaving(false);
   };
 
+  // Обработва смяната на потребителската парола.
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     setPasswordMessage("");
 
+    // Проверява дължината и съвпадението на новата парола.
     if (!newPassword || newPassword.length < 6)
       return setPasswordMessage("Паролата трябва да е поне 6 символа");
     if (newPassword !== confirmPassword)
       return setPasswordMessage("Паролите не съвпадат");
 
     setPasswordLoading(true);
+    // Изпраща заявка за актуализация на паролата.
     const { error } = await supabase.auth.updateUser({ password: newPassword });
 
     if (error) {
@@ -163,11 +177,13 @@ export default function Profile() {
     setPasswordLoading(false);
   };
 
+  // Прекратява текущата сесия и връща потребителя към входа.
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/login");
   };
 
+  // Показва кратко уведомление за успешно действие.
   const showToastMessage = (msg) => {
     setToastMessage(msg);
     setShowToast(true);
@@ -182,18 +198,18 @@ export default function Profile() {
         transition: "opacity 0.4s ease",
       }}
     >
-      
+      {/* Декоративни фонови елементи на страницата. */}
       <div style={bgLight("#3b82f6", "10%", "5%", 300)} />
       <div style={bgLight("#8b5cf6", "80%", "85%", 400)} />
 
-      
+      {/* Горна навигация с данни за текущия профил. */}
       <NavBar profile={profile} />
 
-      
+      {/* Основна секция с формата за редакция на профила. */}
       <main style={mainStyle}>
         <div style={cardContainer}>
           <form onSubmit={handleSave}>
-            
+            {/* Зона за визуализация и смяна на профилната снимка. */}
             <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
               <div style={avatarWrapper}>
                 <img
@@ -218,7 +234,7 @@ export default function Profile() {
               </div>
             </div>
 
-            
+            {/* Поле за промяна на потребителското име. */}
             <div style={fieldGroup}>
               <label style={labelStyle}>Потребителско име</label>
               <input
@@ -238,7 +254,7 @@ export default function Profile() {
               {nameError ? <p style={nameErrorStyle}>{nameError}</p> : null}
             </div>
 
-            
+            {/* Поле за имейл, което е само за преглед. */}
             <div style={fieldGroup}>
               <label style={labelStyle}>Имейл</label>
               <input
@@ -254,7 +270,7 @@ export default function Profile() {
             </button>
           </form>
 
-          
+          {/* Секция за смяна на паролата. */}
           {showPasswordForm ? (
             <form onSubmit={handlePasswordChange} style={{ marginTop: "2rem" }}>
               <div style={fieldGroup}>
@@ -313,14 +329,14 @@ export default function Profile() {
             </button>
           )}
 
-          
+          {/* Бутон за изход от текущата сесия. */}
           <button onClick={handleLogout} style={logoutButton}>
             Изход
           </button>
         </div>
       </main>
 
-      
+      {/* Кратко уведомление при успешно изпълнено действие. */}
       {showToast && (
         <div style={toastContainer}>
           <div style={toastBox}>{toastMessage}</div>
@@ -330,6 +346,7 @@ export default function Profile() {
   );
 }
 
+// Общи стилове за визуалното оформление на страницата.
 const pageWrapper = {
   minHeight: "100vh",
   background: "linear-gradient(135deg,#0f172a,#1e293b,#334155)",

@@ -6,7 +6,7 @@ import LocationPicker from "../components/LocationPicker";
 import InsetScrollbarOverlay from "../components/InsetScrollbarOverlay";
 import { toBgErrorMessage } from "../utils/errorMessages";
 
-
+// Списъци с предварително дефинирани стойности за полетата на формата.
 const PROPERTY_TYPES = [
   "1-СТАЕН",
   "2-СТАЕН",
@@ -56,7 +56,7 @@ const FLOORS = [
   "Не е приложимо",
 ];
 
-
+// Общи стилове за визуалното оформление на страницата.
 const pageContainer = (isLoaded) => ({
   minHeight: "100vh",
   height: "100dvh",
@@ -310,11 +310,13 @@ const backBtn = {
   cursor: "pointer",
 };
 
+// Реализира страницата за редакция на съществуваща обява.
 export default function EditEstate() {
   const navigate = useNavigate();
   const { id } = useParams();
   const cardScrollRef = useRef(null);
 
+  // Съхранява информация за текущия потребител и неговите права.
   const [profile, setProfile] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
@@ -323,6 +325,7 @@ export default function EditEstate() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [loadingEstate, setLoadingEstate] = useState(true);
 
+  // Пази текущите стойности на редактираната обява.
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -344,12 +347,14 @@ export default function EditEstate() {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
+    // Зарежда потребителя, неговия профил и данните за избраната обява.
     const fetchData = async () => {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) return navigate("/login");
 
       const currentUserId = userData.user.id;
 
+      // Извлича профила на текущия потребител.
       const { data: profileData, error: profileErr } = await supabase
         .from("profiles")
         .select("id, name, avatar_url, is_admin")
@@ -363,6 +368,7 @@ export default function EditEstate() {
       setIsAdmin(!!currentProfile.is_admin);
 
       setLoadingEstate(true);
+      // Зарежда данните за обявата по идентификатор.
       const { data, error } = await supabase.from("estates").select("*").eq("id", id).single();
 
       if (error || !data) {
@@ -374,10 +380,12 @@ export default function EditEstate() {
       const owner = data.user_id === currentUserId;
       const admin = !!currentProfile.is_admin;
 
+      // Разрешава редакция само за собственик или администратор.
       setIsOwner(owner);
       setCanEdit(owner || admin);
 
       if (owner || admin) {
+        // Попълва формата с текущите данни на обявата.
         setForm({
           title: data.title || "",
           description: data.description || "",
@@ -401,10 +409,13 @@ export default function EditEstate() {
     fetchData();
   }, [id, navigate]);
 
+  // Обновява стойността на поле във формата.
   const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
+  // Управлява видимостта на обявата в пазара.
   const handleTogglePublic = (e) => setForm((prev) => ({ ...prev, is_public: e.target.checked }));
 
+  // Обработва избор на нова снимка и създава локален preview.
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -415,6 +426,7 @@ export default function EditEstate() {
     }
   };
 
+  // Записва промените по обявата в базата данни.
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!canEdit) return;
@@ -423,6 +435,7 @@ export default function EditEstate() {
 
     let imageUrl = form.image_url;
     if (image) {
+      // Качва новото изображение в storage, ако е избрано.
       const fileName = `${profile.id}-${Date.now()}-${image.name}`;
       const { error: imgError } = await supabase.storage
         .from("estate-images")
@@ -434,9 +447,11 @@ export default function EditEstate() {
         return;
       }
 
+      // Генерира публичен адрес на каченото изображение.
       imageUrl = supabase.storage.from("estate-images").getPublicUrl(fileName).data.publicUrl;
     }
 
+    // Подготвя обекта с обновените данни за обявата.
     const payload = {
       title: form.title,
       description: form.description,
@@ -452,6 +467,7 @@ export default function EditEstate() {
       floor: form.floor || null,
     };
 
+    // Обновява съответния запис в таблицата "estates".
     const { error } = await supabase.from("estates").update(payload).eq("id", id);
 
     setSaving(false);
@@ -472,6 +488,7 @@ export default function EditEstate() {
   const currentImageUrl = imagePreview || form.image_url;
   const fallbackBackRoute = isAdmin && !isOwner ? "/marketplace" : "/my-estates";
 
+  // Връща потребителя към предишната или подходяща резервна страница.
   const handleBack = () => {
     if (window.history.length > 1) navigate(-1);
     else navigate(fallbackBackRoute);
@@ -479,16 +496,20 @@ export default function EditEstate() {
 
   return (
     <div style={pageContainer(isLoaded)}>
+      {/* Декоративни фонови елементи на страницата. */}
       <div style={bgLight("#3b82f6", "10%", "5%", 300)} />
       <div style={bgLight("#8b5cf6", "80%", "85%", 400)} />
       <style>{keyframes}</style>
 
+      {/* Горна навигация с данни за текущия профил. */}
       <NavBar profile={profile} />
 
+      {/* Основна секция, която показва състоянието на редакцията. */}
       <main style={mainStyle}>
         {loadingEstate ? (
           <div className="edit-estate-card" style={cardStyle}>
             <div ref={cardScrollRef} className="edit-estate-scroll" style={cardScrollViewport}>
+              {/* Показва екран за зареждане на данните за обявата. */}
               <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center" }}>
                 <div style={spinner} />
                 <div style={{ fontWeight: 800 }}>Зареждане…</div>
@@ -505,6 +526,7 @@ export default function EditEstate() {
         ) : !canEdit ? (
           <div className="edit-estate-card" style={deniedCard}>
             <div ref={cardScrollRef} className="edit-estate-scroll" style={cardScrollViewport}>
+              {/* Показва съобщение при липса на права за редакция. */}
               <div style={deniedTitle}>⛔ Нямаш достъп</div>
               <p style={deniedText}>
                 Нямаш права да редактираш този имот.
@@ -526,9 +548,10 @@ export default function EditEstate() {
         ) : (
           <div className="edit-estate-card" style={cardStyle}>
             <div ref={cardScrollRef} className="edit-estate-scroll" style={cardScrollViewport}>
-            <button type="button" style={{ ...backBtn, marginTop: 0, marginBottom: "1rem" }} onClick={handleBack}>
-              ⬅ Назад
-            </button>
+              {/* Бутон за връщане към предишния контекст. */}
+              <button type="button" style={{ ...backBtn, marginTop: 0, marginBottom: "1rem" }} onClick={handleBack}>
+                ⬅ Назад
+              </button>
 
             <h2
               style={{
@@ -544,7 +567,7 @@ export default function EditEstate() {
               ✏️ Редактирай имот
             </h2>
 
-            
+            {/* Показва текущия статус на видимост и админ режим. */}
             <div
               style={{
                 display: "inline-flex",
@@ -567,6 +590,7 @@ export default function EditEstate() {
               ) : null}
             </div>
 
+            {/* Показва текущото или новоизбраното изображение на имота. */}
             {currentImageUrl && (
               <div
                 style={{
@@ -585,7 +609,7 @@ export default function EditEstate() {
             )}
 
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}>
-              
+              {/* Поле за избор на вид имот. */}
               <div>
                 <label style={labelStyle}>Вид на имота</label>
                 <select
@@ -607,7 +631,7 @@ export default function EditEstate() {
                 </select>
               </div>
 
-              
+              {/* Полета за допълнителни характеристики на имота. */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                 <div>
                   <label style={labelStyle}>Вид на сградата</label>
@@ -646,7 +670,7 @@ export default function EditEstate() {
                 </div>
               </div>
 
-              
+              {/* Отбелязва дали сградата има Акт 16. */}
               <div style={checkRow}>
                 <div>
                   <div style={{ fontWeight: 700 }}>Има Акт 16</div>
@@ -662,7 +686,7 @@ export default function EditEstate() {
                 />
               </div>
 
-              
+              {/* Основни текстови и числови полета на обявата. */}
               <input
                 name="title"
                 placeholder="Заглавие"
@@ -702,6 +726,7 @@ export default function EditEstate() {
                   style={inputStyle}
                 />
               </div>
+              {/* Компонент за избор и корекция на местоположението. */}
               <LocationPicker
                 value={form.location}
                 onChange={(nextLocation) =>
@@ -713,10 +738,10 @@ export default function EditEstate() {
                 labelStyle={labelStyle}
               />
 
-              
+              {/* Поле за избор на ново изображение за обявата. */}
               <input type="file" accept="image/*" onChange={handleImageChange} style={inputStyle} />
 
-              
+              {/* Управлява публичната видимост на обявата в пазара. */}
               <div style={switchRow}>
                 <div>
                   <div style={{ fontWeight: 700 }}>Покажи в Пазара</div>
@@ -733,6 +758,7 @@ export default function EditEstate() {
                 </label>
               </div>
 
+              {/* Бутон за запис на направените промени. */}
               <button type="submit" disabled={saving} style={submitButton(saving)}>
                 {saving ? (
                   <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
@@ -755,7 +781,7 @@ export default function EditEstate() {
         )}
       </main>
 
-      
+      {/* Модален прозорец при успешно обновяване на обявата. */}
       {showModal && (
         <div style={modalOverlay}>
           <div style={modalCard}>

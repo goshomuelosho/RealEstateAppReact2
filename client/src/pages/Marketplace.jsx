@@ -6,7 +6,7 @@ import NavBar from "../components/NavBar";
 import useViewportWidth from "../hooks/useViewportWidth";
 import { toBgErrorMessage } from "../utils/errorMessages";
 
-
+// Списъци с предварително дефинирани стойности за филтрите.
 const PROPERTY_TYPES = [
   "1-СТАЕН",
   "2-СТАЕН",
@@ -56,7 +56,7 @@ const FLOORS = [
   "Не е приложимо",
 ];
 
-
+// Общи стилове за визуалното оформление на страницата.
 const bgLight = (color, top, left, size) => ({
   position: "absolute",
   top,
@@ -410,7 +410,7 @@ const compactToggleKnob = (on) => ({
   boxShadow: "0 6px 12px rgba(0,0,0,0.2)",
 });
 
-
+// Реализира страницата за търсене, филтриране и контакт с продавачи.
 export default function Marketplace() {
   const viewportWidth = useViewportWidth();
   const isMobile = viewportWidth <= 768;
@@ -418,34 +418,41 @@ export default function Marketplace() {
   const isNarrowTablet = viewportWidth <= 1024;
   const isWideDesktop = viewportWidth >= 1800;
   const navigate = useNavigate();
+  // Пази данни за текущия потребител и състоянието на филтрите.
   const [profile, setProfile] = useState(null);
   const [filtersOpen, setFiltersOpen] = useState(() => !isCompactLayout);
   const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
 
+  // Съхранява намерените обяви и състоянието на зареждане.
   const [estates, setEstates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
 
+  // Основни полета за търсене и сортиране.
   const [qTitle, setQTitle] = useState("");
   const [qLocation, setQLocation] = useState("");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sort, setSort] = useState("newest");
 
+  // Допълнителни филтри за характеристиките на имота.
   const [propertyType, setPropertyType] = useState("");
   const [buildingType, setBuildingType] = useState("");
   const [floor, setFloor] = useState("");
   const [act16, setAct16] = useState("all");
 
+  // Управлява режима за любими обяви и техните идентификатори.
   const [onlyFavorites, setOnlyFavorites] = useState(false);
   const [favoriteIds, setFavoriteIds] = useState(new Set());
 
+  // Управлява модала за контакт и съобщението към продавача.
   const [contactOpen, setContactOpen] = useState(false);
   const [selectedListing, setSelectedListing] = useState(null);
   const [sellerProfile, setSellerProfile] = useState(null);
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
 
+  // Следи потвърждението за изпратено съобщение и състоянието на списъка.
   const [showSentModal, setShowSentModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hoveredCard, setHoveredCard] = useState(null);
@@ -488,6 +495,7 @@ export default function Marketplace() {
     act16 !== "all",
   ].filter(Boolean).length;
 
+  // Изгражда динамична заявка към публичните обяви според избраните филтри.
   const fetchListings = useCallback(
     async ({
       qTitleVal = qTitle,
@@ -552,11 +560,13 @@ export default function Marketplace() {
   );
 
   useEffect(() => {
+    // Държи основните филтри отворени при по-широк екран.
     if (!isCompactLayout) setFiltersOpen(true);
   }, [isCompactLayout]);
 
   useEffect(() => {
     (async () => {
+      // Зарежда текущия потребителски профил.
       const { data } = await supabase.auth.getUser();
       if (!data.user) {
         navigate("/login");
@@ -582,6 +592,7 @@ export default function Marketplace() {
 
       setProfile(currentProfile);
 
+      // Зарежда списъка с любими обяви на потребителя.
       const { data: favs, error: favErr } = await supabase
         .from("favorites")
         .select("estate_id")
@@ -595,6 +606,7 @@ export default function Marketplace() {
   }, [navigate]);
 
   useEffect(() => {
+    // Изпълнява търсенето с кратко забавяне при промяна на филтрите.
     if (!profile) return;
 
     const t = setTimeout(() => {
@@ -605,6 +617,7 @@ export default function Marketplace() {
   }, [profile, fetchListings]);
 
   useEffect(() => {
+    // Връща пагинацията на първа страница при промяна на филтрите.
     setCurrentPage(1);
   }, [
     qTitle,
@@ -620,9 +633,11 @@ export default function Marketplace() {
   ]);
 
   useEffect(() => {
+    // Коригира текущата страница, ако броят резултати намалее.
     setCurrentPage((prev) => (prev > totalPages ? totalPages : prev));
   }, [totalPages]);
 
+  // Добавя или премахва обява от любими с оптимистично обновяване.
   const toggleFavorite = async (estateId) => {
     if (!profile?.id) return;
 
@@ -666,6 +681,7 @@ export default function Marketplace() {
     }
   };
 
+  // Отваря модала за контакт и зарежда профила на продавача.
   const openContact = async (estate) => {
     setSelectedListing(estate);
     setSellerProfile(null);
@@ -686,6 +702,7 @@ export default function Marketplace() {
     setSellerProfile(sp);
   };
 
+  // Записва съобщението към продавача и показва потвърждение.
   const sendMessage = async () => {
     if (!message.trim() || !sellerProfile || !selectedListing || !profile?.id) return;
     try {
@@ -720,9 +737,11 @@ export default function Marketplace() {
 
   return (
     <div style={mainWrap(isLoaded)}>
+      {/* Декоративни фонови елементи на страницата. */}
       <div style={bgLight("#3b82f6", "10%", "5%", 300)} />
       <div style={bgLight("#8b5cf6", "80%", "85%", 400)} />
 
+      {/* Горна навигация с маркиран активен раздел. */}
       <NavBar profile={profile} active="marketplace" />
 
       <style>{`
@@ -745,6 +764,7 @@ export default function Marketplace() {
         }}
       >
         <div style={contentWrapper}>
+        {/* Заглавна секция на страницата. */}
         <div
           style={{
             display: "flex",
@@ -780,7 +800,7 @@ export default function Marketplace() {
           </div>
         ) : null}
 
-        
+        {/* Панел с филтри за търсене и ограничаване на резултатите. */}
         {!isCompactLayout || filtersOpen ? (
           <div
             style={{
@@ -789,8 +809,9 @@ export default function Marketplace() {
               flexDirection: "column",
               gap: denseFilters ? "0.45rem" : "0.6rem",
             }}
-          >
-            <div
+            >
+              {/* Основни филтри за текстово търсене, сортиране и любими. */}
+              <div
               style={{
                 display: "grid",
                 gridTemplateColumns: isMobile
@@ -992,7 +1013,7 @@ export default function Marketplace() {
           </div>
         ) : null}
 
-        
+        {/* Показва зареждане, резултати или празно състояние. */}
         {loading ? (
           <div style={loaderContainer}>
             <div style={loaderSpinner} />
@@ -1017,6 +1038,7 @@ export default function Marketplace() {
                 animation: "fadeInUp 0.6s ease",
               }}
             >
+              {/* Визуализира картите на обявите за текущата страница. */}
               {pagedEstates.map((estate) => {
               const showFloor =
                 estate.floor &&
@@ -1054,7 +1076,7 @@ export default function Marketplace() {
                   onMouseEnter={() => setHoveredCard(estate.id)}
                   onMouseLeave={() => setHoveredCard(null)}
                 >
-                  
+                  {/* Бутон за добавяне или премахване от любими. */}
                   <button
                     onClick={() => toggleFavorite(estate.id)}
                     title={isFav ? "Премахни от любими" : "Добави в любими"}
@@ -1228,6 +1250,7 @@ export default function Marketplace() {
               })}
             </div>
 
+            {/* Пагинация за преминаване между страниците с резултати. */}
             <div
               style={{
                 ...paginationRow,
@@ -1272,7 +1295,7 @@ export default function Marketplace() {
         </div>
       </main>
 
-      
+      {/* Модален прозорец за изпращане на съобщение до продавача. */}
       {contactOpen && selectedListing && (
         <div style={overlay}>
           <div style={modal}>
@@ -1376,7 +1399,7 @@ export default function Marketplace() {
         </div>
       )}
 
-      
+      {/* Модален прозорец при успешно изпратено съобщение. */}
       {showSentModal && (
         <div style={sentOverlay}>
           <div style={sentCard}>
@@ -1395,6 +1418,7 @@ export default function Marketplace() {
 }
 
 
+// Зарежда и показва кратка информация за продавача към всяка обява.
 function SellerBadge({ userId }) {
   const [seller, setSeller] = useState(null);
 
@@ -1431,6 +1455,7 @@ function SellerBadge({ userId }) {
 }
 
 
+// Стилове за модала за контакт с продавача.
 const overlay = {
   position: "fixed",
   inset: 0,

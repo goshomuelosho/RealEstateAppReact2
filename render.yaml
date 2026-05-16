@@ -1,4 +1,5 @@
 services:
+  # Backend услугата обслужва API логиката и realtime функционалността.
   - type: web
     name: realestate-backend
     runtime: node
@@ -6,31 +7,42 @@ services:
     rootDir: server
     buildCommand: npm install
     startCommand: npm start
+    # Проверява дали сървърът е достъпен след деплой.
     healthCheckPath: /
     envVars:
+      # Определя позволените клиентски адреси за CORS и socket връзки.
       - key: CLIENT_URLS
         sync: false
+      # Адрес на Supabase проекта.
       - key: SUPABASE_URL
         sync: false
+      # Сървърен ключ за административни операции.
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
 
+  # Frontend услугата публикува клиентската част на приложението.
   - type: web
     name: realestate-frontend
     runtime: static
     rootDir: client
     buildCommand: npm install && npm run build
+    # Определя директорията със статично генерираните файлове.
     staticPublishPath: dist
     envVars:
+      # Адрес на backend услугата за socket връзка.
       - key: VITE_SOCKET_URL
         sync: false
+      # Път до Socket.IO endpoint.
       - key: VITE_SOCKET_PATH
         value: /socket.io
+      # Адрес на Supabase проекта за клиентската част.
       - key: VITE_SUPABASE_URL
         sync: false
+      # Публичен ключ за достъп до Supabase от frontend приложението.
       - key: VITE_SUPABASE_ANON_KEY
         sync: false
     routes:
+      # Пренасочва всички клиентски маршрути към index.html.
       - type: rewrite
         source: /*
         destination: /index.html

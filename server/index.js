@@ -7,6 +7,7 @@ import { createClient } from "@supabase/supabase-js";
 
 dotenv.config();
 
+// Проверява дали са налични задължителните променливи на средата.
 const REQUIRED_ENV_VARS = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"];
 const missingEnvVars = REQUIRED_ENV_VARS.filter((name) => !process.env[name]);
 
@@ -16,9 +17,11 @@ if (missingEnvVars.length > 0) {
   );
 }
 
+// Инициализира Express приложението и HTTP сървъра.
 const app = express();
 const server = http.createServer(app);
 
+// Зарежда позволените frontend адреси за CORS и socket връзки.
 const rawClientOrigins =
   process.env.CLIENT_URLS ||
   process.env.CLIENT_URL ||
@@ -29,11 +32,13 @@ const allowedClientOrigins = rawClientOrigins
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+// Проверява дали даден origin е позволен.
 function isAllowedOrigin(origin) {
   if (!origin) return true;
   return allowedClientOrigins.includes(origin);
 }
 
+// Валидира origin стойността при CORS заявките.
 function corsOriginValidator(origin, callback) {
   if (isAllowedOrigin(origin)) {
     callback(null, true);
@@ -51,6 +56,7 @@ app.use(
 );
 app.use(express.json());
 
+// Създава административен Supabase клиент за сървърни операции.
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -67,10 +73,12 @@ app.get("/", (req, res) => {
   res.send("Backend is running and connected to Supabase!");
 });
 
+// Нормализира имейл адреса преди проверка и сравнение.
 function normalizeEmail(value) {
   return String(value || "").trim().toLowerCase();
 }
 
+// Проверява дали имейл адресът вече съществува в Supabase Auth.
 async function isAuthEmailRegistered(email) {
   const normalizedEmail = normalizeEmail(email);
   if (!normalizedEmail) return false;
@@ -95,6 +103,7 @@ async function isAuthEmailRegistered(email) {
   }
 }
 
+// Endpoint за предварителна проверка на вече регистриран имейл.
 app.post("/auth/check-email", async (req, res) => {
   try {
     const email = normalizeEmail(req.body?.email);
@@ -111,6 +120,7 @@ app.post("/auth/check-email", async (req, res) => {
   }
 });
 
+// Генерира уникално име на conversation room по имот и участници.
 function getConversationRoom({ estateId, userA, userB }) {
   if (!estateId || !userA || !userB) return null;
 
@@ -118,6 +128,7 @@ function getConversationRoom({ estateId, userA, userB }) {
   return `conversation:${estateId}:${firstUserId}:${secondUserId}`;
 }
 
+// Извлича и нормализира данните за конкретен разговор.
 function parseConversationPayload(payload = {}) {
   const estateId = String(payload.estateId || "").trim();
   const userA = String(payload.userA || payload.senderId || "").trim();
@@ -128,6 +139,7 @@ function parseConversationPayload(payload = {}) {
   return { estateId, userA, userB };
 }
 
+// Извлича access token от socket заявката.
 function getSocketToken(socket) {
   const authToken = socket.handshake?.auth?.token;
   if (typeof authToken === "string" && authToken.trim()) {
@@ -142,6 +154,7 @@ function getSocketToken(socket) {
   return null;
 }
 
+// Създава Socket.IO сървър със същите CORS ограничения.
 const io = new Server(server, {
   cors: {
     origin: corsOriginValidator,
@@ -150,6 +163,7 @@ const io = new Server(server, {
   },
 });
 
+// Валидира всяка нова socket връзка чрез Supabase потребителя.
 io.use(async (socket, next) => {
   try {
     const token = getSocketToken(socket);
@@ -172,8 +186,10 @@ io.use(async (socket, next) => {
   }
 });
 
+// Обработва realtime събитията за разговорите.
 io.on("connection", (socket) => {
   socket.on("join_conversation", (payload) => {
+    // Разрешава присъединяване само на участници в разговора.
     const conversation = parseConversationPayload(payload);
     if (!conversation) return;
 
@@ -191,6 +207,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("leave_conversation", (payload) => {
+    // Премахва socket връзката от room на разговора.
     const conversation = parseConversationPayload(payload);
     if (!conversation) return;
 
@@ -208,6 +225,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("conversation_message", (payload) => {
+    // Препраща съобщението към другия участник в същия room.
     const { message } = payload || {};
     const conversation = parseConversationPayload(payload);
     if (!conversation || !message?.id) return;
@@ -232,6 +250,7 @@ io.on("connection", (socket) => {
   });
 });
 
+// Стартира backend сървъра на зададения порт.
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

@@ -26,6 +26,7 @@ import Privacy from "./pages/Privacy";
 import SiteMapPage from "./pages/SiteMapPage";
 import SiteFooter from "./components/SiteFooter";
 
+// Показва междинен екран при проверка на достъп или смяна на маршрут.
 function RouteLoadingCover({ text }) {
   return (
     <div
@@ -57,31 +58,37 @@ function RouteLoadingCover({ text }) {
   );
 }
 
-
+// Защитава маршрути, достъпни само за вписани потребители.
 function RequireAuth({ children }) {
+  // Следи дали проверката за активна сесия все още се изпълнява.
   const [loading, setLoading] = useState(true);
+  // Пази резултата от проверката за автентикация.
   const [ok, setOk] = useState(false);
 
   useEffect(() => {
     (async () => {
+      // Извлича текущо вписания потребител от Supabase.
       const { data } = await supabase.auth.getUser();
       setOk(!!data?.user);
       setLoading(false);
     })();
   }, []);
 
-  if (loading) return null; 
+  // Изчаква приключването на проверката.
+  if (loading) return null;
+  // При липса на активна сесия пренасочва към страницата за вход.
   if (!ok) return <Navigate to="/login" replace />;
   return children;
 }
 
-
+// Разрешава достъп само на потребители с администраторска роля.
 function RequireAdmin({ children }) {
   const [loading, setLoading] = useState(true);
   const [ok, setOk] = useState(false);
 
   useEffect(() => {
     (async () => {
+      // Проверява дали има вписан потребител.
       const { data: userRes } = await supabase.auth.getUser();
       const user = userRes?.user;
 
@@ -91,6 +98,7 @@ function RequireAdmin({ children }) {
         return;
       }
 
+      // Извлича администраторските права от профила.
       const { data: profileData, error } = await supabase
         .from("profiles")
         .select("is_admin")
@@ -115,13 +123,14 @@ function RequireAdmin({ children }) {
   return children;
 }
 
-
+// Насочва началния маршрут според ролята на текущия потребител.
 function RootRedirect() {
   const [loading, setLoading] = useState(true);
   const [to, setTo] = useState("/login");
 
   useEffect(() => {
     (async () => {
+      // Проверява дали има активна потребителска сесия.
       const { data: userRes } = await supabase.auth.getUser();
       const user = userRes?.user;
 
@@ -131,6 +140,7 @@ function RootRedirect() {
         return;
       }
 
+      // При администратор пренасочва към админ панела.
       const { data: profileData, error } = await supabase
         .from("profiles")
         .select("is_admin")
@@ -148,19 +158,23 @@ function RootRedirect() {
   return <Navigate to={to} replace />;
 }
 
+// Определя продължителността на визуалния преход между страниците.
 const ROUTE_TRANSITION_MS = 280;
 
+// Обгръща страниците с общ layout и плавен преход между маршрутите.
 function AppShell() {
   const location = useLocation();
   const isFirstRenderRef = useRef(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   useLayoutEffect(() => {
+    // Пропуска анимация при първоначалното зареждане.
     if (isFirstRenderRef.current) {
       isFirstRenderRef.current = false;
       return;
     }
 
+    // Активира кратък преход при всяка смяна на маршрут.
     setIsTransitioning(true);
     const timerId = window.setTimeout(
       () => setIsTransitioning(false),
@@ -221,26 +235,27 @@ function AppShell() {
   );
 }
 
+// Дефинира основната маршрутна структура на приложението.
 function App() {
   return (
     <Routes>
       <Route element={<AppShell />}>
-        
+        {/* Публични маршрути за достъп и възстановяване на профил. */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
-        
+        {/* Информационни страници, достъпни без вход. */}
         <Route path="/help" element={<HelpCenter />} />
         <Route path="/contacts" element={<Contacts />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/sitemap" element={<SiteMapPage />} />
 
-        
+        {/* Началният маршрут избира посока според статуса и ролята на потребителя. */}
         <Route path="/" element={<RootRedirect />} />
 
-        
+        {/* Защитени маршрути за работа с обяви и профил. */}
         <Route
           path="/my-estates"
           element={
@@ -290,7 +305,7 @@ function App() {
           }
         />
 
-        
+        {/* Защитени маршрути за съобщения и разговори. */}
         <Route
           path="/messages"
           element={
@@ -308,7 +323,7 @@ function App() {
           }
         />
 
-        
+        {/* Личен панел, достъпен само след автентикация. */}
         <Route
           path="/dashboard"
           element={
@@ -318,7 +333,7 @@ function App() {
           }
         />
 
-        
+        {/* Административен маршрут с допълнителна проверка за роля. */}
         <Route
           path="/admin"
           element={
@@ -328,7 +343,7 @@ function App() {
           }
         />
 
-        
+        {/* Пренасочва всички невалидни адреси към началния маршрут. */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

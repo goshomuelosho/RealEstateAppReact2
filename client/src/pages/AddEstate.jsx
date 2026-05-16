@@ -6,7 +6,7 @@ import LocationPicker from "../components/LocationPicker";
 import InsetScrollbarOverlay from "../components/InsetScrollbarOverlay";
 import { toBgErrorMessage } from "../utils/errorMessages";
 
-
+// Общи стилове за визуалното оформление на страницата.
 const pageContainer = (isLoaded) => ({
   minHeight: "100vh",
   height: "100dvh",
@@ -368,21 +368,22 @@ const FLOORS = [
   "Не е приложимо",
 ];
 
-
+// Реализира страницата за добавяне на нова обява за имот.
 export default function AddEstate() {
   const navigate = useNavigate();
-  const location = useLocation(); 
+  const location = useLocation();
   const [profile, setProfile] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const formScrollRef = useRef(null);
 
+  // Съхранява въведените данни за новата обява.
   const [form, setForm] = useState({
     title: "",
     description: "",
     price: "",
     area: "",
     location: "",
-    is_public: false, 
+    is_public: false,
 
     property_type: "",
     has_act16: false,
@@ -396,10 +397,12 @@ export default function AddEstate() {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
+    // Зарежда профила на текущия потребител и началните стойности на формата.
     const getProfile = async () => {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) return navigate("/login");
 
+      // Извлича данни за профила, нужни за запис на обявата.
       const { data: profileData } = await supabase
         .from("profiles")
         .select("id, name, avatar_url, is_admin")
@@ -408,6 +411,7 @@ export default function AddEstate() {
 
       setProfile(profileData || { id: userData.user.id });
 
+      // Попълва начално публикуване в пазара, ако страницата е отворена с такова намерение.
       if (location.state?.listOnMarketplace) {
         setForm((f) => ({ ...f, is_public: true }));
       }
@@ -416,9 +420,11 @@ export default function AddEstate() {
     getProfile();
   }, [navigate, location.state]);
 
+  // Обновява състоянието на формата при промяна на поле.
   const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
+  // Обработва качване на изображение и създава локален preview.
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -429,6 +435,7 @@ export default function AddEstate() {
     }
   };
 
+  // Качва снимката и записва новата обява в базата данни.
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!profile?.id) return;
@@ -436,6 +443,7 @@ export default function AddEstate() {
 
     let imageUrl = null;
     if (image) {
+      // Качва избраното изображение в storage.
       const fileName = `${profile.id}-${Date.now()}-${image.name}`;
       const { error: uploadError } = await supabase.storage
         .from("estate-images")
@@ -445,11 +453,14 @@ export default function AddEstate() {
         setLoading(false);
         return;
       }
+
+      // Генерира публичен адрес на каченото изображение.
       imageUrl = supabase.storage
         .from("estate-images")
         .getPublicUrl(fileName).data.publicUrl;
     }
 
+    // Подготвя обекта с данни за новата обява.
     const payload = {
       user_id: profile.id,
       title: form.title,
@@ -465,6 +476,7 @@ export default function AddEstate() {
       image_url: imageUrl,
     };
 
+    // Създава нов запис в таблицата "estates".
     const { error } = await supabase.from("estates").insert([payload]);
 
     setLoading(false);
@@ -477,12 +489,15 @@ export default function AddEstate() {
 
   return (
     <div style={pageContainer(isLoaded)}>
+      {/* Декоративни фонови елементи на страницата. */}
       <div style={bgLight("#3b82f6", "10%", "5%", 300)} />
       <div style={bgLight("#8b5cf6", "80%", "85%", 400)} />
       <style>{keyframes}</style>
 
+      {/* Горна навигация с данни за текущия профил. */}
       <NavBar profile={profile} />
 
+      {/* Основна форма за създаване на нова обява. */}
       <main style={mainStyle}>
         <form onSubmit={handleSubmit} className="add-estate-form-card" style={formCard}>
           <div ref={formScrollRef} className="add-estate-form-scroll" style={formScrollViewport}>
@@ -492,7 +507,7 @@ export default function AddEstate() {
               <p style={formSubtitle}>Попълни детайли, за да публикуваш имота</p>
             </div>
 
-            
+            {/* Поле за избор на вид имот. */}
             <div>
               <label style={labelStyle}>Вид на имота</label>
               <select
@@ -514,7 +529,7 @@ export default function AddEstate() {
               </select>
             </div>
 
-            
+            {/* Поле за заглавие на обявата. */}
             <div style={{ marginTop: "1rem" }}>
               <label style={labelStyle}>Заглавие на имота</label>
               <input
@@ -527,7 +542,7 @@ export default function AddEstate() {
               />
             </div>
 
-            
+            {/* Полета за допълнителни характеристики на имота. */}
             <div
               style={{
                 display: "grid",
@@ -573,7 +588,7 @@ export default function AddEstate() {
               </div>
             </div>
 
-            
+            {/* Отбелязва дали сградата има Акт 16. */}
             <div style={checkRow}>
               <div>
                 <div style={{ fontWeight: 700 }}>Има Акт 16</div>
@@ -591,7 +606,7 @@ export default function AddEstate() {
               />
             </div>
 
-            
+            {/* Поле за подробно описание на имота. */}
             <div style={{ marginTop: "1rem" }}>
               <label style={labelStyle}>Описание</label>
               <textarea
@@ -604,7 +619,7 @@ export default function AddEstate() {
               />
             </div>
 
-            
+            {/* Полета за цена и площ на имота. */}
             <div
               style={{
                 display: "grid",
@@ -643,7 +658,7 @@ export default function AddEstate() {
               </div>
             </div>
 
-            
+            {/* Компонент за избор на местоположение. */}
             <div style={{ marginTop: "1rem" }}>
               <LocationPicker
                 value={form.location}
@@ -656,7 +671,7 @@ export default function AddEstate() {
               />
             </div>
 
-            
+            {/* Секция за качване и преглед на снимка. */}
             <div style={{ marginTop: "1rem" }}>
               <label style={labelStyle}>Снимка на имота</label>
               <div style={uploadBoxStyle(imagePreview)}>
@@ -693,7 +708,7 @@ export default function AddEstate() {
               </div>
             </div>
 
-            
+            {/* Управлява дали обявата да бъде видима и в пазара. */}
             <div
               style={toggleWrapper}
               onClick={() => setForm((f) => ({ ...f, is_public: !f.is_public }))}
@@ -713,7 +728,7 @@ export default function AddEstate() {
               />
             </div>
 
-            
+            {/* Бутон за изпращане на формата и създаване на обявата. */}
             <button type="submit" disabled={loading} style={submitButton(loading)}>
               {loading ? (
                 <span
@@ -731,6 +746,7 @@ export default function AddEstate() {
               )}
             </button>
           </div>
+          {/* Визуален индикатор за вътрешно превъртане на формата. */}
           <InsetScrollbarOverlay
             scrollRef={formScrollRef}
             topInset={30}
@@ -741,7 +757,7 @@ export default function AddEstate() {
         </form>
       </main>
 
-      
+      {/* Модален прозорец при успешно добавяне на имота. */}
       {showModal && (
         <div style={modalOverlay}>
           <div style={modalCard}>

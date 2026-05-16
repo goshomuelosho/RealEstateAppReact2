@@ -3,11 +3,13 @@ import { supabase } from "../supabaseClient";
 import { useNavigate } from "react-router-dom";
 import NavBar from "../components/NavBar";
 
+// Групира съобщенията в разговори по друг участник и обява.
 function mapConversations(messages, currentUserId, profileById) {
   const map = new Map();
   const normalizedUserId = String(currentUserId || "");
 
   messages.forEach((message) => {
+    // Определя кой е другият участник в разговора.
     const senderId = String(message.sender_id || "");
     const receiverId = String(message.receiver_id || "");
     const otherUserId = senderId === normalizedUserId ? receiverId : senderId;
@@ -15,6 +17,7 @@ function mapConversations(messages, currentUserId, profileById) {
     const otherUser =
       profileById[otherUserId] || { id: otherUserId, name: "Потребител" };
 
+    // Създава уникален ключ за разговор по потребител и имот.
     const key = `${otherUserId}-${message.estate_id}`;
     if (!map.has(key)) {
       map.set(key, {
@@ -29,12 +32,13 @@ function mapConversations(messages, currentUserId, profileById) {
   return Array.from(map.values());
 }
 
+// Реализира страницата със списък на разговорите на текущия потребител.
 export default function Messages() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isLoaded, setIsLoaded] = useState(false); 
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     let isCancelled = false;
@@ -42,9 +46,11 @@ export default function Messages() {
     let refreshTimerId = null;
     let messagesChannel = null;
 
+    // Зарежда всички разговори на текущия потребител.
     const loadConversations = async (userId) => {
       const normalizedUserId = String(userId || "");
 
+      // Извлича съобщенията, в които потребителят е подател или получател.
       const { data: msgs, error } = await supabase
         .from("messages")
         .select("id, estate_id, sender_id, receiver_id, content, created_at")
@@ -63,6 +69,7 @@ export default function Messages() {
         return;
       }
 
+      // Събира профилите на участниците в разговорите.
       const userIdSet = new Set();
       msgs.forEach((m) => {
         userIdSet.add(String(m.sender_id || ""));
@@ -90,6 +97,7 @@ export default function Messages() {
       }
     };
 
+    // Отлага презареждането при поредица от realtime събития.
     const scheduleConversationsReload = (userId) => {
       if (refreshTimerId) {
         window.clearTimeout(refreshTimerId);
@@ -100,6 +108,7 @@ export default function Messages() {
       }, 120);
     };
 
+    // Инициализира профила, разговорите и realtime канала.
     const bootstrap = async () => {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) {
@@ -122,10 +131,12 @@ export default function Messages() {
       await loadConversations(userId);
 
       if (!isCancelled) {
+        // Показва съдържанието след кратък fade-in преход.
         setLoading(false);
         fadeTimerId = window.setTimeout(() => setIsLoaded(true), 150);
       }
 
+      // Следи за промени в таблицата "messages" и обновява списъка.
       messagesChannel = supabase
         .channel(`messages:list:${userId}`)
         .on(
@@ -156,6 +167,7 @@ export default function Messages() {
     bootstrap();
 
     return () => {
+      // Освобождава таймерите и realtime канала при напускане на страницата.
       isCancelled = true;
       if (fadeTimerId) {
         window.clearTimeout(fadeTimerId);
@@ -182,8 +194,10 @@ export default function Messages() {
         transition: "opacity 0.4s ease",
       }}
     >
+      {/* Горна навигация с данни за текущия профил. */}
       <NavBar profile={profile} />
 
+      {/* Основна секция със списъка на разговорите. */}
       <main
         style={{
           maxWidth: 900,
@@ -206,6 +220,7 @@ export default function Messages() {
           Съобщения
         </h1>
 
+        {/* Показва зареждане, празно състояние или наличните разговори. */}
         {loading ? (
           <p>Зареждане на разговорите…</p>
         ) : conversations.length === 0 ? (
@@ -220,6 +235,7 @@ export default function Messages() {
               transition: "opacity 0.4s ease",
             }}
           >
+            {/* Визуализира разговорите като списък от бутони за отваряне. */}
             {conversations.map((conv) => (
               <button
                 key={`${conv.estateId}-${conv.otherUser.id}`}
