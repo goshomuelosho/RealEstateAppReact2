@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate } from "react-router-dom";
-import { Mail, Search } from "lucide-react";
+import { Mail, Search, Star } from "lucide-react";
 import NavBar from "../components/NavBar";
 import useViewportWidth from "../hooks/useViewportWidth";
 import { toBgErrorMessage } from "../utils/errorMessages";
@@ -349,18 +349,20 @@ const favStarBtn = (active, compact = false) => ({
   position: "absolute",
   top: compact ? 8 : 10,
   right: compact ? 8 : 10,
+  zIndex: 3,
   width: compact ? 42 : 48,
   height: compact ? 42 : 48,
   borderRadius: compact ? 14 : 16,
   border: active
     ? "1px solid rgba(245,158,11,0.45)"
-    : "1px solid rgba(148,163,184,0.45)",
+    : "1px solid rgba(255,255,255,0.75)",
   background: active
     ? "linear-gradient(135deg, rgba(245,158,11,0.22), rgba(253,230,138,0.22))"
-    : "rgba(15,23,42,0.08)",
+    : "rgba(255,255,255,0.92)",
+  backdropFilter: "blur(8px)",
   boxShadow: active
     ? "0 10px 25px rgba(245,158,11,0.22)"
-    : "0 8px 20px rgba(0,0,0,0.14)",
+    : "0 8px 20px rgba(15,23,42,0.18)",
   cursor: "pointer",
   display: "flex",
   alignItems: "center",
@@ -376,39 +378,28 @@ const favStarGlyph = (active, compact = false) => ({
   color: active ? "#fbbf24" : "#94a3b8", 
 });
 
-
-const toggleTrack = (on) => ({
-  width: 52,
-  height: 30,
-  borderRadius: 999,
-  border: "1px solid rgba(255,255,255,0.18)",
-  background: on
-    ? "linear-gradient(135deg, rgba(245,158,11,0.85), rgba(217,119,6,0.85))"
-    : "rgba(148,163,184,0.28)",
-  position: "relative",
+const favoriteFilterBtn = (active, dense = false) => ({
+  minHeight: dense ? 38 : 42,
+  padding: dense ? "0.46rem 0.66rem" : "0.58rem 0.8rem",
+  borderRadius: dense ? 10 : 12,
+  border: active
+    ? "1px solid rgba(245,158,11,0.75)"
+    : "1px solid rgba(255,255,255,0.25)",
+  background: active
+    ? "linear-gradient(135deg, rgba(245,158,11,0.28), rgba(217,119,6,0.2))"
+    : "rgba(15,23,42,0.35)",
+  color: active ? "#fde68a" : "#fff",
+  fontWeight: 800,
+  fontSize: dense ? "0.88rem" : "0.94rem",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 7,
   cursor: "pointer",
-  boxShadow: on ? "0 10px 24px rgba(245,158,11,0.18)" : "none",
-  transition: "background 0.2s ease, box-shadow 0.2s ease",
+  boxShadow: active ? "0 10px 22px rgba(245,158,11,0.16)" : "none",
+  whiteSpace: "nowrap",
 });
 
-const compactToggleTrack = (on) => ({
-  ...toggleTrack(on),
-  width: 42,
-  height: 24,
-  borderRadius: 999,
-});
-
-const compactToggleKnob = (on) => ({
-  width: 18,
-  height: 18,
-  borderRadius: 999,
-  background: "#fff",
-  position: "absolute",
-  top: 2,
-  left: on ? 22 : 2,
-  transition: "left 0.2s ease",
-  boxShadow: "0 6px 12px rgba(0,0,0,0.2)",
-});
 
 // Реализира страницата за търсене, филтриране и контакт с продавачи.
 export default function Marketplace() {
@@ -852,32 +843,21 @@ export default function Marketplace() {
                   gap: denseFilters ? 6 : 8,
                 }}
               >
-                <div
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 7,
-                    padding: denseFilters ? "0.35rem 0.5rem" : "0.45rem 0.62rem",
-                    borderRadius: 10,
-                    border: "1px solid rgba(255,255,255,0.14)",
-                    background: "rgba(255,255,255,0.05)",
-                  }}
+                <button
+                  type="button"
+                  onClick={() => setOnlyFavorites((v) => !v)}
+                  style={favoriteFilterBtn(onlyFavorites, denseFilters)}
+                  title={onlyFavorites ? "Показва само любими" : "Покажи само любими"}
+                  aria-pressed={onlyFavorites}
+                  aria-label={onlyFavorites ? "Показва само любими" : "Покажи само любими"}
                 >
-                  <span style={{ fontSize: denseFilters ? 12 : 13, fontWeight: 800 }}>⭐ Любими</span>
-                  <div
-                    role="switch"
-                    aria-checked={onlyFavorites}
-                    tabIndex={0}
-                    onClick={() => setOnlyFavorites((v) => !v)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") setOnlyFavorites((v) => !v);
-                    }}
-                    style={compactToggleTrack(onlyFavorites)}
-                    title={onlyFavorites ? "Показва любими" : "Показва всички"}
-                  >
-                    <div style={compactToggleKnob(onlyFavorites)} />
-                  </div>
-                </div>
+                  <Star
+                    size={denseFilters ? 16 : 18}
+                    fill={onlyFavorites ? "currentColor" : "none"}
+                    aria-hidden="true"
+                  />
+                  Любими
+                </button>
 
                 <button
                   onClick={() => setAdvancedFiltersOpen((v) => !v)}
@@ -1086,7 +1066,12 @@ export default function Marketplace() {
                     onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
                     aria-label={isFav ? "Премахни от любими" : "Добави в любими"}
                   >
-                    <span style={favStarGlyph(isFav, compactCard)}>{isFav ? "★" : "☆"}</span>
+                    <Star
+                      size={compactCard ? 24 : 28}
+                      fill={isFav ? "currentColor" : "none"}
+                      style={favStarGlyph(isFav, compactCard)}
+                      aria-hidden="true"
+                    />
                   </button>
 
                   {estate.image_url && (
