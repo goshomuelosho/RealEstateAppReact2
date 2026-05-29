@@ -26,6 +26,7 @@ export default function EstateDetail() {
 
   const [isOwner, setIsOwner] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [ownerIsAdmin, setOwnerIsAdmin] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -59,15 +60,39 @@ export default function EstateDetail() {
         return;
       }
 
+      const owner = data.user_id === currentUserId;
+      const admin = !!currentProfile.is_admin;
+
+      if (!data.is_public && !owner) {
+        alert("Този имот е частен и детайлите не са достъпни.");
+        navigate(admin ? "/admin" : "/marketplace");
+        return;
+      }
+
+      let ownerAdmin = false;
+      if (!owner && data.user_id) {
+        const { data: ownerProfile, error: ownerProfileErr } = await supabase
+          .from("profiles")
+          .select("is_admin")
+          .eq("id", data.user_id)
+          .single();
+
+        if (ownerProfileErr) console.error("Error loading estate owner profile:", ownerProfileErr);
+        ownerAdmin = ownerProfileErr ? true : !!ownerProfile?.is_admin;
+      } else {
+        ownerAdmin = admin;
+      }
+
       setEstate(data);
-      setIsOwner(data.user_id === currentUserId);
+      setIsOwner(owner);
+      setOwnerIsAdmin(ownerAdmin);
       setLoading(false);
     };
 
     fetchData();
   }, [id, navigate]);
 
-  const canManage = isOwner || isAdmin;
+  const canManage = isOwner || (isAdmin && !ownerIsAdmin);
   const fallbackBackRoute = isOwner ? "/my-estates" : "/marketplace";
 
   const handleBack = () => {
@@ -76,7 +101,7 @@ export default function EstateDetail() {
   };
 
   const handleDelete = async () => {
-    if (isDeleting) return;
+    if (isDeleting || !canManage) return;
     setIsDeleting(true);
 
     const { error } = await supabase.from("estates").delete().eq("id", id);

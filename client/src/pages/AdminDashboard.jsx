@@ -161,7 +161,7 @@ const btn = (variant = "ghost") => ({
       ? "linear-gradient(135deg,#ef4444,#dc2626)"
       : "rgba(255,255,255,0.06)",
   color: "#fff",
-  cursor: "pointer",
+  cursor: variant === "disabled" ? "not-allowed" : "pointer",
   fontWeight: 800,
   fontSize: 13,
   whiteSpace: "nowrap",
@@ -185,6 +185,10 @@ function fmtMoney(n) {
 function shortId(id) {
   if (!id) return "—";
   return String(id).slice(0, 8) + "…";
+}
+
+function canAdminOpenEstateDetails(estate) {
+  return !!estate?.is_public;
 }
 
 
@@ -572,9 +576,20 @@ function FragmentRow({ user, isOpen, onToggle }) {
                           flexWrap: "wrap",
                         }}
                       >
-                        <Link to={`/estate/${e.id}`} style={{ textDecoration: "none" }}>
-                          <button style={btn("primary")}>Детайли</button>
-                        </Link>
+                        {canAdminOpenEstateDetails(e) ? (
+                          <Link to={`/estate/${e.id}`} style={{ textDecoration: "none" }}>
+                            <button style={btn("primary")}>Детайли</button>
+                          </Link>
+                        ) : (
+                          <button
+                            type="button"
+                            style={btn("disabled")}
+                            disabled
+                            title="Частните имоти не могат да се отварят през админ панела."
+                          >
+                            Частен имот
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}

@@ -379,12 +379,28 @@ export default function EditEstate() {
 
       const owner = data.user_id === currentUserId;
       const admin = !!currentProfile.is_admin;
+      let ownerAdmin = false;
 
-      // Разрешава редакция само за собственик или администратор.
+      if (!owner && data.user_id) {
+        const { data: ownerProfile, error: ownerProfileErr } = await supabase
+          .from("profiles")
+          .select("is_admin")
+          .eq("id", data.user_id)
+          .single();
+
+        if (ownerProfileErr) console.error("Error loading estate owner profile in EditEstate:", ownerProfileErr);
+        ownerAdmin = ownerProfileErr ? true : !!ownerProfile?.is_admin;
+      } else {
+        ownerAdmin = admin;
+      }
+
+      const adminCanEdit = admin && !owner && !ownerAdmin && !!data.is_public;
+
+      // Разрешава редакция само за собственик или администратор върху публичен имот на обикновен user.
       setIsOwner(owner);
-      setCanEdit(owner || admin);
+      setCanEdit(owner || adminCanEdit);
 
-      if (owner || admin) {
+      if (owner || adminCanEdit) {
         // Попълва формата с текущите данни на обявата.
         setForm({
           title: data.title || "",
@@ -480,13 +496,13 @@ export default function EditEstate() {
     setShowModal(true);
 
     setTimeout(() => {
-      if (isAdmin && !isOwner) navigate("/marketplace");
+      if (isAdmin && !isOwner) navigate("/admin");
       else navigate("/my-estates");
     }, 1800);
   };
 
   const currentImageUrl = imagePreview || form.image_url;
-  const fallbackBackRoute = isAdmin && !isOwner ? "/marketplace" : "/my-estates";
+  const fallbackBackRoute = isAdmin && !isOwner ? "/admin" : "/my-estates";
 
   // Връща потребителя към предишната или подходяща резервна страница.
   const handleBack = () => {
@@ -531,10 +547,10 @@ export default function EditEstate() {
               <p style={deniedText}>
                 Нямаш права да редактираш този имот.
                 <br />
-                Само собственикът или администратор може да прави промени.
+                Администраторите не могат да редактират частни имоти или имоти на други администратори.
               </p>
-              <button style={backBtn} onClick={() => navigate("/marketplace")}>
-                ⬅ Назад към Пазара
+              <button style={backBtn} onClick={() => navigate(isAdmin && !isOwner ? "/admin" : "/marketplace")}>
+                ⬅ Назад
               </button>
             </div>
             <InsetScrollbarOverlay

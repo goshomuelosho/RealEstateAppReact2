@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate } from "react-router-dom";
-import { Mail, Search, Star } from "lucide-react";
+import { BarChart3, Mail, Search, Star, X } from "lucide-react";
 import NavBar from "../components/NavBar";
 import useViewportWidth from "../hooks/useViewportWidth";
 import { toBgErrorMessage } from "../utils/errorMessages";
@@ -400,6 +400,122 @@ const favoriteFilterBtn = (active, dense = false) => ({
   whiteSpace: "nowrap",
 });
 
+const compareBar = {
+  position: "sticky",
+  bottom: 16,
+  zIndex: 10,
+  margin: "1rem auto 0",
+  padding: "0.7rem 0.85rem",
+  maxWidth: 940,
+  borderRadius: 16,
+  border: "1px solid rgba(255,255,255,0.18)",
+  background: "rgba(15,23,42,0.92)",
+  boxShadow: "0 18px 50px rgba(0,0,0,0.28)",
+  backdropFilter: "blur(14px)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 12,
+  flexWrap: "wrap",
+};
+
+const compareChip = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 8,
+  maxWidth: 220,
+  padding: "0.4rem 0.5rem 0.4rem 0.65rem",
+  borderRadius: 999,
+  border: "1px solid rgba(148,163,184,0.35)",
+  background: "rgba(255,255,255,0.08)",
+  color: "#e2e8f0",
+  fontSize: 13,
+  fontWeight: 800,
+};
+
+const compareActionBtn = (variant = "primary") => ({
+  minHeight: 38,
+  padding: "0.55rem 0.85rem",
+  borderRadius: 12,
+  border:
+    variant === "primary"
+      ? "1px solid rgba(59,130,246,0.55)"
+      : "1px solid rgba(255,255,255,0.18)",
+  background:
+    variant === "primary"
+      ? "linear-gradient(135deg,#3b82f6,#1d4ed8)"
+      : "rgba(255,255,255,0.06)",
+  color: "#fff",
+  fontWeight: 800,
+  cursor: "pointer",
+});
+
+const compareToggleBtn = (active) => ({
+  padding: "0.62rem 0.75rem",
+  borderRadius: 12,
+  border: active
+    ? "1px solid rgba(59,130,246,0.55)"
+    : "1px solid rgba(148,163,184,0.35)",
+  background: active
+    ? "linear-gradient(135deg, rgba(59,130,246,0.95), rgba(29,78,216,0.95))"
+    : "rgba(15,23,42,0.08)",
+  color: active ? "#fff" : "#1e293b",
+  fontWeight: 800,
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 7,
+  cursor: "pointer",
+  transition: "transform 0.12s ease, filter 0.2s ease",
+});
+
+const compareTableWrap = {
+  overflowX: "auto",
+  borderRadius: 14,
+  border: "1px solid #e2e8f0",
+  background: "#fff",
+};
+
+const compareTable = {
+  width: "100%",
+  minWidth: 680,
+  borderCollapse: "collapse",
+};
+
+const compareTh = {
+  textAlign: "left",
+  padding: "0.8rem 0.9rem",
+  background: "#f8fafc",
+  color: "#0f172a",
+  borderBottom: "1px solid #e2e8f0",
+  fontSize: 13,
+};
+
+const compareTd = {
+  padding: "0.75rem 0.9rem",
+  color: "#334155",
+  borderBottom: "1px solid #e2e8f0",
+  verticalAlign: "top",
+  fontSize: 14,
+};
+
+const compareMetric = {
+  color: "#0f172a",
+  fontWeight: 900,
+  whiteSpace: "nowrap",
+};
+
+const MAX_COMPARE_ITEMS = 3;
+
+function formatMoney(value) {
+  return `€${Number(value || 0).toLocaleString()}`;
+}
+
+function formatArea(value) {
+  const area = Number(value);
+  return Number.isFinite(area) && area > 0 ? `${area.toLocaleString()} кв.м` : "Няма данни";
+}
+
 
 // Реализира страницата за търсене, филтриране и контакт с продавачи.
 export default function Marketplace() {
@@ -447,6 +563,8 @@ export default function Marketplace() {
   const [showSentModal, setShowSentModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hoveredCard, setHoveredCard] = useState(null);
+  const [compareIds, setCompareIds] = useState([]);
+  const [compareOpen, setCompareOpen] = useState(false);
 
   const denseFilters = isCompactLayout || isMobile;
   const compactFilterBar = {
@@ -485,6 +603,9 @@ export default function Marketplace() {
     !!floor,
     act16 !== "all",
   ].filter(Boolean).length;
+  const compareEstates = compareIds
+    .map((id) => estates.find((estate) => estate.id === id))
+    .filter(Boolean);
 
   // Изгражда динамична заявка към публичните обяви според избраните филтри.
   const fetchListings = useCallback(
@@ -670,6 +791,21 @@ export default function Marketplace() {
         });
       }
     }
+  };
+
+  // Избира до три обяви за таблично сравнение.
+  const toggleCompare = (estateId) => {
+    setCompareIds((prev) => {
+      if (prev.includes(estateId)) {
+        return prev.filter((id) => id !== estateId);
+      }
+
+      if (prev.length >= MAX_COMPARE_ITEMS) {
+        return [...prev.slice(1), estateId];
+      }
+
+      return [...prev, estateId];
+    });
   };
 
   // Отваря модала за контакт и зарежда профила на продавача.
@@ -1032,6 +1168,7 @@ export default function Marketplace() {
               const priceText = `€${Number(estate.price || 0).toLocaleString()}`;
 
               const isFav = favoriteIds.has(estate.id);
+              const isCompared = compareIds.includes(estate.id);
               const compactCard = isCompactLayout && !isMobile;
               const compactText = isMobile || compactCard;
               const hoverable = !compactText;
@@ -1204,36 +1341,114 @@ export default function Marketplace() {
                     <div
                       style={{
                         display: "flex",
-                        justifyContent: "flex-end",
+                        justifyContent: "space-between",
+                        alignItems: "center",
                         gap: "0.6rem",
                         marginTop: "auto",
                         paddingTop: 12,
+                        flexWrap: "wrap",
                       }}
                     >
                       <button
-                        style={contactBtn}
-                        onClick={() => openContact(estate)}
-                        aria-label="Изпрати съобщение"
+                        style={compareToggleBtn(isCompared)}
+                        onClick={() => toggleCompare(estate.id)}
+                        aria-pressed={isCompared}
+                        aria-label={isCompared ? "Премахни от сравнение" : "Добави за сравнение"}
+                        title={isCompared ? "Премахни от сравнение" : "Добави за сравнение"}
                       >
-                        <Mail size={17} aria-hidden="true" />
+                        <BarChart3 size={16} aria-hidden="true" />
+                        {isCompared ? "Избрано" : "Сравни"}
                       </button>
-                      <button
-                        style={{
-                          ...contactBtn,
-                          background: "linear-gradient(135deg,#3b82f6,#1d4ed8)",
-                          boxShadow: "0 8px 18px rgba(59,130,246,0.28)",
-                        }}
-                        onClick={() => navigate(`/estate/${estate.id}`)}
-                        aria-label="Виж детайли"
-                      >
-                        <Search size={17} aria-hidden="true" />
-                      </button>
+
+                      <div style={{ display: "flex", gap: "0.6rem" }}>
+                        <button
+                          style={contactBtn}
+                          onClick={() => openContact(estate)}
+                          aria-label="Изпрати съобщение"
+                        >
+                          <Mail size={17} aria-hidden="true" />
+                        </button>
+                        <button
+                          style={{
+                            ...contactBtn,
+                            background: "linear-gradient(135deg,#3b82f6,#1d4ed8)",
+                            boxShadow: "0 8px 18px rgba(59,130,246,0.28)",
+                          }}
+                          onClick={() => navigate(`/estate/${estate.id}`)}
+                          aria-label="Виж детайли"
+                        >
+                          <Search size={17} aria-hidden="true" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               );
               })}
             </div>
+
+            {compareEstates.length ? (
+              <div style={compareBar}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <span style={{ color: "#f8fafc", fontWeight: 900 }}>
+                    За сравнение: {compareEstates.length}/{MAX_COMPARE_ITEMS}
+                  </span>
+                  {compareEstates.map((estate) => (
+                    <span key={estate.id} style={compareChip} title={estate.title || "Без заглавие"}>
+                      <span style={{ ...oneLineClamp, maxWidth: 160 }}>
+                        {estate.title || "Без заглавие"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => toggleCompare(estate.id)}
+                        aria-label="Премахни от сравнение"
+                        style={{
+                          width: 22,
+                          height: 22,
+                          borderRadius: "50%",
+                          border: "none",
+                          background: "rgba(255,255,255,0.12)",
+                          color: "#e2e8f0",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                          padding: 0,
+                          flexShrink: 0,
+                        }}
+                      >
+                        <X size={14} aria-hidden="true" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={() => setCompareOpen(true)}
+                    disabled={compareEstates.length < 2}
+                    style={{
+                      ...compareActionBtn("primary"),
+                      opacity: compareEstates.length < 2 ? 0.6 : 1,
+                      cursor: compareEstates.length < 2 ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    Сравни избраните
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCompareIds([]);
+                      setCompareOpen(false);
+                    }}
+                    style={compareActionBtn("ghost")}
+                  >
+                    Изчисти
+                  </button>
+                </div>
+              </div>
+            ) : null}
 
             {/* Пагинация за преминаване между страниците с резултати. */}
             <div
@@ -1279,6 +1494,163 @@ export default function Marketplace() {
         )}
         </div>
       </main>
+
+      {/* Модален прозорец за сравнение на избрани обяви. */}
+      {compareOpen && compareEstates.length >= 2 ? (
+        <div style={overlay}>
+          <div style={{ ...modal, maxWidth: 980 }}>
+            <div
+              style={{
+                ...modalHeader,
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 12,
+                alignItems: "flex-start",
+              }}
+            >
+              <div>
+                <h3 style={modalTitle}>Сравнение на имоти</h3>
+                <p style={modalSubtitle}>
+                  Таблицата събира най-важните параметри, за да се избере по-лесно
+                  подходяща обява.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCompareOpen(false)}
+                aria-label="Затвори сравнението"
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 12,
+                  border: "1px solid #e2e8f0",
+                  background: "#fff",
+                  color: "#0f172a",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                }}
+              >
+                <span aria-hidden="true" style={{ fontSize: 18, lineHeight: 1 }}>
+                  ❌
+                </span>
+              </button>
+            </div>
+
+            <div style={compareTableWrap}>
+              <table style={compareTable}>
+                <thead>
+                  <tr>
+                    <th style={compareTh}>Показател</th>
+                    {compareEstates.map((estate) => (
+                      <th key={estate.id} style={compareTh}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                          <span style={{ fontWeight: 900 }}>
+                            {estate.title || "Без заглавие"}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/estate/${estate.id}`)}
+                            style={{
+                              alignSelf: "flex-start",
+                              padding: "0.35rem 0.55rem",
+                              borderRadius: 9,
+                              border: "1px solid rgba(59,130,246,0.22)",
+                              background: "rgba(59,130,246,0.1)",
+                              color: "#1d4ed8",
+                              fontWeight: 800,
+                              cursor: "pointer",
+                            }}
+                          >
+                            Детайли
+                          </button>
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style={{ ...compareTd, ...compareMetric }}>Цена</td>
+                    {compareEstates.map((estate) => (
+                      <td key={estate.id} style={compareTd}>
+                        {formatMoney(estate.price)}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td style={{ ...compareTd, ...compareMetric }}>Площ</td>
+                    {compareEstates.map((estate) => (
+                      <td key={estate.id} style={compareTd}>
+                        {formatArea(estate.area)}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td style={{ ...compareTd, ...compareMetric }}>Цена / кв.м</td>
+                    {compareEstates.map((estate) => {
+                      const price = Number(estate.price);
+                      const area = Number(estate.area);
+                      const pricePerArea =
+                        Number.isFinite(price) && Number.isFinite(area) && area > 0
+                          ? `${Math.round(price / area).toLocaleString()} €/кв.м`
+                          : "Няма данни";
+
+                      return (
+                        <td key={estate.id} style={compareTd}>
+                          {pricePerArea}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                  <tr>
+                    <td style={{ ...compareTd, ...compareMetric }}>Локация</td>
+                    {compareEstates.map((estate) => (
+                      <td key={estate.id} style={compareTd}>
+                        {estate.location || "Няма данни"}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td style={{ ...compareTd, ...compareMetric }}>Вид имот</td>
+                    {compareEstates.map((estate) => (
+                      <td key={estate.id} style={compareTd}>
+                        {estate.property_type || "Няма данни"}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td style={{ ...compareTd, ...compareMetric }}>Сграда</td>
+                    {compareEstates.map((estate) => (
+                      <td key={estate.id} style={compareTd}>
+                        {estate.building_type || "Няма данни"}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td style={{ ...compareTd, ...compareMetric }}>Етаж</td>
+                    {compareEstates.map((estate) => (
+                      <td key={estate.id} style={compareTd}>
+                        {estate.floor || "Няма данни"}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td style={{ ...compareTd, ...compareMetric }}>Акт 16</td>
+                    {compareEstates.map((estate) => (
+                      <td key={estate.id} style={compareTd}>
+                        {estate.has_act16 ? "Да" : "Не"}
+                      </td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* Модален прозорец за изпращане на съобщение до продавача. */}
       {contactOpen && selectedListing && (
